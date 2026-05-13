@@ -2,13 +2,13 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="wi([qiita.com](https://qiita.com/aoko_2477/items/dd6373d427f942b8e30f?utm_source=chatgpt.com)).0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>코코포리아 로그 불러오기</title>
   <style>
     :root {
       --bg: #111111;
-      --panel: rgba(255,255,255,.075);
-      --panel2: rgba(255,255,255,.105);
+      --panel: rgba(255,255,255,.08);
+      --panel2: rgba(255,255,255,.12);
       --line: rgba(255,255,255,.16);
       --text: #f7f3ee;
       --muted: rgba(247,243,238,.68);
@@ -31,13 +31,9 @@
     }
 
     .wrap {
-      width: min(1080px, calc(100% - 32px));
+      width: min(1000px, calc(100% - 32px));
       margin: 0 auto;
       padding: 42px 0 56px;
-    }
-
-    header {
-      margin-bottom: 24px;
     }
 
     .eyebrow {
@@ -50,12 +46,12 @@
 
     h1 {
       margin: 0;
-      font-size: clamp(28px, 5vw, 52px);
-      line-height: 1.08;
+      font-size: clamp(28px, 5vw, 50px);
+      line-height: 1.1;
     }
 
     .desc {
-      margin: 14px 0 0;
+      margin: 14px 0 24px;
       color: var(--muted);
       line-height: 1.7;
       font-size: 15px;
@@ -63,7 +59,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: 390px 1fr;
+      grid-template-columns: 370px 1fr;
       gap: 18px;
       align-items: start;
     }
@@ -175,16 +171,6 @@
       background: #fff;
     }
 
-    .log-preview {
-      height: 640px;
-      overflow: auto;
-      background: #f7f4ef;
-      color: #28211b;
-      padding: 24px;
-      font-size: 14px;
-      line-height: 1.75;
-    }
-
     .placeholder {
       display: grid;
       place-items: center;
@@ -194,6 +180,8 @@
       padding: 28px;
       line-height: 1.8;
     }
+
+    .placeholder b { color: var(--text); }
 
     .tabs {
       display: flex;
@@ -210,10 +198,15 @@
 
     .hidden { display: none !important; }
 
+    code {
+      word-break: break-all;
+      color: var(--accent);
+    }
+
     @media (max-width: 860px) {
-      .wrap { width: min(100% - 22px, 1080px); padding-top: 24px; }
+      .wrap { width: min(100% - 22px, 1000px); padding-top: 24px; }
       .grid { grid-template-columns: 1fr; }
-      iframe, .log-preview, .placeholder { height: 68vh; min-height: 420px; }
+      iframe, .placeholder { height: 68vh; min-height: 420px; }
       .card-inner { padding: 18px; }
     }
   </style>
@@ -222,21 +215,22 @@
   <main class="wrap">
     <header>
       <div class="eyebrow">CCFOLIA LOG LOADER</div>
-      <h1>코코포리아 룸 ID로<br />채팅 로그를 열기</h1>
+      <h1>코코포리아 로그<br />불러오기</h1>
       <p class="desc">
-        룸 ID를 입력하면 채팅 표시용 주소를 열 수 있습니다. 코코포리아 정책상 외부 사이트에서 로그 HTML을 직접 추출하지 못할 수 있으므로,
-        공식 로그 출력으로 받은 HTML 파일을 이 페이지에 업로드해서 미리보는 기능도 같이 넣었습니다.
+        코코포리아는 외부 사이트에서 룸 로그를 자동으로 긁어오는 것이 막힐 수 있습니다.
+        그래서 이 페이지는 <b>룸 바로가기 생성</b>과 <b>다운로드한 HTML 로그 미리보기</b>에 맞춰 만들었습니다.
       </p>
     </header>
 
     <section class="grid">
       <aside class="card">
         <div class="card-inner">
-          <label for="roomId">룸 ID</label>
-          <input id="roomId" type="text" placeholder="예: abcdef123456" autocomplete="off" />
+          <label for="roomId">룸 ID 또는 룸 주소</label>
+          <input id="roomId" type="text" placeholder="예: abcdef123456 또는 https://ccfolia.com/rooms/..." autocomplete="off" />
           <div class="row">
-            <button class="primary" id="loadRoom" type="button">채팅창 불러오기</button>
-            <a class="btn" id="openRoom" href="#" target="_blank" rel="noopener">새 탭에서 열기</a>
+            <button class="primary" id="makeLink" type="button">주소 만들기</button>
+            <a class="btn" id="openRoom" href="#" target="_blank" rel="noopener">룸 새 탭</a>
+            <a class="btn" id="openChat" href="#" target="_blank" rel="noopener">채팅 새 탭</a>
           </div>
 
           <p class="hint">
@@ -245,7 +239,7 @@
           </p>
 
           <div class="warning">
-            iframe이 안 보이면 코코포리아가 외부 임베드를 막은 것입니다. 그때는 “새 탭에서 열기”를 사용해주세요.
+            룸 ID만으로 로그 HTML을 자동 다운로드하는 기능은 코코포리아 로그인/CORS/권한 문제 때문에 외부 정적 사이트에서는 거의 막힙니다.
           </div>
         </div>
 
@@ -253,17 +247,148 @@
           <label for="logFile">다운로드한 로그 HTML 불러오기</label>
           <input id="logFile" type="file" accept=".html,.htm,text/html" />
           <p class="hint">
-            코코포리아 룸 안에서 채팅 메뉴 → 로그 출력으로 받은 HTML 파일을 선택하면 아래에 표시됩니다.
+            코코포리아 룸 안에서 채팅 메뉴 → 로그 출력/저장으로 받은 HTML 파일을 선택하면 오른쪽에 표시됩니다.
           </p>
         </div>
       </aside>
 
       <section class="card">
         <div class="tabs">
-          <button class="tab active" id="tabRoom" type="button">룸 채팅창</button>
+          <button class="tab active" id="tabInfo" type="button">안내</button>
           <button class="tab" id="tabFile" type="button">HTML 로그 미리보기</button>
         </div>
 
-        <div id="roomPanel">
+        <div id="infoPanel">
           <div class="viewer-head">
-            <span id="roomStatus">아직 불러온
+            <span id="status">아직 주소를 만들지 않았습니다.</span>
+            <span>ccfolia</span>
+          </div>
+          <div class="placeholder">
+            <div>
+              <p>
+                <b>이 사이트 안에 코코포리아 룸을 직접 띄우는 기능은 뺐습니다.</b><br />
+                대부분의 경우 외부 iframe이 차단되어 빈 화면만 뜨기 때문입니다.
+              </p>
+              <p id="madeUrls" class="hint"></p>
+            </div>
+          </div>
+        </div>
+
+        <div id="filePanel" class="hidden">
+          <div class="viewer-head">
+            <span id="fileStatus">아직 선택한 로그 파일이 없습니다.</span>
+            <span>local html</span>
+          </div>
+          <div id="filePlaceholder" class="placeholder">
+            다운로드한 코코포리아 로그 HTML 파일을 선택하면<br />이곳에 미리보기로 표시됩니다.
+          </div>
+          <iframe id="fileFrame" class="hidden" title="로그 HTML 미리보기"></iframe>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const roomInput = document.getElementById('roomId');
+    const makeLink = document.getElementById('makeLink');
+    const openRoom = document.getElementById('openRoom');
+    const openChat = document.getElementById('openChat');
+    const statusText = document.getElementById('status');
+    const madeUrls = document.getElementById('madeUrls');
+
+    const logFile = document.getElementById('logFile');
+    const fileFrame = document.getElementById('fileFrame');
+    const fileStatus = document.getElementById('fileStatus');
+    const filePlaceholder = document.getElementById('filePlaceholder');
+
+    const tabInfo = document.getElementById('tabInfo');
+    const tabFile = document.getElementById('tabFile');
+    const infoPanel = document.getElementById('infoPanel');
+    const filePanel = document.getElementById('filePanel');
+
+    function cleanRoomId(value) {
+      const text = value.trim();
+      const match = text.match(/ccfolia\.com\/rooms\/([^/?#]+)/i);
+      return match ? decodeURIComponent(match[1]) : text.replace(/^\/+|\/+$/g, '');
+    }
+
+    function urls() {
+      const roomId = cleanRoomId(roomInput.value);
+      if (!roomId) return null;
+      const encoded = encodeURIComponent(roomId);
+      return {
+        id: roomId,
+        room: `https://ccfolia.com/rooms/${encoded}`,
+        chat: `https://ccfolia.com/rooms/${encoded}/chat`
+      };
+    }
+
+    function updateLinks() {
+      const data = urls();
+      if (!data) {
+        openRoom.href = '#';
+        openChat.href = '#';
+        return false;
+      }
+      openRoom.href = data.room;
+      openChat.href = data.chat;
+      return data;
+    }
+
+    function showTab(which) {
+      const isFile = which === 'file';
+      tabInfo.classList.toggle('active', !isFile);
+      tabFile.classList.toggle('active', isFile);
+      infoPanel.classList.toggle('hidden', isFile);
+      filePanel.classList.toggle('hidden', !isFile);
+    }
+
+    roomInput.addEventListener('input', updateLinks);
+
+    makeLink.addEventListener('click', () => {
+      const data = updateLinks();
+      showTab('info');
+      if (!data) {
+        statusText.textContent = '룸 ID나 룸 주소를 입력해주세요.';
+        madeUrls.innerHTML = '';
+        return;
+      }
+      statusText.textContent = `주소 생성 완료: ${data.id}`;
+      madeUrls.innerHTML = `
+        룸 주소: <code>${data.room}</code><br />
+        채팅 주소: <code>${data.chat}</code>
+      `;
+    });
+
+    function blockEmptyLink(event) {
+      const data = updateLinks();
+      if (!data) {
+        event.preventDefault();
+        showTab('info');
+        statusText.textContent = '룸 ID나 룸 주소를 먼저 입력해주세요.';
+      }
+    }
+
+    openRoom.addEventListener('click', blockEmptyLink);
+    openChat.addEventListener('click', blockEmptyLink);
+
+    logFile.addEventListener('change', async () => {
+      const file = logFile.files && logFile.files[0];
+      if (!file) return;
+
+      const html = await file.text();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+
+      showTab('file');
+      fileFrame.src = url;
+      fileFrame.classList.remove('hidden');
+      filePlaceholder.classList.add('hidden');
+      fileStatus.textContent = `미리보기: ${file.name}`;
+    });
+
+    tabInfo.addEventListener('click', () => showTab('info'));
+    tabFile.addEventListener('click', () => showTab('file'));
+  </script>
+</body>
+</html>
