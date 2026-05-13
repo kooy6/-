@@ -6,245 +6,816 @@
   <title>CCFOLIA LOG CUSTOM</title>
   <style>
     :root {
-      --bg:#efebe3;
-      --paper:#fffdf8;
-      --ink:#2a2420;
-      --muted:#82776f;
-      --line:#d8cec2;
-      --accent:#99806a;
-      --accent2:#6f5f51;
-      --soft:#f7f1e9;
-      --blue:#edf3f7;
-      --gray:#eeeeee;
-      --secret:#eaf0f7;
-      --radius:18px;
+      --bg: #efe8de;
+      --paper: #fffdf8;
+      --ink: #27211d;
+      --muted: #7f746b;
+      --line: #d9cfc4;
+      --accent: #826b59;
+      --accent-dark: #5d4d41;
+      --soft: #f7f1e9;
+      --secret: #eaf0f7;
+      --radius: 18px;
     }
-    *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(180deg,#f7f2eb,#e9e0d5);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;}
-    .app{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:32px 0 64px;}
-    header{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:18px;}
-    h1{margin:0;font-size:clamp(28px,4vw,46px);letter-spacing:.02em}.sub{color:var(--muted);line-height:1.7;font-size:14px;margin:8px 0 0}.version{font-weight:800;color:var(--accent2);white-space:nowrap}.layout{display:grid;grid-template-columns:360px 1fr;gap:18px}.panel{background:rgba(255,253,248,.86);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 16px 40px rgba(65,45,25,.08);overflow:hidden}.section{padding:18px}.section+.section{border-top:1px solid var(--line)}h2{font-size:15px;margin:0 0 12px;color:var(--accent2)}label{font-size:12px;font-weight:800;color:var(--muted);display:block;margin:12px 0 7px}input[type=text],textarea,select,input[type=file],input[type=color],input[type=number]{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;color:var(--ink);font:inherit}textarea{min-height:90px;resize:vertical}input[type=color]{height:42px;padding:4px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.btn{border:1px solid var(--accent);background:var(--accent);color:white;border-radius:999px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}.btn.ghost{background:#fff;color:var(--accent2)}.btn.gray{background:#7e7a76;border-color:#7e7a76}.btn:disabled{opacity:.45;cursor:not-allowed}.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.chip{border:1px solid var(--line);border-radius:999px;padding:9px 10px;background:#fff;display:flex;gap:7px;align-items:center;font-size:13px;font-weight:700}.hint{font-size:12px;line-height:1.65;color:var(--muted);margin:10px 0 0}.notice{font-size:12px;line-height:1.65;background:#fff7e6;border:1px solid #e5d2a9;color:#725b2f;border-radius:12px;padding:10px 12px;margin-top:10px}.tabs{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--line);background:var(--soft);overflow:auto}.tab{border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 12px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap}.tab.active{background:var(--accent2);color:#fff;border-color:var(--accent2)}.viewer{min-height:680px;background:#fffdf8}.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}.preview{padding:22px;background:#f4f1ec;min-height:620px}.empty{min-height:600px;display:grid;place-items:center;text-align:center;color:var(--muted);line-height:1.8}.log-title{max-width:860px;margin:0 auto 16px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;text-align:center}.log-title h3{margin:0;font-size:24px}.msg{max-width:860px;margin:0 auto 10px;display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:start}.avatar{width:64px;height:64px;border-radius:50%;background:#ddd;object-fit:cover;border:1px solid var(--line)}.bubble{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 8px 20px rgba(0,0,0,.035)}.name{display:inline-flex;align-items:center;gap:8px;font-weight:900;margin-bottom:6px}.time{color:#999;font-size:11px;font-weight:600}.text{white-space:pre-wrap;line-height:1.72;font-size:14px}.msg.info .bubble{background:#eef2ee}.msg.other .bubble{background:#eeeeee;color:#555}.msg.secret .bubble,.msg.extra .bubble{background:var(--secret)}.msg.system{display:block;text-align:center}.msg.system .bubble{display:inline-block;background:transparent;border:0;box-shadow:none;color:#777}.dice-success{color:#226b3c;font-weight:900}.dice-fail{color:#9a322b;font-weight:900}.editor{width:100%;border:0;background:transparent;color:inherit;font:inherit;line-height:1.72;resize:vertical;min-height:42px;padding:0;outline:1px dashed transparent}.editor:focus{outline-color:#b69e85;background:#fff}.hidden{display:none!important}.progress{font-size:12px;color:var(--muted);line-height:1.65;max-height:120px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}.splitline{height:1px;background:var(--line);margin:12px 0}.image-list{display:flex;gap:8px;flex-wrap:wrap}.top-image,.bottom-image{display:block;max-width:860px;width:100%;margin:0 auto 14px;border-radius:14px}.bottom-image{margin:14px auto 0}@media(max-width:900px){.layout{grid-template-columns:1fr}.app{width:min(100% - 18px,1180px);padding-top:18px}header{display:block}.version{margin-top:8px}.msg{grid-template-columns:54px 1fr}.avatar{width:48px;height:48px}.preview{padding:14px}.viewer{min-height:500px}.empty{min-height:420px}}
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f8f2ea, var(--bg));
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-end;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 46px);
+      letter-spacing: .02em;
+    }
+
+    .sub {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .version {
+      font-weight: 800;
+      color: var(--accent-dark);
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 253, 248, .9);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 16px 40px rgba(65, 45, 25, .08);
+      overflow: hidden;
+    }
+
+    .section { padding: 18px; }
+    .section + .section { border-top: 1px solid var(--line); }
+
+    h2 {
+      font-size: 15px;
+      margin: 0 0 12px;
+      color: var(--accent-dark);
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      display: block;
+      margin: 12px 0 7px;
+    }
+
+    input[type="text"], textarea, select, input[type="file"], input[type="color"], input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    textarea { min-height: 90px; resize: vertical; }
+    input[type="color"] { height: 42px; padding: 4px; }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .row > * { flex: 1; }
+
+    button, .btn {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button.ghost, .btn.ghost { background: #fff; color: var(--accent-dark); }
+    button.gray { background: #7e7a76; border-color: #7e7a76; }
+
+    .hint {
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--muted);
+      margin: 10px 0 0;
+    }
+
+    .notice {
+      font-size: 12px;
+      line-height: 1.65;
+      background: #fff7e6;
+      border: 1px solid #e5d2a9;
+      color: #725b2f;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-top: 10px;
+    }
+
+    .progress {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.65;
+      max-height: 150px;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    .hidden { display: none !important; }
+
+    .checkgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 10px;
+      background: #fff;
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--soft);
+      overflow: auto;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 8px 12px;
+      font-weight: 800;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: var(--accent-dark);
+      color: #fff;
+      border-color: var(--accent-dark);
+    }
+
+    .viewer { min-height: 680px; }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .preview {
+      padding: 22px;
+      background: #f4f1ec;
+      min-height: 620px;
+    }
+
+    .empty {
+      min-height: 600px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .log-title {
+      max-width: 860px;
+      margin: 0 auto 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .log-title h3 { margin: 0; font-size: 24px; }
+
+    .msg {
+      max-width: 860px;
+      margin: 0 auto 10px;
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #ddd;
+      object-fit: cover;
+      border: 1px solid var(--line);
+    }
+
+    .bubble {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.035);
+    }
+
+    .name {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .time { color: #999; font-size: 11px; font-weight: 600; }
+
+    .text {
+      white-space: pre-wrap;
+      line-height: 1.72;
+      font-size: 14px;
+    }
+
+    .msg.info .bubble { background: #eef2ee; }
+    .msg.other .bubble { background: #eeeeee; color: #555; }
+    .msg.secret .bubble, .msg.extra .bubble { background: var(--secret); }
+
+    .msg.system {
+      display: block;
+      text-align: center;
+    }
+
+    .msg.system .bubble {
+      display: inline-block;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      color: #777;
+    }
+
+    .dice-success { color: #226b3c; font-weight: 900; }
+    .dice-fail { color: #9a322b; font-weight: 900; }
+
+    .editor {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      line-height: 1.72;
+      resize: vertical;
+      min-height: 42px;
+      padding: 0;
+      outline: 1px dashed transparent;
+    }
+
+    .editor:focus { outline-color: #b69e85; background: #fff; }
+
+    .top-image, .bottom-image {
+      display: block;
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto 14px;
+      border-radius: 14px;
+    }
+
+    .bottom-image { margin: 14px auto 0; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .app { width: min(100% - 18px, 1180px); padding-top: 18px; }
+      header { display: block; }
+      .version { margin-top: 8px; }
+      .msg { grid-template-columns: 54px 1fr; }
+      .avatar { width: 48px; height: 48px; }
+      .preview { padding: 14px; }
+      .viewer { min-height: 500px; }
+      .empty { min-height: 420px; }
+    }
   </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <div>
-      <h1>CCFOLIA LOG CUSTOM</h1>
-      <p class="sub">룸 주소/ID 또는 코코포리아 로그 HTML을 넣어서 백업용 로그를 만들고, 탭 선택·텍스트 수정·스타일 적용 후 다운로드합니다.</p>
+  <div class="app">
+    <header>
+      <div>
+        <h1>CCFOLIA LOG CUSTOM</h1>
+        <p class="sub">룸 주소/ID 또는 코코포리아 로그 HTML을 넣어서 백업용 로그를 만들고, 탭 선택·텍스트 수정·스타일 적용 후 다운로드합니다.</p>
+      </div>
+      <div class="version">private clone style · clean</div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel">
+        <div class="section">
+          <h2>1. 불러오기</h2>
+          <label>룸 주소 / 룸 ID</label>
+          <input id="roomInput" type="text" placeholder="https://ccfolia.com/rooms/A1234 또는 A1234" />
+          <div class="row" style="margin-top:10px">
+            <button id="loadRoomBtn">룸 데이터 불러오기</button>
+            <button class="ghost" id="openRoomBtn">룸 열기</button>
+          </div>
+          <p class="hint">Firestore 공개 접근이 가능한 룸 메시지만 불러올 수 있습니다. 실패하면 HTML 로그 파일을 넣어주세요.</p>
+          <div id="progress" class="progress hidden"></div>
+        </div>
+
+        <div class="section">
+          <h2>2. 파일로 불러오기</h2>
+          <label>코코포리아 로그 HTML</label>
+          <input id="htmlFile" type="file" accept=".html,.htm,text/html" />
+          <label>JSON 붙여넣기</label>
+          <textarea id="jsonText" placeholder="룸 데이터 JSON 또는 메시지 배열을 붙여넣기"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="ghost" id="parseJsonBtn">JSON 적용</button>
+            <button class="ghost" id="sampleBtn">샘플 보기</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>3. 출력 탭</h2>
+          <div class="checkgrid">
+            <label class="chip"><input type="checkbox" class="tabCheck" value="main" checked> 메인</label>
+            <label class="chip"><input type="checkbox" class="tabCheck" value="info" checked> 정보</label>
+            <label class="chip"><input type="checkbox" class="tabCheck" value="other" checked> 잡담</label>
+            <label class="chip"><input type="checkbox" class="tabCheck" value="secret" checked> 비밀</label>
+            <label class="chip"><input type="checkbox" class="tabCheck" value="extra" checked> 기타</label>
+            <label class="chip"><input type="checkbox" id="diceStyle" checked> 주사위</label>
+          </div>
+          <label>기타/비밀 탭 배경색</label>
+          <input type="color" id="secretColor" value="#eaf0f7" />
+        </div>
+
+        <div class="section">
+          <h2>4. 꾸미기</h2>
+          <label>로그 제목</label>
+          <input id="titleInput" type="text" placeholder="비워두면 룸 이름/파일명 사용" />
+          <label>제목 이미지 URL, 쉼표로 여러 개</label>
+          <textarea id="topImages" placeholder="https://...jpg, https://...png"></textarea>
+          <label>엔딩 이미지 URL, 쉼표로 여러 개</label>
+          <textarea id="bottomImages" placeholder="https://...jpg, https://...png"></textarea>
+          <label>DESC 스타일 적용 캐릭터명, 쉼표 구분</label>
+          <input id="descNames" type="text" placeholder="예: NPC, GM" />
+          <label>글자 크기</label>
+          <input id="fontSize" type="number" min="10" max="24" value="14" />
+        </div>
+
+        <div class="section">
+          <h2>5. 저장</h2>
+          <div class="row">
+            <button id="renderBtn">미리보기 갱신</button>
+            <button class="gray" id="downloadBtn">HTML 다운로드</button>
+          </div>
+          <div class="notice">주의: 원본 사이트를 그대로 복사한 것이 아니라 비슷한 흐름으로 새로 만든 코드입니다.</div>
+        </div>
+      </aside>
+
+      <main class="panel viewer">
+        <div class="tabs" id="previewTabs">
+          <button class="tab active" data-tab="all">전체</button>
+          <button class="tab" data-tab="main">메인</button>
+          <button class="tab" data-tab="info">정보</button>
+          <button class="tab" data-tab="other">잡담</button>
+          <button class="tab" data-tab="secret">비밀</button>
+          <button class="tab" data-tab="extra">기타</button>
+        </div>
+        <div class="toolbar">
+          <span id="status">아직 불러온 로그가 없습니다.</span>
+          <span id="count">0 messages</span>
+        </div>
+        <div class="preview" id="preview">
+          <div class="empty">룸 ID/주소를 입력하거나<br>HTML/JSON 로그를 불러오세요.</div>
+        </div>
+      </main>
     </div>
-    <div class="version">private clone style · v0.1</div>
-  </header>
-
-  <div class="layout">
-    <aside class="panel">
-      <div class="section">
-        <h2>1. 불러오기</h2>
-        <label>언어</label>
-        <select id="lang"><option value="ko">한국어</option><option value="ja">日本語</option></select>
-        <label>룸 주소 / 룸 ID</label>
-        <input id="roomInput" type="text" placeholder="https://ccfolia.com/rooms/A1234 또는 A1234" />
-        <div class="row" style="margin-top:10px">
-          <button class="btn" id="loadRoomBtn">룸 데이터 불러오기</button>
-          <button class="btn ghost" id="openRoomBtn">룸 열기</button>
-        </div>
-        <p class="hint">코코포리아 쪽 공개 접근이 허용된 룸만 불러올 수 있습니다. 실패하면 아래 JSON/HTML 업로드 방식을 사용하세요.</p>
-        <div id="progress" class="progress hidden"></div>
-      </div>
-
-      <div class="section">
-        <h2>2. 파일로 불러오기</h2>
-        <label>코코포리아 로그 HTML</label>
-        <input id="htmlFile" type="file" accept=".html,.htm,text/html" />
-        <label>JSON 붙여넣기 / 업로드</label>
-        <textarea id="jsonText" placeholder="룸 데이터 JSON 또는 메시지 배열을 붙여넣기"></textarea>
-        <div class="row" style="margin-top:10px">
-          <button class="btn ghost" id="parseJsonBtn">JSON 적용</button>
-          <button class="btn ghost" id="sampleBtn">샘플 보기</button>
-        </div>
-      </div>
-
-      <div class="section">
-        <h2>3. 출력 탭</h2>
-        <div class="checkgrid">
-          <label class="chip"><input type="checkbox" class="tabCheck" value="main" checked> 메인</label>
-          <label class="chip"><input type="checkbox" class="tabCheck" value="info" checked> 정보</label>
-          <label class="chip"><input type="checkbox" class="tabCheck" value="other" checked> 잡담</label>
-          <label class="chip"><input type="checkbox" class="tabCheck" value="secret" checked> 비밀</label>
-          <label class="chip"><input type="checkbox" class="tabCheck" value="extra" checked> 기타</label>
-          <label class="chip"><input type="checkbox" id="diceStyle" checked> 주사위</label>
-        </div>
-        <label>기타/비밀 탭 배경색</label>
-        <input type="color" id="secretColor" value="#eaf0f7" />
-      </div>
-
-      <div class="section">
-        <h2>4. 꾸미기</h2>
-        <label>로그 제목</label>
-        <input id="titleInput" type="text" placeholder="비워두면 룸 이름/파일명 사용" />
-        <label>제목 이미지 URL, 쉼표로 여러 개</label>
-        <textarea id="topImages" placeholder="https://...jpg, https://...png"></textarea>
-        <label>엔딩 이미지 URL, 쉼표로 여러 개</label>
-        <textarea id="bottomImages" placeholder="https://...jpg, https://...png"></textarea>
-        <label>DESC 스타일 적용 캐릭터명, 쉼표 구분</label>
-        <input id="descNames" type="text" placeholder="예: NPC, GM" />
-        <label>글자 크기</label>
-        <input id="fontSize" type="number" min="10" max="24" value="14" />
-      </div>
-
-      <div class="section">
-        <h2>5. 저장</h2>
-        <div class="row">
-          <button class="btn" id="renderBtn">미리보기 갱신</button>
-          <button class="btn gray" id="downloadBtn">HTML 다운로드</button>
-        </div>
-        <div class="notice">주의: 이 코드는 공개 사이트를 그대로 복사한 것이 아니라 같은 사용 흐름으로 새로 만든 버전입니다. 코코포리아 내부 API가 바뀌면 룸 ID 직접 불러오기는 실패할 수 있습니다.</div>
-      </div>
-    </aside>
-
-    <main class="panel viewer">
-      <div class="tabs" id="previewTabs">
-        <button class="tab active" data-tab="all">전체</button>
-        <button class="tab" data-tab="main">메인</button>
-        <button class="tab" data-tab="info">정보</button>
-        <button class="tab" data-tab="other">잡담</button>
-        <button class="tab" data-tab="secret">비밀</button>
-        <button class="tab" data-tab="extra">기타</button>
-      </div>
-      <div class="toolbar"><span id="status">아직 불러온 로그가 없습니다.</span><span id="count">0 messages</span></div>
-      <div class="preview" id="preview"><div class="empty">룸 ID/주소를 입력하거나<br>HTML/JSON 로그를 불러오세요.</div></div>
-    </main>
   </div>
-</div>
 
-<script>
-let state={title:'',messages:[],characters:{},activeTab:'all',sourceName:'log'};
-const $=s=>document.querySelector(s);const $$=s=>Array.from(document.querySelectorAll(s));
-const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const log=t=>{const p=$('#progress');p.classList.remove('hidden');p.innerHTML+=`<div>${escapeHtml(t)}</div>`;p.scrollTop=p.scrollHeight};
-function roomIdFrom(v){v=v.trim();const m=v.match(/ccfolia\.com\/rooms(?:-v2)?\/([^/?#]+)/i);return m?decodeURIComponent(m[1]):v.replace(/^\/+|\/+$/g,'')}
-function selectedTabs(){return $$('.tabCheck:checked').map(x=>x.value)}
-function normalizeTab(v){v=String(v||'main').toLowerCase();if(['main','メイン','메인'].includes(v))return'main';if(['info','정보','情報'].includes(v))return'info';if(['other','잡담','雑談'].includes(v))return'other';if(['secret','비밀','秘匿'].includes(v))return'secret';return'extra'}
-function fsValue(v){
-  if(!v || typeof v !== 'object') return v;
-  if('stringValue' in v) return v.stringValue;
-  if('integerValue' in v) return Number(v.integerValue);
-  if('doubleValue' in v) return Number(v.doubleValue);
-  if('booleanValue' in v) return Boolean(v.booleanValue);
-  if('timestampValue' in v) return v.timestampValue;
-  if('nullValue' in v) return null;
-  if('arrayValue' in v) return (v.arrayValue.values||[]).map(fsValue);
-  if('mapValue' in v) return fsFields(v.mapValue.fields||{});
-  return v;
-}
-function fsFields(fields){
-  const obj={};
-  Object.entries(fields||{}).forEach(([k,v])=>obj[k]=fsValue(v));
-  return obj;
-}
-function firestoreDocsToMessages(raw){
-  const docs=Array.isArray(raw) ? raw : (raw && raw.documents) ? raw.documents : [];
-  return docs.map((doc,i)=>{
-    const f=doc.fields ? fsFields(doc.fields) : doc;
-    const id=(doc.name||f.id||String(i)).split('/').pop();
-    return {
-      id,
-      name:f.name||f.characterName||f.speakerName||f.senderName||'',
-      text:f.text||f.message||f.content||f.body||f.value||'',
-      tab:f.tab||f.channel||f.channelName||f.roomChatTab||f.type||'main',
-      time:f.createdAt||f.updatedAt||f.timestamp||doc.createTime||doc.updateTime||'',
-      icon:f.iconUrl||f.imageUrl||f.portraitUrl||f.avatar||f.image||'',
-      color:f.color||f.nameColor||f.textColor||'#99806a',
-      raw:f
+  <script>
+    let state = {
+      title: '',
+      messages: [],
+      activeTab: 'all',
+      sourceName: 'log'
     };
-  });
-}
-function normalizeMessages(raw){
-  let arr=[];let chars={};let title='';
-  if(raw && raw.documents) arr=firestoreDocsToMessages(raw);
-  else if(Array.isArray(raw) && raw[0] && raw[0].fields) arr=firestoreDocsToMessages(raw);
-  else if(Array.isArray(raw)) arr=raw;
-  else if(raw){
-    title=raw.name||raw.title||raw.roomName||raw.room?.name||'';
-    chars=raw.characters||raw.character||raw.room?.characters||raw.entities?.characters||{};
-    arr=raw.messages||raw.chatMessages||raw.logs||raw.chatLogs||raw.room?.messages||raw.room?.chatMessages||raw.entities?.messages||[];
-    if(!Array.isArray(arr)&&typeof arr==='object')arr=Object.values(arr);
-  }
-  const charMap={};
-  if(Array.isArray(chars)) chars.forEach(c=>{if(c&&(c.id||c.name))charMap[c.id||c.name]=c});
-  else if(chars&&typeof chars==='object') Object.entries(chars).forEach(([k,c])=>{charMap[k]=c||{}; if(c&&c.name)charMap[c.name]=c});
-  return {title, characters:charMap, messages:arr.map((m,i)=>{
-    const ch=charMap[m.characterId]||charMap[m.character?.id]||charMap[m.name]||m.character||{};
-    const name=m.name||m.speakerName||m.characterName||ch.name||'';
-    const icon=m.iconUrl||m.imageUrl||m.portraitUrl||m.avatar||ch.iconUrl||ch.imageUrl||ch.portraitUrl||ch.avatar||'';
-    const color=m.color||m.nameColor||m.textColor||ch.color||ch.nameColor||'#99806a';
-    return {id:m.id||i,name,text:m.text||m.message||m.content||m.body||'',tab:normalizeTab(m.tab||m.channel||m.channelName||m.type||m.roomChatTab),time:m.time||m.createdAt||m.updatedAt||m.timestamp||'',icon,color,raw:m};
-  }).filter(m=>m.text||m.name)};
-}
-async function fetchJson(url){
-  const r = await fetch(url);
-  if (!r.ok) {
-    throw new Error(String(r.status) + ' ' + String(r.statusText));
-  }
-  return r.json();
-}([github.com](https://github.com/sukenell/cclog_custom))
-function applyData(data,name='log'){
-  const n=normalizeMessages(data);state.title=$('#titleInput').value.trim()||n.title||name;state.messages=n.messages;state.characters=n.characters;state.sourceName=name;render();
-}
-function parseHtmlLog(html,name='log.html'){
-  const doc=new DOMParser().parseFromString(html,'text/html');
-  const rows=[...doc.querySelectorAll('.message,.message-row,.msg_container,.chatlog,.chat-line,li,div')];
-  const msgs=[];
-  rows.forEach((el,i)=>{
-    const text=(el.querySelector('.text,.message-text,.msg-text,.chat-text,.content')||el).innerText?.trim();
-    if(!text||text.length<1)return;
-    const nameEl=el.querySelector('.name,.msg-name,.message-name,.speaker,.character-name');
-    const img=el.querySelector('img');
-    const timeEl=el.querySelector('.time,.timestamp,.msg-timestamp');
-    let tab='main'; const all=(el.className+' '+el.textContent).toLowerCase();
-    if(all.includes('info')||all.includes('정보'))tab='info'; else if(all.includes('잡담')||all.includes('other'))tab='other'; else if(all.includes('secret')||all.includes('비밀'))tab='secret';
-    msgs.push({id:i,name:nameEl?nameEl.innerText.trim():'',text,tab,time:timeEl?timeEl.innerText.trim():'',icon:img?img.src:'',color:'#99806a'});
-  });
-  state.title=$('#titleInput').value.trim()||name.replace(/\.html?$/,'');state.messages=msgs;state.sourceName=name;render();
-}
-function enhanceDice(text){if(!$('#diceStyle').checked)return escapeHtml(text);let h=escapeHtml(text);h=h.replace(/(대성공|대단한 성공|극단적 성공|어려운 성공|보통 성공|성공)/g,'<span class="dice-success">$1</span>');h=h.replace(/(대실패|실패|펌블)/g,'<span class="dice-fail">$1</span>');return h}
-function urlsFrom(v){return v.split(',').map(s=>s.trim()).filter(Boolean)}
-function render(){
-  document.documentElement.style.setProperty('--secret',$('#secretColor').value);
-  const out=$('#preview');const allowed=selectedTabs();const view=state.activeTab;const descNames=$('#descNames').value.split(',').map(s=>s.trim()).filter(Boolean);const fontSize=Number($('#fontSize').value)||14;
-  let msgs=state.messages.filter(m=>allowed.includes(m.tab));if(view!=='all')msgs=msgs.filter(m=>m.tab===view);
-  $('#status').textContent=state.title||'custom log';$('#count').textContent=`${msgs.length} messages`;
-  if(!msgs.length){out.innerHTML='<div class="empty">출력할 메시지가 없습니다.<br>탭 선택을 확인해주세요.</div>';return}
-  const title=escapeHtml($('#titleInput').value.trim()||state.title||'CCFOLIA LOG');
-  const top=urlsFrom($('#topImages').value).map(u=>`<img class="top-image" src="${escapeHtml(u)}">`).join('');
-  const bottom=urlsFrom($('#bottomImages').value).map(u=>`<img class="bottom-image" src="${escapeHtml(u)}">`).join('');
-  out.innerHTML=`${top}<div class="log-title"><h3>${title}</h3></div>`+msgs.map((m,idx)=>{
-    const system=!m.name&&!m.icon;
-    const desc=descNames.includes(m.name);
-    const cls=`msg ${m.tab} ${system?'system':''} ${desc?'desc':''}`;
-    const avatar=system?'':`<img class="avatar" src="${escapeHtml(m.icon||'')}" onerror="this.style.visibility='hidden'">`;
-    const name=system?'':`<div class="name" style="color:${escapeHtml(m.color)}">${escapeHtml(m.name||'Unknown')} <span class="time">${escapeHtml(formatTime(m.time))}</span></div>`;
-    const text=`<textarea class="editor" data-index="${idx}" style="font-size:${fontSize}px">${escapeHtml(m.text)}</textarea>`;
-    return `<article class="${cls}" data-tab="${m.tab}">${avatar}<div class="bubble">${name}<div class="text rendered" style="font-size:${fontSize}px">${enhanceDice(m.text)}</div>${text}</div></article>`;
-  }).join('')+bottom;
-  $$('.editor').forEach(ed=>{ed.classList.add('hidden');ed.addEventListener('change',()=>{const visible=msgs[Number(ed.dataset.index)];const real=state.messages.find(x=>x.id===visible.id);if(real)real.text=ed.value;render();})});
-  out.addEventListener('dblclick',e=>{const bubble=e.target.closest('.bubble');if(!bubble)return;const r=bubble.querySelector('.rendered');const ed=bubble.querySelector('.editor');if(r&&ed){r.classList.toggle('hidden');ed.classList.toggle('hidden');if(!ed.classList.contains('hidden'))ed.focus();}}, {once:true});
-}
-function formatTime(t){if(!t)return'';try{const d=new Date(t);if(!isNaN(d))return d.toLocaleString()}catch(e){}return String(t)}
-function download(){
-  render();const clone=$('#preview').cloneNode(true);clone.querySelectorAll('textarea').forEach(t=>t.remove());clone.querySelectorAll('.hidden').forEach(x=>x.remove());
-  const html=`<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${escapeHtml(state.title||'custom_log')}</title><style>${document.querySelector('style').textContent}</style></head><body><main class="preview">${clone.innerHTML}</main></body></html>`;
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=`custom_${(state.sourceName||'log').replace(/[^\w가-힣.-]+/g,'_')}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
-$('#loadRoomBtn').addEventListener('click',loadRoom);
-$('#openRoomBtn').addEventListener('click',()=>{const id=roomIdFrom($('#roomInput').value);if(id)window.open(`https://ccfolia.com/rooms/${encodeURIComponent(id)}`,'_blank')});
-$('#parseJsonBtn').addEventListener('click',()=>{try{applyData(JSON.parse($('#jsonText').value||'[]'),'pasted_json')}catch(e){alert('JSON 파싱 실패: '+e.message)}});
-$('#sampleBtn').addEventListener('click',()=>applyData({name:'샘플 로그',messages:[{name:'탐사자',text:'CC<=70 관찰력 → 보통 성공',tab:'main',color:'#7b5d45'},{name:'KP',text:'정보 탭 예시입니다.',tab:'info',color:'#57735b'},{name:'',text:'장면 전환',tab:'main'},{name:'잡담',text:'잡담 탭은 회색으로 출력됩니다.',tab:'other'},{name:'비밀',text:'비밀 탭 예시입니다.',tab:'secret'}]},'sample'));
-$('#htmlFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;parseHtmlLog(await f.text(),f.name)});
-$('#renderBtn').addEventListener('click',render);$('#downloadBtn').addEventListener('click',download);
-$$('.tabCheck,#diceStyle,#secretColor,#fontSize').forEach(el=>el.addEventListener('change',render));
-$('#titleInput').addEventListener('input',()=>{state.title=$('#titleInput').value.trim()||state.title;render()});
-$('#previewTabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;$$('#previewTabs .tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.activeTab=b.dataset.tab;render()});
-</script>
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, function (char) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[char];
+      });
+    }
+
+    function log(message) {
+      const progress = $('#progress');
+      progress.classList.remove('hidden');
+      progress.innerHTML += '<div>' + escapeHtml(message) + '</div>';
+      progress.scrollTop = progress.scrollHeight;
+    }
+
+    function roomIdFrom(value) {
+      const text = String(value || '').trim();
+      const match = text.match(/ccfolia\.com\/rooms(?:-v2)?\/([^/?#]+)/i);
+      return match ? decodeURIComponent(match[1]) : text.replace(/^\/+|\/+$/g, '');
+    }
+
+    function fsValue(value) {
+      if (!value || typeof value !== 'object') return value;
+      if ('stringValue' in value) return value.stringValue;
+      if ('integerValue' in value) return Number(value.integerValue);
+      if ('doubleValue' in value) return Number(value.doubleValue);
+      if ('booleanValue' in value) return Boolean(value.booleanValue);
+      if ('timestampValue' in value) return value.timestampValue;
+      if ('nullValue' in value) return null;
+      if ('arrayValue' in value) return (value.arrayValue.values || []).map(fsValue);
+      if ('mapValue' in value) return fsFields(value.mapValue.fields || {});
+      return value;
+    }
+
+    function fsFields(fields) {
+      const object = {};
+      Object.entries(fields || {}).forEach(function ([key, value]) {
+        object[key] = fsValue(value);
+      });
+      return object;
+    }
+
+    function firestoreDocsToMessages(raw) {
+      const docs = Array.isArray(raw) ? raw : ((raw && raw.documents) ? raw.documents : []);
+      return docs.map(function (doc, index) {
+        const f = doc.fields ? fsFields(doc.fields) : doc;
+        const id = String(doc.name || f.id || index).split('/').pop();
+        return {
+          id: id,
+          name: f.name || f.characterName || f.speakerName || f.senderName || '',
+          text: f.text || f.message || f.content || f.body || f.value || '',
+          tab: normalizeTab(f.tab || f.channel || f.channelName || f.roomChatTab || f.type || 'main'),
+          time: f.createdAt || f.updatedAt || f.timestamp || doc.createTime || doc.updateTime || '',
+          icon: f.iconUrl || f.imageUrl || f.portraitUrl || f.avatar || f.image || '',
+          color: f.color || f.nameColor || f.textColor || '#99806a',
+          raw: f
+        };
+      });
+    }
+
+    function normalizeTab(value) {
+      const v = String(value || 'main').toLowerCase();
+      if (['main', '메인', 'メイン'].includes(v)) return 'main';
+      if (['info', '정보', '情報'].includes(v)) return 'info';
+      if (['other', '잡담', '雑談'].includes(v)) return 'other';
+      if (['secret', '비밀', '秘匿'].includes(v)) return 'secret';
+      return 'extra';
+    }
+
+    function normalizeMessages(raw) {
+      let arr = [];
+      let title = '';
+
+      if (raw && raw.documents) {
+        arr = firestoreDocsToMessages(raw);
+      } else if (Array.isArray(raw) && raw[0] && raw[0].fields) {
+        arr = firestoreDocsToMessages(raw);
+      } else if (Array.isArray(raw)) {
+        arr = raw;
+      } else if (raw) {
+        title = raw.name || raw.title || raw.roomName || (raw.room && raw.room.name) || '';
+        arr = raw.messages || raw.chatMessages || raw.logs || raw.chatLogs || (raw.room && raw.room.messages) || (raw.room && raw.room.chatMessages) || [];
+        if (!Array.isArray(arr) && typeof arr === 'object') arr = Object.values(arr);
+      }
+
+      return {
+        title: title,
+        messages: arr.map(function (m, index) {
+          return {
+            id: m.id || index,
+            name: m.name || m.speakerName || m.characterName || '',
+            text: m.text || m.message || m.content || m.body || '',
+            tab: normalizeTab(m.tab || m.channel || m.channelName || m.type || m.roomChatTab),
+            time: m.time || m.createdAt || m.updatedAt || m.timestamp || '',
+            icon: m.icon || m.iconUrl || m.imageUrl || m.portraitUrl || m.avatar || '',
+            color: m.color || m.nameColor || m.textColor || '#99806a',
+            raw: m
+          };
+        }).filter(function (m) {
+          return m.text || m.name;
+        })
+      };
+    }
+
+    async function fetchJson(url) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(String(response.status) + ' ' + String(response.statusText));
+      }
+      return response.json();
+    }
+
+    async function loadRoom() {
+      const id = roomIdFrom($('#roomInput').value);
+      $('#progress').innerHTML = '';
+      if (!id) {
+        log('룸 ID를 입력해주세요.');
+        return;
+      }
+
+      const base = 'https://firestore.googleapis.com/v1/projects/ccfolia-160aa/databases/(default)/documents/rooms/' + encodeURIComponent(id) + '/messages/?pageSize=300';
+      let all = [];
+      let pageToken = '';
+
+      try {
+        do {
+          const url = base + (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : '');
+          log('불러오는 중: ' + url);
+          const data = await fetchJson(url);
+
+          if (!data.documents || !data.documents.length) {
+            log('메시지 문서를 찾지 못했습니다. 룸 ID가 틀렸거나 접근 제한 상태일 수 있습니다.');
+            return;
+          }
+
+          all = all.concat(data.documents);
+          pageToken = data.nextPageToken || '';
+        } while (pageToken);
+
+        all.sort(function (a, b) {
+          return new Date(a.createTime || a.updateTime || 0) - new Date(b.createTime || b.updateTime || 0);
+        });
+
+        applyData({ documents: all }, id);
+        log('불러오기 성공: ' + all.length + '개 메시지');
+      } catch (error) {
+        console.error(error);
+        log('불러오기 실패: ' + error.message);
+        log('원본 사이트와 같은 Firestore 방식이지만, 룸이 비공개/삭제/접근 제한이면 실패합니다.');
+      }
+    }
+
+    function applyData(data, name) {
+      const normalized = normalizeMessages(data);
+      state.title = $('#titleInput').value.trim() || normalized.title || name || 'log';
+      state.messages = normalized.messages;
+      state.sourceName = name || 'log';
+      render();
+    }
+
+    function parseHtmlLog(html, name) {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = Array.from(doc.querySelectorAll('.message-row, .msg_container, .message, .chat-line, li'));
+      const messages = [];
+
+      rows.forEach(function (element, index) {
+        const nameElement = element.querySelector('.msg-name, .name, .message-name, .speaker, .character-name');
+        const textElement = element.querySelector('.msg-text, .text, .message-text, .chat-text, .content') || element;
+        const timeElement = element.querySelector('.msg-timestamp, .time, .timestamp');
+        const img = element.querySelector('img');
+        const text = (textElement.innerText || '').trim();
+        if (!text) return;
+
+        let tab = 'main';
+        const allText = (element.className + ' ' + element.textContent).toLowerCase();
+        if (allText.includes('info') || allText.includes('정보')) tab = 'info';
+        else if (allText.includes('other') || allText.includes('잡담')) tab = 'other';
+        else if (allText.includes('secret') || allText.includes('비밀')) tab = 'secret';
+
+        messages.push({
+          id: index,
+          name: nameElement ? nameElement.innerText.trim() : '',
+          text: text,
+          tab: tab,
+          time: timeElement ? timeElement.innerText.trim() : '',
+          icon: img ? img.src : '',
+          color: '#99806a'
+        });
+      });
+
+      state.title = $('#titleInput').value.trim() || String(name || 'log').replace(/\.html?$/i, '');
+      state.messages = messages;
+      state.sourceName = name || 'log';
+      render();
+    }
+
+    function selectedTabs() {
+      return $$('.tabCheck:checked').map(function (input) { return input.value; });
+    }
+
+    function enhanceDice(text) {
+      let html = escapeHtml(text);
+      if (!$('#diceStyle').checked) return html;
+      html = html.replace(/(대성공|대단한 성공|극단적 성공|어려운 성공|보통 성공|성공)/g, '<span class="dice-success">$1</span>');
+      html = html.replace(/(대실패|실패|펌블)/g, '<span class="dice-fail">$1</span>');
+      return html;
+    }
+
+    function urlList(value) {
+      return String(value || '').split(',').map(function (v) { return v.trim(); }).filter(Boolean);
+    }
+
+    function formatTime(value) {
+      if (!value) return '';
+      const date = new Date(value);
+      if (!isNaN(date)) return date.toLocaleString();
+      return String(value);
+    }
+
+    function render() {
+      document.documentElement.style.setProperty('--secret', $('#secretColor').value);
+      const preview = $('#preview');
+      const allowed = selectedTabs();
+      const active = state.activeTab;
+      const fontSize = Number($('#fontSize').value) || 14;
+      const descNames = $('#descNames').value.split(',').map(function (v) { return v.trim(); }).filter(Boolean);
+
+      let messages = state.messages.filter(function (m) { return allowed.includes(m.tab); });
+      if (active !== 'all') messages = messages.filter(function (m) { return m.tab === active; });
+
+      $('#status').textContent = state.title || 'custom log';
+      $('#count').textContent = messages.length + ' messages';
+
+      if (!messages.length) {
+        preview.innerHTML = '<div class="empty">출력할 메시지가 없습니다.<br>탭 선택을 확인해주세요.</div>';
+        return;
+      }
+
+      const title = escapeHtml($('#titleInput').value.trim() || state.title || 'CCFOLIA LOG');
+      const topImages = urlList($('#topImages').value).map(function (url) {
+        return '<img class="top-image" src="' + escapeHtml(url) + '">';
+      }).join('');
+      const bottomImages = urlList($('#bottomImages').value).map(function (url) {
+        return '<img class="bottom-image" src="' + escapeHtml(url) + '">';
+      }).join('');
+
+      let html = topImages + '<div class="log-title"><h3>' + title + '</h3></div>';
+
+      messages.forEach(function (m, index) {
+        const system = !m.name && !m.icon;
+        const desc = descNames.includes(m.name);
+        const cls = 'msg ' + m.tab + (system ? ' system' : '') + (desc ? ' desc' : '');
+        const avatar = system ? '' : '<img class="avatar" src="' + escapeHtml(m.icon || '') + '" onerror="this.style.visibility=\'hidden\'">';
+        const name = system ? '' : '<div class="name" style="color:' + escapeHtml(m.color) + '">' + escapeHtml(m.name || 'Unknown') + ' <span class="time">' + escapeHtml(formatTime(m.time)) + '</span></div>';
+        html += '<article class="' + cls + '" data-real-index="' + state.messages.indexOf(m) + '">' + avatar + '<div class="bubble">' + name + '<div class="text rendered" style="font-size:' + fontSize + 'px">' + enhanceDice(m.text) + '</div><textarea class="editor hidden" style="font-size:' + fontSize + 'px">' + escapeHtml(m.text) + '</textarea></div></article>';
+      });
+
+      html += bottomImages;
+      preview.innerHTML = html;
+
+      $$('#preview .bubble').forEach(function (bubble) {
+        bubble.addEventListener('dblclick', function () {
+          const rendered = bubble.querySelector('.rendered');
+          const editor = bubble.querySelector('.editor');
+          rendered.classList.toggle('hidden');
+          editor.classList.toggle('hidden');
+          if (!editor.classList.contains('hidden')) editor.focus();
+        });
+      });
+
+      $$('#preview .editor').forEach(function (editor) {
+        editor.addEventListener('change', function () {
+          const article = editor.closest('.msg');
+          const realIndex = Number(article.dataset.realIndex);
+          if (state.messages[realIndex]) state.messages[realIndex].text = editor.value;
+          render();
+        });
+      });
+    }
+
+    function downloadHtml() {
+      render();
+      const clone = $('#preview').cloneNode(true);
+      clone.querySelectorAll('textarea').forEach(function (textarea) { textarea.remove(); });
+      clone.querySelectorAll('.hidden').forEach(function (element) { element.remove(); });
+      const html = '<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + escapeHtml(state.title || 'custom_log') + '</title><style>' + document.querySelector('style').textContent + '</style></head><body><main class="preview">' + clone.innerHTML + '</main></body></html>';
+      const blob = new Blob([html], { type: 'text/html' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'custom_' + String(state.sourceName || 'log').replace(/[^\w가-힣.-]+/g, '_') + '.html';
+      link.click();
+      setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      $('#loadRoomBtn').addEventListener('click', loadRoom);
+
+      $('#openRoomBtn').addEventListener('click', function () {
+        const id = roomIdFrom($('#roomInput').value);
+        if (!id) {
+          log('룸 ID를 입력해주세요.');
+          return;
+        }
+        window.open('https://ccfolia.com/rooms/' + encodeURIComponent(id), '_blank');
+      });
+
+      $('#parseJsonBtn').addEventListener('click', function () {
+        try {
+          applyData(JSON.parse($('#jsonText').value || '[]'), 'pasted_json');
+        } catch (error) {
+          alert('JSON 파싱 실패: ' + error.message);
+        }
+      });
+
+      $('#sampleBtn').addEventListener('click', function () {
+        applyData({
+          name: '샘플 로그',
+          messages: [
+            { name: '탐사자', text: 'CC<=70 관찰력 → 보통 성공', tab: 'main', color: '#7b5d45' },
+            { name: 'KP', text: '정보 탭 예시입니다.', tab: 'info', color: '#57735b' },
+            { name: '', text: '장면 전환', tab: 'main' },
+            { name: '잡담', text: '잡담 탭은 회색으로 출력됩니다.', tab: 'other' },
+            { name: '비밀', text: '비밀 탭 예시입니다.', tab: 'secret' }
+          ]
+        }, 'sample');
+      });
+
+      $('#htmlFile').addEventListener('change', async function (event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        parseHtmlLog(await file.text(), file.name);
+      });
+
+      $('#renderBtn').addEventListener('click', render);
+      $('#downloadBtn').addEventListener('click', downloadHtml);
+
+      $$('.tabCheck, #diceStyle, #secretColor, #fontSize').forEach(function (element) {
+        element.addEventListener('change', render);
+      });
+
+      $('#titleInput').addEventListener('input', function () {
+        state.title = $('#titleInput').value.trim() || state.title;
+        render();
+      });
+
+      $('#previewTabs').addEventListener('click', function (event) {
+        const button = event.target.closest('.tab');
+        if (!button) return;
+        $$('#previewTabs .tab').forEach(function (tab) { tab.classList.remove('active'); });
+        button.classList.add('active');
+        state.activeTab = button.dataset.tab;
+        render();
+      });
+    });
+  </script>
 </body>
 </html>
