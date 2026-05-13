@@ -145,7 +145,13 @@ function normalizeMessages(raw){
     return {id:m.id||i,name,text:m.text||m.message||m.content||m.body||'',tab:normalizeTab(m.tab||m.channel||m.type||m.roomChatTab),time:m.time||m.createdAt||m.updatedAt||m.timestamp||'',icon,color,raw:m};
   }).filter(m=>m.text||m.name)};
 }
-async function fetchJson(url){const r=await fetch(url,{mode:'cors',credentials:'omit'});if(!r.ok)throw new Error(`${r.status} ${r.statusText}`);return await r.json()}
+async function fetchJson(url){
+  // 코코포리아 룸은 로그인/초대 권한 쿠키가 필요한 경우가 많아서 credentials: 'include'가 필요합니다.
+  // 그래도 CORS가 막혀 있으면 브라우저 보안상 여기서 직접 읽을 수 없습니다.
+  const r=await fetch(url,{mode:'cors',credentials:'include'});
+  if(!r.ok)throw new Error(`${r.status} ${r.statusText}`);
+  return await r.json();
+}
 async function loadRoom(){
   const id=roomIdFrom($('#roomInput').value);$('#progress').innerHTML='';if(!id){log('룸 ID를 입력해주세요.');return}
   const candidates=[
@@ -159,7 +165,7 @@ async function loadRoom(){
     try{log(`시도: ${url}`);const data=await fetchJson(url);applyData(data,id);log('불러오기 성공');return}
     catch(e){log(`실패: ${e.message}`)}
   }
-  log('직접 요청이 실패했습니다. 이 경우 코코포리아가 CORS/권한/API 주소를 막은 것입니다. HTML 로그나 JSON을 넣어주세요.');
+  log('직접 요청이 실패했습니다. 로그인 쿠키를 포함해도 실패했다면, 현재 후보 API 주소가 실제 주소와 다르거나 코코포리아가 CORS/권한/API 접근을 막은 것입니다. 원본 사이트처럼 정확히 맞추려면 원본 사이트의 Network 요청 주소가 필요합니다.');
 }
 function applyData(data,name='log'){
   const n=normalizeMessages(data);state.title=$('#titleInput').value.trim()||n.title||name;state.messages=n.messages;state.characters=n.characters;state.sourceName=name;render();
