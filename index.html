@@ -1,183 +1,269 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>코코포리아 로그 백업 생성기</title>
+  <meta name="viewport" content="wi([qiita.com](https://qiita.com/aoko_2477/items/dd6373d427f942b8e30f?utm_source=chatgpt.com)).0" />
+  <title>코코포리아 로그 불러오기</title>
   <style>
-    *{box-sizing:border-box} body{margin:0;background:#0f0f10;color:#f5f5f5;font-family:Pretendard,system-ui,sans-serif}.wrap{max-width:1600px;margin:0 auto;padding:24px}h1{margin:0 0 10px;font-size:34px}.sub{color:#aaa;margin-bottom:24px;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:#1a1a1d;border:1px solid #2c2c31;border-radius:24px;padding:20px;margin-bottom:20px}.title{font-size:20px;font-weight:700;margin-bottom:14px}textarea,input,select{width:100%;background:#101013;border:1px solid #34343b;border-radius:14px;color:#fff;padding:12px;margin-bottom:10px}textarea{min-height:220px;resize:vertical}button{background:#f5f5f5;color:#000;border:0;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700;margin:4px 4px 4px 0}.ghost{background:#2a2a30;color:#fff}.danger{background:#5a2020;color:#fff}.small{font-size:12px;color:#aaa;line-height:1.7}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.character{display:grid;grid-template-columns:2fr 3fr 1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:10px}iframe{width:100%;height:760px;border:0;border-radius:16px;background:white}.status{white-space:pre-wrap;background:#101013;border:1px solid #34343b;border-radius:14px;padding:12px;color:#ddd;font-size:12px;line-height:1.7;min-height:44px}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.pill{background:#2a2a30;color:#ddd;border-radius:999px;padding:6px 10px;font-size:12px}@media(max-width:1000px){.grid{grid-template-columns:1fr}.character,.row{grid-template-columns:1fr}iframe{height:620px}}
+    :root {
+      --bg: #111111;
+      --panel: rgba(255,255,255,.075);
+      --panel2: rgba(255,255,255,.105);
+      --line: rgba(255,255,255,.16);
+      --text: #f7f3ee;
+      --muted: rgba(247,243,238,.68);
+      --accent: #f5d9b8;
+      --danger: #ffb8b8;
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(245,217,184,.15), transparent 32%),
+        radial-gradient(circle at 80% 0%, rgba(255,255,255,.08), transparent 26%),
+        var(--bg);
+    }
+
+    .wrap {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0 56px;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      letter-spacing: .12em;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 52px);
+      line-height: 1.08;
+    }
+
+    .desc {
+      margin: 14px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.22);
+      overflow: hidden;
+    }
+
+    .card-inner { padding: 22px; }
+
+    label {
+      display: block;
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding: 13px 14px;
+      outline: none;
+      font: inherit;
+    }
+
+    input[type="file"] { font-size: 13px; }
+
+    input:focus {
+      border-color: rgba(245,217,184,.68);
+      box-shadow: 0 0 0 4px rgba(245,217,184,.11);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button, a.btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 11px 15px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      color: var(--text);
+      background: var(--panel2);
+      text-decoration: none;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+
+    button:hover, a.btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.16);
+      border-color: rgba(245,217,184,.48);
+    }
+
+    .primary {
+      color: #17120e;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .hint {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .warning {
+      margin-top: 16px;
+      padding: 13px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,184,184,.24);
+      color: var(--danger);
+      background: rgba(255,184,184,.08);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .viewer-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    iframe {
+      display: block;
+      width: 100%;
+      height: 640px;
+      border: 0;
+      background: #fff;
+    }
+
+    .log-preview {
+      height: 640px;
+      overflow: auto;
+      background: #f7f4ef;
+      color: #28211b;
+      padding: 24px;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .placeholder {
+      display: grid;
+      place-items: center;
+      min-height: 640px;
+      text-align: center;
+      color: var(--muted);
+      padding: 28px;
+      line-height: 1.8;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #17120e;
+      border-color: var(--accent);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 860px) {
+      .wrap { width: min(100% - 22px, 1080px); padding-top: 24px; }
+      .grid { grid-template-columns: 1fr; }
+      iframe, .log-preview, .placeholder { height: 68vh; min-height: 420px; }
+      .card-inner { padding: 18px; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>코코포리아 로그 백업 생성기</h1>
-    <div class="sub">방 주소/룸 ID로 로그와 인장 불러오기 시도 → 티스토리용 HTML 변환 → 미리보기 → 코드 복사<br>불러오기가 막히면 아래 입력칸에 JSON/텍스트/HTML을 붙여넣어도 변환됩니다.</div>
+  <main class="wrap">
+    <header>
+      <div class="eyebrow">CCFOLIA LOG LOADER</div>
+      <h1>코코포리아 룸 ID로<br />채팅 로그를 열기</h1>
+      <p class="desc">
+        룸 ID를 입력하면 채팅 표시용 주소를 열 수 있습니다. 코코포리아 정책상 외부 사이트에서 로그 HTML을 직접 추출하지 못할 수 있으므로,
+        공식 로그 출력으로 받은 HTML 파일을 이 페이지에 업로드해서 미리보는 기능도 같이 넣었습니다.
+      </p>
+    </header>
 
-    <div class="grid">
-      <div>
-        <div class="card">
-          <div class="title">0. 방 주소로 불러오기</div>
-          <input id="roomId" placeholder="https://ccfolia.com/rooms/ROOM_ID 또는 ROOM_ID" />
+    <section class="grid">
+      <aside class="card">
+        <div class="card-inner">
+          <label for="roomId">룸 ID</label>
+          <input id="roomId" type="text" placeholder="예: abcdef123456" autocomplete="off" />
           <div class="row">
-            <select id="loadMode">
-              <option value="auto">자동 시도</option>
-              <option value="direct">직접 fetch만</option>
-              <option value="proxy">프록시 fetch만</option>
-            </select>
-            <input id="proxyPrefix" value="https://api.allorigins.win/raw?url=" placeholder="CORS 프록시 prefix" />
+            <button class="primary" id="loadRoom" type="button">채팅창 불러오기</button>
+            <a class="btn" id="openRoom" href="#" target="_blank" rel="noopener">새 탭에서 열기</a>
           </div>
-          <button onclick="loadRoomData()">방 데이터 불러오기</button>
-          <button class="ghost" onclick="openRoom()">코코포리아 방 새 창 열기</button>
-          <div class="small">개인용이어도 브라우저 보안 때문에 실패할 수 있어요. 성공하면 아래 입력칸에 자동으로 JSON이 들어가고 미리보기가 만들어집니다.</div>
-          <div id="status" class="status">대기 중</div>
+
+          <p class="hint">
+            룸 ID는 공유 URL의 <b>/rooms/여기</b> 부분입니다.<br />
+            예: <code>https://ccfolia.com/rooms/ROOM_ID</code>
+          </p>
+
+          <div class="warning">
+            iframe이 안 보이면 코코포리아가 외부 임베드를 막은 것입니다. 그때는 “새 탭에서 열기”를 사용해주세요.
+          </div>
         </div>
 
-        <div class="card">
-          <div class="title">1. 직접 붙여넣기 / 자동 입력</div>
-          <textarea id="rawHtml" placeholder="방 데이터가 성공하면 여기에 자동 입력됩니다. 또는 JSON / 텍스트 로그 / HTML 조각을 붙여넣으세요."></textarea>
+        <div class="card-inner" style="border-top:1px solid var(--line);">
+          <label for="logFile">다운로드한 로그 HTML 불러오기</label>
+          <input id="logFile" type="file" accept=".html,.htm,text/html" />
+          <p class="hint">
+            코코포리아 룸 안에서 채팅 메뉴 → 로그 출력으로 받은 HTML 파일을 선택하면 아래에 표시됩니다.
+          </p>
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="tabs">
+          <button class="tab active" id="tabRoom" type="button">룸 채팅창</button>
+          <button class="tab" id="tabFile" type="button">HTML 로그 미리보기</button>
         </div>
 
-        <div class="card">
-          <div class="title">2. BGM</div>
-          <div id="bgmList"></div>
-          <button onclick="addBgm()">BGM 추가</button>
-        </div>
-
-        <div class="card">
-          <div class="title">3. 캐릭터 인장 교체/조정</div>
-          <div id="characterList"></div>
-          <button onclick="addCharacter()">캐릭터 추가</button>
-        </div>
-
-        <div class="card">
-          <div class="title">최종 코드</div>
-          <textarea id="finalCode"></textarea>
-          <button onclick="copyCode()">복사</button>
-        </div>
-      </div>
-
-      <div>
-        <div class="card">
-          <div class="title">미리보기</div>
-          <iframe id="preview"></iframe>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<script>
-const bgmList=document.getElementById('bgmList');
-const characterList=document.getElementById('characterList');
-const rawHtml=document.getElementById('rawHtml');
-const finalCode=document.getElementById('finalCode');
-const preview=document.getElementById('preview');
-const statusBox=document.getElementById('status');
-
-addBgm(); addCharacter(); rawHtml.addEventListener('input',generate); generate();
-
-function setStatus(msg){statusBox.textContent=msg;}
-function getRoomId(){return document.getElementById('roomId').value.trim().replace(/^https?:\/\/ccfolia\.com\/rooms\//,'').replace(/\/chat.*$/,'').replace(/\?.*$/,'').replace(/\/$/,'');}
-function openRoom(){const id=getRoomId(); if(!id)return; window.open(`https://ccfolia.com/rooms/${id}`,'_blank');}
-
-async function loadRoomData(){
-  const id=getRoomId(); if(!id){setStatus('룸 ID를 입력해주세요.');return;}
-  const mode=document.getElementById('loadMode').value;
-  const proxy=document.getElementById('proxyPrefix').value.trim();
-  const urls=[
-    `https://ccfolia.com/rooms/${id}`,
-    `https://ccfolia.com/rooms/${id}/chat`,
-    `https://ccfolia.com/api/rooms/${id}`,
-    `https://ccfolia.com/api/rooms/${id}/messages`,
-    `https://ccfolia.com/api/rooms/${id}/logs`,
-    `https://ccfolia.com/api/rooms/${id}/chats`
-  ];
-  const attempts=[];
-  setStatus('불러오는 중...');
-  for(const url of urls){
-    const targets=[];
-    if(mode==='auto'||mode==='direct') targets.push({label:'direct',url});
-    if((mode==='auto'||mode==='proxy')&&proxy) targets.push({label:'proxy',url:proxy+encodeURIComponent(url)});
-    for(const t of targets){
-      try{
-        const res=await fetch(t.url,{credentials:'omit'});
-        const ct=res.headers.get('content-type')||'';
-        const text=await res.text();
-        attempts.push(`${t.label} ${url} → ${res.status} ${ct}`);
-        if(res.ok && text && text.length>20){
-          const found=extractUsefulData(text);
-          if(found){
-            rawHtml.value=typeof found==='string'?found:JSON.stringify(found,null,2);
-            generate();
-            setStatus('성공! 아래 입력칸에 방 데이터가 들어갔어요.\n\n'+attempts.join('\n'));
-            return;
-          }
-        }
-      }catch(e){attempts.push(`${t.label} ${url} → 실패: ${e.message}`);}
-    }
-  }
-  setStatus('자동 불러오기에 실패했어요.\n코코포리아가 막았거나 데이터 주소가 다른 상태예요.\n\n'+attempts.join('\n'));
-}
-
-function extractUsefulData(text){
-  const trimmed=String(text||'').trim();
-  if(!trimmed)return null;
-  try{return JSON.parse(trimmed);}catch(e){}
-  const jsonMatch=trimmed.match(/<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-  if(jsonMatch){try{return JSON.parse(jsonMatch[1]);}catch(e){}}
-  if(trimmed.includes('message')||trimmed.includes('character')||trimmed.includes('room')) return trimmed;
-  return null;
-}
-
-function addBgm(){
-  const div=document.createElement('div');
-  div.innerHTML='<input class="bgm-title" placeholder="노래 제목" /><input class="bgm-url" placeholder="오디오 URL" />';
-  bgmList.appendChild(div); div.querySelectorAll('input').forEach(el=>el.addEventListener('input',generate));
-}
-function addCharacter(){
-  const div=document.createElement('div'); div.className='character';
-  div.innerHTML='<input class="char-name" placeholder="이름" /><input class="char-url" placeholder="인장 이미지 URL" /><input class="char-width" placeholder="W%" value="160" /><input class="char-height" placeholder="H%" value="160" /><input class="char-left" placeholder="L%" value="0" /><input class="char-top" placeholder="T%" value="0" /><button class="danger" onclick="this.parentElement.remove(); generate();">X</button>';
-  characterList.appendChild(div); div.querySelectorAll('input').forEach(el=>el.addEventListener('input',generate));
-}
-function escapeHtml(str){return String(str||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');}
-function isUrl(str){return /^https?:\/\//.test(String(str||''));}
-
-function generate(){
-  const bgms=[...document.querySelectorAll('#bgmList > div')];
-  const chars=[...document.querySelectorAll('.character')];
-  const bgmButtons=bgms.map(b=>{const title=b.querySelector('.bgm-title').value; const url=b.querySelector('.bgm-url').value; if(!title&&!url)return ''; return `<p style="text-align:center;"><button class="bgmButton" data-audio="${escapeHtml(url)}" data-label="${escapeHtml(title)}">♪ ${escapeHtml(title||'BGM')}</button></p>`;}).join('\n');
-  const charRules=chars.map(c=>{const name=c.querySelector('.char-name').value; const url=c.querySelector('.char-url').value; const width=c.querySelector('.char-width').value||'160'; const height=c.querySelector('.char-height').value||'160'; const left=c.querySelector('.char-left').value||'0'; const top=c.querySelector('.char-top').value||'0'; if(!name)return ''; return `\nif(nameText.includes(${JSON.stringify(name)})){\n  ${url?`img.src=${JSON.stringify(url)};`:''}\n  img.style.width='${width}%';\n  img.style.height='${height}%';\n  img.style.marginLeft='${left}%';\n  img.style.marginTop='${top}%';\n}`;}).join('\n');
-  const convertedLog=convertLogToHtml(rawHtml.value);
-  const code=`${bgmButtons}\n\n<div class="ccfolia_backup_area">\n${convertedLog}\n</div>\n\n<style>\n.ccfolia_backup_area{width:100%;max-width:980px;margin:0 auto;font-size:15px;line-height:1.8}.ccfolia_backup_area .generated-row{display:flex;gap:12px;margin:10px 0;padding:10px;border-radius:14px;background:rgba(128,128,128,.08)}.ccfolia_backup_area .msg_icon{width:58px;height:58px;overflow:hidden;border-radius:12px;flex:0 0 58px}.ccfolia_backup_area .msg_icon img{width:100%;height:100%;object-fit:cover}.ccfolia_backup_area .msg-name{font-weight:bold;margin-bottom:4px}.msg-timestamp,.msg-category-tag{display:none!important}.cc-system-line{width:100%!important;text-align:center!important;justify-content:center!important}.cc-system-line .msg_container,.cc-system-line .msg-text{text-align:center!important;width:100%!important}.bgmButton{margin:8px 4px;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);color:inherit;cursor:pointer}@media(max-width:768px){.ccfolia_wrap{width:100vw!important;max-width:100vw!important;margin-left:calc(50% - 50vw)!important;margin-right:calc(50% - 50vw)!important}.ccfolia_backup_area{max-width:100%;padding:0 12px;font-size:14px}}\n</style>\n\n<script>\n(function(){\nconst root=document.querySelector('.ccfolia_backup_area'); if(!root)return;\nroot.querySelectorAll('.msg-timestamp,.msg-category-tag').forEach(el=>el.remove());\nroot.querySelectorAll('.gap.message-row').forEach(row=>{\n const nameEl=row.querySelector('.msg-name'); const img=row.querySelector('img'); const nameText=nameEl?nameEl.textContent.trim():''; const src=img?(img.src||''):'';\n if(!nameText&&src.includes('blank')){if(img){const box=img.closest('.msg_icon,.msg-icon,.icon,.avatar')||img.parentElement;if(box)box.remove();} row.classList.add('cc-system-line');}\n if(img){${charRules}\n }\n});\nlet currentAudio=null; document.querySelectorAll('.bgmButton').forEach(button=>{const src=button.dataset.audio; button.addEventListener('click',()=>{if(!src)return; if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;} currentAudio=new Audio(src); currentAudio.loop=true; currentAudio.play();});});\n})();\n<\/script>`;
-  finalCode.value=code; preview.srcdoc=code;
-}
-
-function convertLogToHtml(input){
-  const text=String(input||'').trim(); if(!text)return '<!-- 여기에 변환된 로그가 들어갑니다 -->';
-  if(text.includes('<div')||text.includes('<p')||text.includes('<span'))return text;
-  try{const data=JSON.parse(text); const rows=jsonToRows(data); if(rows.length)return rowsToHtml(rows); return `<pre>${escapeHtml(JSON.stringify(data,null,2))}</pre>`;}catch(e){}
-  const lines=text.replaceAll(String.fromCharCode(13),'').split(String.fromCharCode(10)).filter(line=>line.trim());
-  return lines.map(line=>{const t=line.trim(); const a=t.indexOf(':'); const b=t.indexOf('：'); const ci=(a<0?b:b<0?a:Math.min(a,b)); if(ci>0&&ci<40){return rowHtml(t.slice(0,ci).trim(),t.slice(ci+1).trim(),'','');} return systemHtml(t);}).join('\n');
-}
-function jsonToRows(data){
-  const rows=[]; const seen=new Set();
-  function walk(x){
-    if(!x||typeof x!=='object')return;
-    if(Array.isArray(x)){x.forEach(walk);return;}
-    const text=x.text||x.message||x.content||x.body||x.value||x.description||'';
-    const name=x.name||x.characterName||x.speaker||x.senderName||x.displayName||x.userName||'';
-    const icon=x.iconUrl||x.icon||x.imageUrl||x.image||x.avatar||x.portrait||x.standingUrl||'';
-    const color=x.color||x.nameColor||x.textColor||x.labelColor||'';
-    if(typeof text==='string'&&text.trim()&&(name||icon||x.createdAt||x.updatedAt||x.tab)){
-      const key=(name+'|'+text+'|'+icon).slice(0,300); if(!seen.has(key)){seen.add(key); rows.push({name,text,icon,color});}
-    }
-    Object.values(x).forEach(walk);
-  }
-  walk(data); return rows;
-}
-function rowsToHtml(rows){return rows.map(r=>r.name?rowHtml(r.name,r.text,r.icon,r.color):systemHtml(r.text)).join('\n');}
-function rowHtml(name,text,icon,color){const img=isUrl(icon)?icon:'blank.gif'; const style=color?` style="color:${escapeHtml(color)}"`:''; return `<div class="gap message-row generated-row">\n  <div class="msg_icon"><img src="${escapeHtml(img)}" alt="" /></div>\n  <div class="msg_container">\n    <div class="msg-name"${style}>${escapeHtml(name)}</div>\n    <div class="msg-text">${escapeHtml(text)}</div>\n  </div>\n</div>`;}
-function systemHtml(text){return `<div class="gap message-row generated-row cc-system-line">\n  <div class="msg_container"><div class="msg-text">${escapeHtml(text)}</div></div>\n</div>`;}
-function copyCode(){navigator.clipboard.writeText(finalCode.value); alert('복사 완료');}
-</script>
-</body>
-</html>
+        <div id="roomPanel">
+          <div class="viewer-head">
+            <span id="roomStatus">아직 불러온
