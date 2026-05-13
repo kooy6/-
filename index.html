@@ -30,7 +30,7 @@
       <div class="section"><h2>3. 출력할 탭</h2><p class="hint">체크한 탭들의 채팅이 시간순으로 통합 출력됩니다.</p><div id="tabList" class="tab-list"><div class="hint">룸을 불러오면 탭이 표시됩니다.</div></div></div>
       <div class="section"><h2>4. 탭 색</h2><div id="tabColorList" class="tab-list"><div class="hint">탭별 색을 바꿀 수 있습니다.</div></div></div>
       <div class="section"><h2>5. 시스템 캐릭터</h2><div id="systemList" class="system-list"><div class="hint">룸을 불러오면 캐릭터가 표시됩니다.</div></div></div>
-      <div class="section"><h2>6. 저장</h2><label>로그 제목</label><input id="titleInput" type="text" placeholder="비워두면 룸 ID 사용"><div class="row" style="margin-top:8px"><button id="renderBtn">미리보기 갱신</button><button class="gray" id="downloadBtn">HTML 다운로드</button></div><div class="row" style="margin-top:8px"><button class="ghost" id="copyTistoryBtn">티스토리 HTML 복사</button><button class="ghost" id="saveLocalBtn">저장</button></div><div class="notice">왼쪽에는 전체 설정만 남겼어요. 메시지 수정/채팅 추가/이미지/BGM 추가는 오른쪽 + 버튼으로 합니다.</div></div>
+      <div class="section"><h2>6. 저장</h2><label>로그 제목</label><input id="titleInput" type="text" placeholder="비워두면 룸 ID 사용"><div class="row" style="margin-top:8px"><button class="gray" id="downloadBtn">HTML 다운로드</button><button class="ghost" id="copyTistoryBtn">티스토리 HTML 복사</button></div><div class="notice">왼쪽에는 전체 설정만 남겼어요. 메시지 수정/채팅 추가/이미지/BGM 추가는 오른쪽 + 버튼으로 합니다.</div></div>
     </aside>
     <main class="panel viewer"><div class="toolbar"><span id="status">아직 불러온 로그가 없습니다.</span><span id="count">0 messages</span></div><div class="preview skin-dark cc-perfect" id="preview"><div class="empty">룸 ID/주소를 입력해서 로그를 불러오세요.</div></div></main>
   </div>
@@ -84,8 +84,7 @@ function attachBgm(){let current=null;$$('.bgmButton').forEach(btn=>btn.onclick=
 function cleanForExport(html){return html.replace(/<div class="insert-control"[\s\S]*?<\/div>/g,'').replace(/<div class="inline-tools"[\s\S]*?<\/div>/g,'').replace(/<div class="inline-editor[\s\S]*?<\/div>/g,'')}
 function exportHtml(){render();const title=$('#titleInput').value.trim()||state.title||'custom_log';const script='<script>let currentAudio=null;document.querySelectorAll(".bgmButton").forEach(function(btn){btn.addEventListener("click",function(){var src=btn.dataset.audio;if(currentAudio){currentAudio.pause();currentAudio.currentTime=0}if(btn.dataset.playing==="1"){btn.dataset.playing="0";return}document.querySelectorAll(".bgmButton").forEach(function(b){b.dataset.playing="0"});currentAudio=new Audio(src);currentAudio.loop=true;currentAudio.play();btn.dataset.playing="1"})});<\/script>';return '<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+escapeHtml(title)+'</title><style>'+document.querySelector('style').textContent+'</style></head><body><main class="preview '+$('#skinMode').value+($('#ccPerfect').checked?' cc-perfect':'')+'">'+cleanForExport($('#preview').innerHTML)+'</main>'+script+'</body></html>'}
 function downloadHtml(){const blob=new Blob([exportHtml()],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ccfolia_backup_'+String(state.roomId||'log').replace(/[^\w가-힣.-]+/g,'_')+'.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}async function copyTistory(){await navigator.clipboard.writeText(exportHtml());alert('티스토리용 HTML을 복사했어요.')}
-function {
-  // 자동저장 비활성화: 큰 로그에서 localStorage 용량 초과가 나지 않게 아무것도 저장하지 않습니다.
+function saveLocal(){
   return;
 }
 function saveSettingsOnly(){
@@ -104,7 +103,7 @@ function saveSettingsOnly(){
   }catch(e){}
 }
 window.toggleEdit=toggleEdit;window.editMsg=editMsg;window.deleteItem=deleteItem;window.addChatAfter=addChatAfter;window.editBlock=editBlock;window.toggleInsertControl=toggleInsertControl;window.openImageModal=openImageModal;window.openBgmModal=openBgmModal;window.saveImageModal=saveImageModal;window.saveBgmModal=saveBgmModal;window.closeModal=closeModal;
-document.addEventListener('DOMContentLoaded',()=>{restoreLocal();$('#loadRoomBtn').onclick=loadRoom;$('#openRoomBtn').onclick=()=>{const id=roomIdFrom($('#roomInput').value);if(!id){log('룸 ID를 입력해주세요.');return}window.open('https://ccfolia.com/rooms/'+encodeURIComponent(id),'_blank')};$('#renderBtn').onclick=()=>{render()};$('#downloadBtn').onclick=downloadHtml;$('#copyTistoryBtn').onclick=copyTistory;$('#saveLocalBtn').onclick=()=>{saveSettingsOnly()};['showDate','showTime','showAvatar','diceStyle','diceSeparate','mergeSameChar','ccPerfect','skinMode','fontSize','bgColor','titleInput'].forEach(id=>{const el=$('#'+id);if(el){el.addEventListener('input',()=>{render()});el.addEventListener('change',()=>{render()})}})});
+document.addEventListener('DOMContentLoaded',()=>{restoreLocal();$('#loadRoomBtn').onclick=loadRoom;$('#openRoomBtn').onclick=()=>{const id=roomIdFrom($('#roomInput').value);if(!id){log('룸 ID를 입력해주세요.');return}window.open('https://ccfolia.com/rooms/'+encodeURIComponent(id),'_blank')};$('#downloadBtn').onclick=downloadHtml;$('#copyTistoryBtn').onclick=copyTistory;['showDate','showTime','showAvatar','diceStyle','diceSeparate','mergeSameChar','ccPerfect','skinMode','fontSize','bgColor','titleInput'].forEach(id=>{const el=$('#'+id);if(el){el.addEventListener('input',()=>{render()});el.addEventListener('change',()=>{render()})}})});
 </script>
 </body>
 </html>
