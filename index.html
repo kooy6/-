@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>코코포리아 로그 백업 생성기</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #0f0f10;
+      color: #f5f5f5;
+      font-family: Pretendard, sans-serif;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 36px;
+    }
+
+    .sub {
+      color: #9d9d9d;
+      margin-bottom: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: #1a1a1d;
+      border: 1px solid #2c2c31;
+      border-radius: 24px;
+      padding: 20px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    textarea,
+    input {
+      width: 100%;
+      background: #101013;
+      border: 1px solid #34343b;
+      border-radius: 14px;
+      color: white;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      min-height: 260px;
+      resize: vertical;
+    }
+
+    button {
+      background: #f5f5f5;
+      color: black;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .character {
+      display: grid;
+      grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    iframe {
+      width: 100%;
+      height: 700px;
+      border: none;
+      border-radius: 16px;
+      background: white;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #aaa;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1000px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .character {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>코코포리아 로그 백업 생성기</h1>
+    <div class="sub">
+      로그 HTML 붙여넣기 → 미리보기 → 티스토리용 코드 복사
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <div class="title">0. 룸 ID</div>
+
+          <input id="roomId" placeholder="룸 ID 또는 https://ccfolia.com/rooms/ROOM_ID" />
+
+          <div class="small">
+            코코포리아 정책 때문에 사이트 안에서 자동 추출이 막힐 수 있어요.<br />
+            아래 버튼으로 채팅창을 새 탭에서 연 뒤 HTML을 복사해서 넣는 방식 권장.
+          </div>
+
+          <button onclick="openRoom()">코코포리아 채팅창 열기</button>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <div class="title">1. 코코포리아 로그 HTML</div>
+
+          <textarea id="rawHtml" placeholder="코코포리아 로그 HTML 붙여넣기"></textarea>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <div class="title">2. BGM</div>
+
+          <div id="bgmList"></div>
+
+          <button onclick="addBgm()">BGM 추가</button>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <div class="title">3. 캐릭터 인장 조정</div>
+
+          <div id="characterList"></div>
+
+          <button onclick="addCharacter()">캐릭터 추가</button>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <div class="title">최종 코드</div>
+
+          <textarea id="finalCode"></textarea>
+
+          <button onclick="copyCode()">복사</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="title">미리보기</div>
+
+          <iframe id="preview"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const bgmList = document.getElementById('bgmList');
+    const characterList = document.getElementById('characterList');
+    const rawHtml = document.getElementById('rawHtml');
+    const finalCode = document.getElementById('finalCode');
+    const preview = document.getElementById('preview');
+
+    addBgm();
+    addCharacter();
+
+    rawHtml.addEventListener('input', generate);
+
+    function openRoom() {
+      const input = document.getElementById('roomId').value.trim();
+      if (!input) return;
+
+      const roomId = input
+        .replace('https://ccfolia.com/rooms/', '')
+        .replace('/chat', '')
+        .split('?')[0];
+
+      window.open(`https://ccfolia.com/rooms/${roomId}/chat`, '_blank');
+    }
+
+    function addBgm() {
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <input class="bgm-title" placeholder="노래 제목" />
+        <input class="bgm-url" placeholder="오디오 URL" />
+      `;
+
+      bgmList.appendChild(div);
+
+      div.querySelectorAll('input').forEach(el => {
+        el.addEventListener('input', generate);
+      });
+    }
+
+    function addCharacter() {
+      const div = document.createElement('div');
+      div.className = 'character';
+
+      div.innerHTML = `
+        <input class="char-name" placeholder="이름" />
+        <input class="char-url" placeholder="인장 이미지 URL" />
+        <input class="char-width" placeholder="W%" value="160" />
+        <input class="char-height" placeholder="H%" value="160" />
+        <input class="char-left" placeholder="L%" value="0" />
+        <input class="char-top" placeholder="T%" value="0" />
+        <button onclick="this.parentElement.remove(); generate();">X</button>
+      `;
+
+      characterList.appendChild(div);
+
+      div.querySelectorAll('input').forEach(el => {
+        el.addEventListener('input', generate);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
+    function generate() {
+      const bgms = [...document.querySelectorAll('#bgmList > div')];
+      const chars = [...document.querySelectorAll('.character')];
+
+      const bgmButtons = bgms.map(b => {
+        const title = b.querySelector('.bgm-title').value;
+        const url = b.querySelector('.bgm-url').value;
+
+        if (!title && !url) return '';
+
+        return `<p style="text-align:center;"><button class="bgmButton" data-audio="${escapeHtml(url)}" data-label="${escapeHtml(title)}">♪ ${escapeHtml(title)}</button></p>`;
+      }).join('\n');
+
+      const charRules = chars.map(c => {
+        const name = c.querySelector('.char-name').value;
+        const url = c.querySelector('.char-url').value;
+        const width = c.querySelector('.char-width').value || '160';
+        const height = c.querySelector('.char-height').value || '160';
+        const left = c.querySelector('.char-left').value || '0';
+        const top = c.querySelector('.char-top').value || '0';
+
+        if (!name) return '';
+
+        return `
+if (nameText.includes(${JSON.stringify(name)})) {
+  ${url ? `img.src = ${JSON.stringify(url)};` : ''}
+  img.style.width = '${width}%';
+  img.style.height = '${height}%';
+  img.style.marginLeft = '${left}%';
+  img.style.marginTop = '${top}%';
+}`;
+      }).join('\n');
+
+      const code = `
+${bgmButtons}
+
+<div class="ccfolia_backup_area">
+${rawHtml.value}
+</div>
+
+<style>
+.msg-timestamp,
+.msg-category-tag {
+  display:none !important;
+}
+
+.cc-system-line {
+  width:100% !important;
+  text-align:center !important;
+}
+
+.bgmButton {
+  margin:8px 4px;
+  padding:6px 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.06);
+  color:inherit;
+}
+
+@media (max-width:768px) {
+  .ccfolia_wrap {
+    width:100vw !important;
+    max-width:100vw !important;
+    margin-left:calc(50% - 50vw) !important;
+    margin-right:calc(50% - 50vw) !important;
+  }
+}
+</style>
+
+<script>
+(function(){
+const root = document.querySelector('.ccfolia_backup_area');
+if(!root) return;
+
+root.querySelectorAll('.msg-timestamp,.msg-category-tag').forEach(el=>el.remove());
+
+root.querySelectorAll('.gap.message-row').forEach(row=>{
+  const nameEl = row.querySelector('.msg-name');
+  const img = row.querySelector('img');
+
+  const nameText = nameEl ? nameEl.textContent.trim() : '';
+  const src = img ? img.src || '' : '';
+
+  if(!nameText && src.includes('blank')) {
+    if(img) {
+      const box = img.parentElement;
+      if(box) box.remove();
+    }
+
+    row.classList.add('cc-system-line');
+  }
+
+  if(img) {
+${charRules}
+  }
+});
+
+let currentAudio = null;
+
+document.querySelectorAll('.bgmButton').forEach(button=>{
+  const src = button.dataset.audio;
+
+  button.addEventListener('click', ()=>{
+    if(!src) return;
+
+    if(currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+
+    currentAudio = new Audio(src);
+    currentAudio.loop = true;
+    currentAudio.play();
+  });
+});
+})();
+<\/script>
+      `;
+
+      finalCode.value = code;
+      preview.srcdoc = code;
+    }
+
+    function copyCode() {
+      navigator.clipboard.writeText(finalCode.value);
+      alert('복사 완료');
+    }
+
+    generate();
+  </script>
+</body>
+</html>
