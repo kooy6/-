@@ -125,9 +125,45 @@ const log=t=>{const p=$('#progress');p.classList.remove('hidden');p.innerHTML+=`
 function roomIdFrom(v){v=v.trim();const m=v.match(/ccfolia\.com\/rooms(?:-v2)?\/([^/?#]+)/i);return m?decodeURIComponent(m[1]):v.replace(/^\/+|\/+$/g,'')}
 function selectedTabs(){return $$('.tabCheck:checked').map(x=>x.value)}
 function normalizeTab(v){v=String(v||'main').toLowerCase();if(['main','メイン','메인'].includes(v))return'main';if(['info','정보','情報'].includes(v))return'info';if(['other','잡담','雑談'].includes(v))return'other';if(['secret','비밀','秘匿'].includes(v))return'secret';return'extra'}
+function fsValue(v){
+  if(!v || typeof v !== 'object') return v;
+  if('stringValue' in v) return v.stringValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return Number(v.doubleValue);
+  if('booleanValue' in v) return Boolean(v.booleanValue);
+  if('timestampValue' in v) return v.timestampValue;
+  if('nullValue' in v) return null;
+  if('arrayValue' in v) return (v.arrayValue.values||[]).map(fsValue);
+  if('mapValue' in v) return fsFields(v.mapValue.fields||{});
+  return v;
+}
+function fsFields(fields){
+  const obj={};
+  Object.entries(fields||{}).forEach(([k,v])=>obj[k]=fsValue(v));
+  return obj;
+}
+function firestoreDocsToMessages(raw){
+  const docs=Array.isArray(raw) ? raw : (raw && raw.documents) ? raw.documents : [];
+  return docs.map((doc,i)=>{
+    const f=doc.fields ? fsFields(doc.fields) : doc;
+    const id=(doc.name||f.id||String(i)).split('/').pop();
+    return {
+      id,
+      name:f.name||f.characterName||f.speakerName||f.senderName||'',
+      text:f.text||f.message||f.content||f.body||f.value||'',
+      tab:f.tab||f.channel||f.channelName||f.roomChatTab||f.type||'main',
+      time:f.createdAt||f.updatedAt||f.timestamp||doc.createTime||doc.updateTime||'',
+      icon:f.iconUrl||f.imageUrl||f.portraitUrl||f.avatar||f.image||'',
+      color:f.color||f.nameColor||f.textColor||'#99806a',
+      raw:f
+    };
+  });
+}
 function normalizeMessages(raw){
   let arr=[];let chars={};let title='';
-  if(Array.isArray(raw)) arr=raw;
+  if(raw && raw.documents) arr=firestoreDocsToMessages(raw);
+  else if(Array.isArray(raw) && raw[0] && raw[0].fields) arr=firestoreDocsToMessages(raw);
+  else if(Array.isArray(raw)) arr=raw;
   else if(raw){
     title=raw.name||raw.title||raw.roomName||raw.room?.name||'';
     chars=raw.characters||raw.character||raw.room?.characters||raw.entities?.characters||{};
@@ -142,31 +178,16 @@ function normalizeMessages(raw){
     const name=m.name||m.speakerName||m.characterName||ch.name||'';
     const icon=m.iconUrl||m.imageUrl||m.portraitUrl||m.avatar||ch.iconUrl||ch.imageUrl||ch.portraitUrl||ch.avatar||'';
     const color=m.color||m.nameColor||m.textColor||ch.color||ch.nameColor||'#99806a';
-    return {id:m.id||i,name,text:m.text||m.message||m.content||m.body||'',tab:normalizeTab(m.tab||m.channel||m.type||m.roomChatTab),time:m.time||m.createdAt||m.updatedAt||m.timestamp||'',icon,color,raw:m};
+    return {id:m.id||i,name,text:m.text||m.message||m.content||m.body||'',tab:normalizeTab(m.tab||m.channel||m.channelName||m.type||m.roomChatTab),time:m.time||m.createdAt||m.updatedAt||m.timestamp||'',icon,color,raw:m};
   }).filter(m=>m.text||m.name)};
 }
 async function fetchJson(url){
-  // 코코포리아 룸은 로그인/초대 권한 쿠키가 필요한 경우가 많아서 credentials: 'include'가 필요합니다.
-  // 그래도 CORS가 막혀 있으면 브라우저 보안상 여기서 직접 읽을 수 없습니다.
-  const r=await fetch(url,{mode:'cors',credentials:'include'});
-  if(!r.ok)throw new Error(`${r.status} ${r.statusText}`);
-  return await r.json();
-}
-async function loadRoom(){
-  const id=roomIdFrom($('#roomInput').value);$('#progress').innerHTML='';if(!id){log('룸 ID를 입력해주세요.');return}
-  const candidates=[
-    `https://ccfolia.com/api/rooms/${encodeURIComponent(id)}`,
-    `https://ccfolia.com/api/rooms/${encodeURIComponent(id)}/messages`,
-    `https://ccfolia.com/api/rooms/${encodeURIComponent(id)}/logs`,
-    `https://ccfolia.com/api/rooms/${encodeURIComponent(id)}/snapshot`,
-    `https://ccfolia.com/rooms/${encodeURIComponent(id)}.json`
-  ];
-  for(const url of candidates){
-    try{log(`시도: ${url}`);const data=await fetchJson(url);applyData(data,id);log('불러오기 성공');return}
-    catch(e){log(`실패: ${e.message}`)}
+  const r = await fetch(url);
+  if (!r.ok) {
+    throw new Error(String(r.status) + ' ' + String(r.statusText));
   }
-  log('직접 요청이 실패했습니다. 로그인 쿠키를 포함해도 실패했다면, 현재 후보 API 주소가 실제 주소와 다르거나 코코포리아가 CORS/권한/API 접근을 막은 것입니다. 원본 사이트처럼 정확히 맞추려면 원본 사이트의 Network 요청 주소가 필요합니다.');
-}
+  return r.json();
+}([github.com](https://github.com/sukenell/cclog_custom))
 function applyData(data,name='log'){
   const n=normalizeMessages(data);state.title=$('#titleInput').value.trim()||n.title||name;state.messages=n.messages;state.characters=n.characters;state.sourceName=name;render();
 }
