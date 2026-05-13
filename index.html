@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CCFOLIA LOG CUSTOM</title>
+  <title>CCFOLIA LOG BACKUP</title>
   <style>
     :root {
-      --bg: #efe8de;
-      --paper: #fffdf8;
-      --ink: #27211d;
-      --muted: #7f746b;
-      --line: #d9cfc4;
-      --accent: #826b59;
-      --accent-dark: #5d4d41;
-      --soft: #f7f1e9;
-      --secret: #eaf0f7;
+      --page-bg: #f2eee8;
+      --panel: #fffdf8;
+      --ink: #29231f;
+      --muted: #7e746c;
+      --line: #ddd3c8;
+      --accent: #806a58;
+      --accent-dark: #5e4d41;
+      --cc-bg: #f4f4f4;
+      --cc-bubble: #ffffff;
+      --cc-system: #777777;
       --radius: 18px;
     }
 
@@ -23,7 +24,7 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(180deg, #f8f2ea, var(--bg));
+      background: linear-gradient(180deg, #fbf5ee, var(--page-bg));
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
     }
@@ -44,11 +45,7 @@
       padding-bottom: 18px;
     }
 
-    h1 {
-      margin: 0;
-      font-size: clamp(28px, 4vw, 46px);
-      letter-spacing: .02em;
-    }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 46px); }
 
     .sub {
       margin: 8px 0 0;
@@ -57,11 +54,7 @@
       font-size: 14px;
     }
 
-    .version {
-      font-weight: 800;
-      color: var(--accent-dark);
-      white-space: nowrap;
-    }
+    .version { font-weight: 800; color: var(--accent-dark); white-space: nowrap; }
 
     .layout {
       display: grid;
@@ -71,7 +64,7 @@
     }
 
     .panel {
-      background: rgba(255, 253, 248, .9);
+      background: rgba(255, 253, 248, .92);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: 0 16px 40px rgba(65, 45, 25, .08);
@@ -81,11 +74,7 @@
     .section { padding: 18px; }
     .section + .section { border-top: 1px solid var(--line); }
 
-    h2 {
-      font-size: 15px;
-      margin: 0 0 12px;
-      color: var(--accent-dark);
-    }
+    h2 { font-size: 15px; margin: 0 0 12px; color: var(--accent-dark); }
 
     label {
       font-size: 12px;
@@ -95,7 +84,7 @@
       margin: 12px 0 7px;
     }
 
-    input[type="text"], textarea, select, input[type="file"], input[type="color"], input[type="number"] {
+    input[type="text"], select, input[type="color"], input[type="number"] {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -105,19 +94,12 @@
       font: inherit;
     }
 
-    textarea { min-height: 90px; resize: vertical; }
     input[type="color"] { height: 42px; padding: 4px; }
 
-    .row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .row > * { flex: 1; }
 
-    button, .btn {
+    button {
       border: 1px solid var(--accent);
       background: var(--accent);
       color: #fff;
@@ -126,22 +108,16 @@
       font: inherit;
       font-weight: 800;
       cursor: pointer;
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
     }
 
-    button.ghost, .btn.ghost { background: #fff; color: var(--accent-dark); }
+    button.ghost { background: #fff; color: var(--accent-dark); }
     button.gray { background: #7e7a76; border-color: #7e7a76; }
 
-    .hint {
-      font-size: 12px;
-      line-height: 1.65;
-      color: var(--muted);
-      margin: 10px 0 0;
-    }
+    .hint { font-size: 12px; line-height: 1.65; color: var(--muted); margin: 10px 0 0; }
 
     .notice {
       font-size: 12px;
@@ -169,11 +145,7 @@
 
     .hidden { display: none !important; }
 
-    .checkgrid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
+    .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
     .chip {
       border: 1px solid var(--line);
@@ -187,12 +159,25 @@
       font-weight: 700;
     }
 
+    .system-list, .tab-list {
+      display: grid;
+      gap: 7px;
+      max-height: 170px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 8px;
+    }
+
+    .system-list .chip, .tab-list .chip { border-radius: 12px; }
+
     .tabs {
       display: flex;
       gap: 8px;
       padding: 12px;
       border-bottom: 1px solid var(--line);
-      background: var(--soft);
+      background: #f7f1e9;
       overflow: auto;
     }
 
@@ -207,11 +192,7 @@
       white-space: nowrap;
     }
 
-    .tab.active {
-      background: var(--accent-dark);
-      color: #fff;
-      border-color: var(--accent-dark);
-    }
+    .tab.active { background: var(--accent-dark); color: #fff; border-color: var(--accent-dark); }
 
     .viewer { min-height: 680px; }
 
@@ -227,13 +208,13 @@
     }
 
     .preview {
-      padding: 22px;
-      background: #f4f1ec;
       min-height: 620px;
+      padding: 26px 16px;
+      background: var(--cc-bg);
     }
 
     .empty {
-      min-height: 600px;
+      min-height: 560px;
       display: grid;
       place-items: center;
       text-align: center;
@@ -242,114 +223,103 @@
     }
 
     .log-title {
-      max-width: 860px;
-      margin: 0 auto 16px;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
+      max-width: 900px;
+      margin: 0 auto 18px;
       text-align: center;
+      color: #555;
+      font-weight: 800;
+      letter-spacing: .04em;
     }
 
-    .log-title h3 { margin: 0; font-size: 24px; }
-
-    .msg {
-      max-width: 860px;
-      margin: 0 auto 10px;
+    .cc-row {
+      max-width: 900px;
+      margin: 0 auto 12px;
       display: grid;
-      grid-template-columns: 72px 1fr;
-      gap: 12px;
+      grid-template-columns: 64px 1fr;
+      gap: 10px;
       align-items: start;
+      position: relative;
     }
 
-    .avatar {
-      width: 64px;
-      height: 64px;
+    .cc-row.right {
+      grid-template-columns: 1fr 64px;
+    }
+
+    .cc-row.right .cc-avatar { grid-column: 2; }
+    .cc-row.right .cc-body { grid-column: 1; grid-row: 1; text-align: right; }
+    .cc-row.center { display: block; text-align: center; }
+
+    .cc-avatar {
+      width: 54px;
+      height: 54px;
       border-radius: 50%;
-      background: #ddd;
       object-fit: cover;
-      border: 1px solid var(--line);
+      background: #ddd;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 1px 2px rgba(0,0,0,.06);
     }
 
-    .bubble {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 12px 14px;
-      box-shadow: 0 8px 20px rgba(0,0,0,.035);
-    }
-
-    .name {
-      display: inline-flex;
-      align-items: center;
+    .cc-name-line {
+      display: flex;
       gap: 8px;
-      font-weight: 900;
-      margin-bottom: 6px;
+      align-items: center;
+      margin: 0 0 4px;
+      min-height: 18px;
     }
 
-    .time { color: #999; font-size: 11px; font-weight: 600; }
+    .cc-row.right .cc-name-line { justify-content: flex-end; }
 
-    .text {
+    .cc-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #555;
+    }
+
+    .cc-meta {
+      font-size: 11px;
+      color: #999;
+    }
+
+    .cc-bubble {
+      display: inline-block;
+      max-width: min(100%, 720px);
+      background: var(--cc-bubble);
+      border-radius: 8px;
+      padding: 9px 12px;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      text-align: left;
       white-space: pre-wrap;
-      line-height: 1.72;
+      line-height: 1.68;
       font-size: 14px;
     }
 
-    .msg.info .bubble { background: #eef2ee; }
-    .msg.other .bubble { background: #eeeeee; color: #555; }
-    .msg.secret .bubble, .msg.extra .bubble { background: var(--secret); }
+    .cc-row.right .cc-bubble { text-align: left; }
 
-    .msg.system {
-      display: block;
-      text-align: center;
-    }
-
-    .msg.system .bubble {
-      display: inline-block;
+    .cc-row.system .cc-bubble {
       background: transparent;
       border: 0;
       box-shadow: none;
-      color: #777;
+      color: var(--cc-system);
+      font-size: 13px;
+      text-align: center;
+      max-width: 100%;
     }
 
-    .dice-success { color: #226b3c; font-weight: 900; }
-    .dice-fail { color: #9a322b; font-weight: 900; }
+    .cc-row.system .cc-name-line, .cc-row.system .cc-avatar { display: none; }
 
-    .editor {
-      width: 100%;
-      border: 0;
-      background: transparent;
-      color: inherit;
-      font: inherit;
-      line-height: 1.72;
-      resize: vertical;
-      min-height: 42px;
-      padding: 0;
-      outline: 1px dashed transparent;
-    }
-
-    .editor:focus { outline-color: #b69e85; background: #fff; }
-
-    .top-image, .bottom-image {
-      display: block;
-      max-width: 860px;
-      width: 100%;
-      margin: 0 auto 14px;
-      border-radius: 14px;
-    }
-
-    .bottom-image { margin: 14px auto 0; }
+    .dice-success { color: #267647; font-weight: 900; }
+    .dice-fail { color: #a33b35; font-weight: 900; }
 
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       .app { width: min(100% - 18px, 1180px); padding-top: 18px; }
       header { display: block; }
       .version { margin-top: 8px; }
-      .msg { grid-template-columns: 54px 1fr; }
-      .avatar { width: 48px; height: 48px; }
-      .preview { padding: 14px; }
-      .viewer { min-height: 500px; }
-      .empty { min-height: 420px; }
+      .cc-row { grid-template-columns: 50px 1fr; }
+      .cc-row.right { grid-template-columns: 1fr 50px; }
+      .cc-avatar { width: 44px; height: 44px; }
+      .preview { padding: 18px 10px; }
     }
   </style>
 </head>
@@ -357,91 +327,93 @@
   <div class="app">
     <header>
       <div>
-        <h1>CCFOLIA LOG CUSTOM</h1>
-        <p class="sub">룸 주소/ID 또는 코코포리아 로그 HTML을 넣어서 백업용 로그를 만들고, 탭 선택·텍스트 수정·스타일 적용 후 다운로드합니다.</p>
+        <h1>CCFOLIA LOG BACKUP</h1>
+        <p class="sub">코코포리아 룸 주소/ID로 로그를 불러와, 코코포리아 원본에 가까운 모양으로 백업 HTML을 만듭니다.</p>
       </div>
-      <div class="version">private clone style · clean</div>
+      <div class="version">room only · cc-like</div>
     </header>
 
     <div class="layout">
       <aside class="panel">
         <div class="section">
-          <h2>1. 불러오기</h2>
+          <h2>1. 룸 불러오기</h2>
           <label>룸 주소 / 룸 ID</label>
           <input id="roomInput" type="text" placeholder="https://ccfolia.com/rooms/A1234 또는 A1234" />
           <div class="row" style="margin-top:10px">
             <button id="loadRoomBtn">룸 데이터 불러오기</button>
             <button class="ghost" id="openRoomBtn">룸 열기</button>
           </div>
-          <p class="hint">Firestore 공개 접근이 가능한 룸 메시지만 불러올 수 있습니다. 실패하면 HTML 로그 파일을 넣어주세요.</p>
+          <p class="hint">원본 사이트처럼 Firestore 공개 데이터에서 메시지를 읽습니다. 룸이 비공개/삭제/접근 제한이면 실패할 수 있습니다.</p>
           <div id="progress" class="progress hidden"></div>
         </div>
 
         <div class="section">
-          <h2>2. 파일로 불러오기</h2>
-          <label>코코포리아 로그 HTML</label>
-          <input id="htmlFile" type="file" accept=".html,.htm,text/html" />
-          <label>JSON 붙여넣기</label>
-          <textarea id="jsonText" placeholder="룸 데이터 JSON 또는 메시지 배열을 붙여넣기"></textarea>
-          <div class="row" style="margin-top:10px">
-            <button class="ghost" id="parseJsonBtn">JSON 적용</button>
-            <button class="ghost" id="sampleBtn">샘플 보기</button>
+          <h2>2. 표시 옵션</h2>
+          <div class="option-grid">
+            <label class="chip"><input type="checkbox" id="showDate"> 날짜 표시</label>
+            <label class="chip"><input type="checkbox" id="showTime" checked> 시간 표시</label>
+            <label class="chip"><input type="checkbox" id="showAvatar" checked> 인장 표시</label>
+            <label class="chip"><input type="checkbox" id="diceStyle" checked> 주사위 강조</label>
           </div>
-        </div>
 
-        <div class="section">
-          <h2>3. 출력 탭</h2>
-          <div class="checkgrid">
-            <label class="chip"><input type="checkbox" class="tabCheck" value="main" checked> 메인</label>
-            <label class="chip"><input type="checkbox" class="tabCheck" value="info" checked> 정보</label>
-            <label class="chip"><input type="checkbox" class="tabCheck" value="other" checked> 잡담</label>
-            <label class="chip"><input type="checkbox" class="tabCheck" value="secret" checked> 비밀</label>
-            <label class="chip"><input type="checkbox" class="tabCheck" value="extra" checked> 기타</label>
-            <label class="chip"><input type="checkbox" id="diceStyle" checked> 주사위</label>
-          </div>
-          <label>기타/비밀 탭 배경색</label>
-          <input type="color" id="secretColor" value="#eaf0f7" />
-        </div>
+          <label>메시지 위치 일괄 선택</label>
+          <select id="positionMode">
+            <option value="left">왼쪽</option>
+            <option value="right">오른쪽</option>
+            <option value="center">가운데</option>
+          </select>
 
-        <div class="section">
-          <h2>4. 꾸미기</h2>
-          <label>로그 제목</label>
-          <input id="titleInput" type="text" placeholder="비워두면 룸 이름/파일명 사용" />
-          <label>제목 이미지 URL, 쉼표로 여러 개</label>
-          <textarea id="topImages" placeholder="https://...jpg, https://...png"></textarea>
-          <label>엔딩 이미지 URL, 쉼표로 여러 개</label>
-          <textarea id="bottomImages" placeholder="https://...jpg, https://...png"></textarea>
-          <label>DESC 스타일 적용 캐릭터명, 쉼표 구분</label>
-          <input id="descNames" type="text" placeholder="예: NPC, GM" />
+          <label>시스템 메시지 위치</label>
+          <select id="systemPosition">
+            <option value="center">가운데</option>
+            <option value="left">왼쪽</option>
+            <option value="right">오른쪽</option>
+          </select>
+
           <label>글자 크기</label>
           <input id="fontSize" type="number" min="10" max="24" value="14" />
+
+          <label>배경색</label>
+          <input type="color" id="bgColor" value="#f4f4f4" />
+        </div>
+
+        <div class="section">
+          <h2>3. 탭 선택</h2>
+          <div id="tabList" class="tab-list">
+            <div class="hint">룸을 불러오면 사용자가 만든 탭이 여기에 뜹니다.</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>4. 시스템 캐릭터 선택</h2>
+          <div id="systemList" class="system-list">
+            <div class="hint">룸을 불러오면 캐릭터 목록이 여기에 뜹니다.</div>
+          </div>
+          <p class="hint">선택한 캐릭터의 메시지는 이름/인장 없이 시스템 로그처럼 표시됩니다.</p>
         </div>
 
         <div class="section">
           <h2>5. 저장</h2>
-          <div class="row">
+          <label>로그 제목</label>
+          <input id="titleInput" type="text" placeholder="비워두면 룸 ID 사용" />
+          <div class="row" style="margin-top:10px">
             <button id="renderBtn">미리보기 갱신</button>
             <button class="gray" id="downloadBtn">HTML 다운로드</button>
           </div>
-          <div class="notice">주의: 원본 사이트를 그대로 복사한 것이 아니라 비슷한 흐름으로 새로 만든 코드입니다.</div>
+          <div class="notice">인장/이름은 메시지 데이터 안에 있거나 캐릭터 데이터가 같이 잡힐 때 표시됩니다. 룸 데이터 구조가 다르면 일부가 비어 보일 수 있어요.</div>
         </div>
       </aside>
 
       <main class="panel viewer">
         <div class="tabs" id="previewTabs">
-          <button class="tab active" data-tab="all">전체</button>
-          <button class="tab" data-tab="main">메인</button>
-          <button class="tab" data-tab="info">정보</button>
-          <button class="tab" data-tab="other">잡담</button>
-          <button class="tab" data-tab="secret">비밀</button>
-          <button class="tab" data-tab="extra">기타</button>
+          <button class="tab active" data-tab="__all__">전체</button>
         </div>
         <div class="toolbar">
           <span id="status">아직 불러온 로그가 없습니다.</span>
           <span id="count">0 messages</span>
         </div>
         <div class="preview" id="preview">
-          <div class="empty">룸 ID/주소를 입력하거나<br>HTML/JSON 로그를 불러오세요.</div>
+          <div class="empty">룸 ID/주소를 입력해서 로그를 불러오세요.</div>
         </div>
       </main>
     </div>
@@ -450,9 +422,11 @@
   <script>
     let state = {
       title: '',
+      roomId: '',
       messages: [],
-      activeTab: 'all',
-      sourceName: 'log'
+      characters: {},
+      tabs: [],
+      activeTab: '__all__'
     };
 
     const $ = (selector) => document.querySelector(selector);
@@ -504,162 +478,187 @@
       return object;
     }
 
-    function firestoreDocsToMessages(raw) {
-      const docs = Array.isArray(raw) ? raw : ((raw && raw.documents) ? raw.documents : []);
-      return docs.map(function (doc, index) {
-        const f = doc.fields ? fsFields(doc.fields) : doc;
-        const id = String(doc.name || f.id || index).split('/').pop();
-        return {
-          id: id,
-          name: f.name || f.characterName || f.speakerName || f.senderName || '',
-          text: f.text || f.message || f.content || f.body || f.value || '',
-          tab: normalizeTab(f.tab || f.channel || f.channelName || f.roomChatTab || f.type || 'main'),
-          time: f.createdAt || f.updatedAt || f.timestamp || doc.createTime || doc.updateTime || '',
-          icon: f.iconUrl || f.imageUrl || f.portraitUrl || f.avatar || f.image || '',
-          color: f.color || f.nameColor || f.textColor || '#99806a',
-          raw: f
-        };
-      });
-    }
-
-    function normalizeTab(value) {
-      const v = String(value || 'main').toLowerCase();
-      if (['main', '메인', 'メイン'].includes(v)) return 'main';
-      if (['info', '정보', '情報'].includes(v)) return 'info';
-      if (['other', '잡담', '雑談'].includes(v)) return 'other';
-      if (['secret', '비밀', '秘匿'].includes(v)) return 'secret';
-      return 'extra';
-    }
-
-    function normalizeMessages(raw) {
-      let arr = [];
-      let title = '';
-
-      if (raw && raw.documents) {
-        arr = firestoreDocsToMessages(raw);
-      } else if (Array.isArray(raw) && raw[0] && raw[0].fields) {
-        arr = firestoreDocsToMessages(raw);
-      } else if (Array.isArray(raw)) {
-        arr = raw;
-      } else if (raw) {
-        title = raw.name || raw.title || raw.roomName || (raw.room && raw.room.name) || '';
-        arr = raw.messages || raw.chatMessages || raw.logs || raw.chatLogs || (raw.room && raw.room.messages) || (raw.room && raw.room.chatMessages) || [];
-        if (!Array.isArray(arr) && typeof arr === 'object') arr = Object.values(arr);
-      }
-
-      return {
-        title: title,
-        messages: arr.map(function (m, index) {
-          return {
-            id: m.id || index,
-            name: m.name || m.speakerName || m.characterName || '',
-            text: m.text || m.message || m.content || m.body || '',
-            tab: normalizeTab(m.tab || m.channel || m.channelName || m.type || m.roomChatTab),
-            time: m.time || m.createdAt || m.updatedAt || m.timestamp || '',
-            icon: m.icon || m.iconUrl || m.imageUrl || m.portraitUrl || m.avatar || '',
-            color: m.color || m.nameColor || m.textColor || '#99806a',
-            raw: m
-          };
-        }).filter(function (m) {
-          return m.text || m.name;
-        })
-      };
-    }
-
     async function fetchJson(url) {
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(String(response.status) + ' ' + String(response.statusText));
-      }
+      if (!response.ok) throw new Error(String(response.status) + ' ' + String(response.statusText));
       return response.json();
     }
 
+    async function fetchCollection(roomId, collectionName, pageSize) {
+      const base = 'https://firestore.googleapis.com/v1/projects/ccfolia-160aa/databases/(default)/documents/rooms/' + encodeURIComponent(roomId) + '/' + collectionName + '/?pageSize=' + (pageSize || 300);
+      let all = [];
+      let pageToken = '';
+      do {
+        const url = base + (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : '');
+        const data = await fetchJson(url);
+        all = all.concat(data.documents || []);
+        pageToken = data.nextPageToken || '';
+      } while (pageToken);
+      return all;
+    }
+
+    async function fetchRoomDoc(roomId) {
+      const url = 'https://firestore.googleapis.com/v1/projects/ccfolia-160aa/databases/(default)/documents/rooms/' + encodeURIComponent(roomId);
+      try {
+        const data = await fetchJson(url);
+        return data.fields ? fsFields(data.fields) : data;
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function normalizeTabName(value) {
+      const v = String(value || '').trim();
+      if (!v) return '메인';
+      return v;
+    }
+
+    function extractCharacter(doc, index) {
+      const f = doc.fields ? fsFields(doc.fields) : doc;
+      const id = String(doc.name || f.id || index).split('/').pop();
+      const name = f.name || f.characterName || f.label || f.displayName || id;
+      const icon = f.iconUrl || f.imageUrl || f.portraitUrl || f.avatar || f.image || f.url || '';
+      const color = f.color || f.nameColor || f.textColor || '#555555';
+      return { id, name, icon, color, raw: f };
+    }
+
+    function extractMessage(doc, index, charMap) {
+      const f = doc.fields ? fsFields(doc.fields) : doc;
+      const id = String(doc.name || f.id || index).split('/').pop();
+      const characterId = f.characterId || f.character || f.cid || f.speakerId || '';
+      const ch = charMap[characterId] || {};
+      const name = f.name || f.speakerName || f.characterName || ch.name || '';
+      const icon = f.iconUrl || f.imageUrl || f.portraitUrl || f.avatar || f.image || ch.icon || '';
+      const color = f.color || f.nameColor || f.textColor || ch.color || '#555555';
+      const text = f.text || f.message || f.content || f.body || f.value || '';
+      const rawTab = f.tab || f.tabName || f.channel || f.channelName || f.roomChatTab || f.type || f.roomChatTabName || '메인';
+      const tab = normalizeTabName(rawTab);
+      const created = f.createdAt || f.updatedAt || f.timestamp || doc.createTime || doc.updateTime || '';
+      return { id, characterId, name, icon, color, text, tab, created, raw: f };
+    }
+
     async function loadRoom() {
-      const id = roomIdFrom($('#roomInput').value);
+      const roomId = roomIdFrom($('#roomInput').value);
       $('#progress').innerHTML = '';
-      if (!id) {
+      if (!roomId) {
         log('룸 ID를 입력해주세요.');
         return;
       }
 
-      const base = 'https://firestore.googleapis.com/v1/projects/ccfolia-160aa/databases/(default)/documents/rooms/' + encodeURIComponent(id) + '/messages/?pageSize=300';
-      let all = [];
-      let pageToken = '';
-
       try {
-        do {
-          const url = base + (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : '');
-          log('불러오는 중: ' + url);
-          const data = await fetchJson(url);
+        state.roomId = roomId;
+        log('룸 정보 확인 중...');
+        const roomDoc = await fetchRoomDoc(roomId);
+        state.title = $('#titleInput').value.trim() || roomDoc.name || roomDoc.title || roomId;
 
-          if (!data.documents || !data.documents.length) {
-            log('메시지 문서를 찾지 못했습니다. 룸 ID가 틀렸거나 접근 제한 상태일 수 있습니다.');
-            return;
-          }
+        log('캐릭터 데이터 불러오는 중...');
+        let characterDocs = [];
+        try { characterDocs = await fetchCollection(roomId, 'characters', 300); } catch (error) { log('characters 컬렉션 없음 또는 접근 실패'); }
+        if (!characterDocs.length) {
+          try { characterDocs = await fetchCollection(roomId, 'roomCharacters', 300); } catch (error) { log('roomCharacters 컬렉션 없음 또는 접근 실패'); }
+        }
 
-          all = all.concat(data.documents);
-          pageToken = data.nextPageToken || '';
-        } while (pageToken);
+        const charMap = {};
+        characterDocs.map(extractCharacter).forEach(function (ch) {
+          charMap[ch.id] = ch;
+          if (ch.name) charMap[ch.name] = ch;
+        });
+        state.characters = charMap;
+        log('캐릭터 ' + Object.keys(charMap).filter(function (key) { return charMap[key].id === key; }).length + '개 확인');
 
-        all.sort(function (a, b) {
+        log('메시지 데이터 불러오는 중...');
+        const messageDocs = await fetchCollection(roomId, 'messages', 300);
+        if (!messageDocs.length) {
+          log('메시지 문서를 찾지 못했습니다. 룸 ID가 틀렸거나 접근 제한 상태일 수 있습니다.');
+          return;
+        }
+
+        messageDocs.sort(function (a, b) {
           return new Date(a.createTime || a.updateTime || 0) - new Date(b.createTime || b.updateTime || 0);
         });
 
-        applyData({ documents: all }, id);
-        log('불러오기 성공: ' + all.length + '개 메시지');
+        state.messages = messageDocs.map(function (doc, index) {
+          return extractMessage(doc, index, charMap);
+        }).filter(function (m) { return m.text || m.name; });
+
+        hydrateCharactersFromMessages();
+        buildTabs();
+        buildSystemList();
+        render();
+        log('불러오기 성공: ' + state.messages.length + '개 메시지');
       } catch (error) {
         console.error(error);
         log('불러오기 실패: ' + error.message);
-        log('원본 사이트와 같은 Firestore 방식이지만, 룸이 비공개/삭제/접근 제한이면 실패합니다.');
+        log('원본 사이트와 같은 Firestore 방식이지만, 룸이 비공개/삭제/접근 제한이면 실패할 수 있습니다.');
       }
     }
 
-    function applyData(data, name) {
-      const normalized = normalizeMessages(data);
-      state.title = $('#titleInput').value.trim() || normalized.title || name || 'log';
-      state.messages = normalized.messages;
-      state.sourceName = name || 'log';
-      render();
-    }
-
-    function parseHtmlLog(html, name) {
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const rows = Array.from(doc.querySelectorAll('.message-row, .msg_container, .message, .chat-line, li'));
-      const messages = [];
-
-      rows.forEach(function (element, index) {
-        const nameElement = element.querySelector('.msg-name, .name, .message-name, .speaker, .character-name');
-        const textElement = element.querySelector('.msg-text, .text, .message-text, .chat-text, .content') || element;
-        const timeElement = element.querySelector('.msg-timestamp, .time, .timestamp');
-        const img = element.querySelector('img');
-        const text = (textElement.innerText || '').trim();
-        if (!text) return;
-
-        let tab = 'main';
-        const allText = (element.className + ' ' + element.textContent).toLowerCase();
-        if (allText.includes('info') || allText.includes('정보')) tab = 'info';
-        else if (allText.includes('other') || allText.includes('잡담')) tab = 'other';
-        else if (allText.includes('secret') || allText.includes('비밀')) tab = 'secret';
-
-        messages.push({
-          id: index,
-          name: nameElement ? nameElement.innerText.trim() : '',
-          text: text,
-          tab: tab,
-          time: timeElement ? timeElement.innerText.trim() : '',
-          icon: img ? img.src : '',
-          color: '#99806a'
-        });
+    function hydrateCharactersFromMessages() {
+      state.messages.forEach(function (m) {
+        const key = m.characterId || m.name;
+        if (!key) return;
+        if (!state.characters[key]) {
+          state.characters[key] = { id: key, name: m.name || key, icon: m.icon || '', color: m.color || '#555555' };
+        } else {
+          if (!state.characters[key].name && m.name) state.characters[key].name = m.name;
+          if (!state.characters[key].icon && m.icon) state.characters[key].icon = m.icon;
+          if (!state.characters[key].color && m.color) state.characters[key].color = m.color;
+        }
       });
-
-      state.title = $('#titleInput').value.trim() || String(name || 'log').replace(/\.html?$/i, '');
-      state.messages = messages;
-      state.sourceName = name || 'log';
-      render();
     }
 
-    function selectedTabs() {
-      return $$('.tabCheck:checked').map(function (input) { return input.value; });
+    function buildTabs() {
+      const names = [];
+      state.messages.forEach(function (m) {
+        if (!names.includes(m.tab)) names.push(m.tab);
+      });
+      state.tabs = names;
+
+      const tabList = $('#tabList');
+      tabList.innerHTML = names.map(function (name) {
+        return '<label class="chip"><input type="checkbox" class="outputTab" value="' + escapeHtml(name) + '" checked> ' + escapeHtml(name) + '</label>';
+      }).join('') || '<div class="hint">탭을 찾지 못했습니다.</div>';
+
+      const previewTabs = $('#previewTabs');
+      previewTabs.innerHTML = '<button class="tab active" data-tab="__all__">전체</button>' + names.map(function (name) {
+        return '<button class="tab" data-tab="' + escapeHtml(name) + '">' + escapeHtml(name) + '</button>';
+      }).join('');
+
+      $$('.outputTab').forEach(function (input) { input.addEventListener('change', render); });
+    }
+
+    function uniqueCharacters() {
+      const seen = new Set();
+      const list = [];
+      state.messages.forEach(function (m) {
+        const key = m.characterId || m.name;
+        const label = m.name || key;
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        list.push({ id: key, name: label });
+      });
+      return list;
+    }
+
+    function buildSystemList() {
+      const list = uniqueCharacters();
+      const area = $('#systemList');
+      area.innerHTML = list.map(function (ch) {
+        return '<label class="chip"><input type="checkbox" class="systemChar" value="' + escapeHtml(ch.id) + '"> ' + escapeHtml(ch.name) + '</label>';
+      }).join('') || '<div class="hint">캐릭터를 찾지 못했습니다.</div>';
+      $$('.systemChar').forEach(function (input) { input.addEventListener('change', render); });
+    }
+
+    function selectedOutputTabs() {
+      return $$('.outputTab:checked').map(function (input) { return input.value; });
+    }
+
+    function selectedSystemChars() {
+      return new Set($$('.systemChar:checked').map(function (input) { return input.value; }));
+    }
+
+    function isSystemMessage(message, systemSet) {
+      return systemSet.has(message.characterId) || systemSet.has(message.name) || (!message.name && !message.icon);
     }
 
     function enhanceDice(text) {
@@ -670,29 +669,38 @@
       return html;
     }
 
-    function urlList(value) {
-      return String(value || '').split(',').map(function (v) { return v.trim(); }).filter(Boolean);
+    function formatDateTime(value) {
+      if (!value) return { date: '', time: '' };
+      const date = new Date(value);
+      if (isNaN(date)) return { date: '', time: String(value) };
+      return {
+        date: date.toLocaleDateString(),
+        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
     }
 
-    function formatTime(value) {
-      if (!value) return '';
-      const date = new Date(value);
-      if (!isNaN(date)) return date.toLocaleString();
-      return String(value);
+    function renderMeta(value) {
+      const dt = formatDateTime(value);
+      const parts = [];
+      if ($('#showDate').checked && dt.date) parts.push(dt.date);
+      if ($('#showTime').checked && dt.time) parts.push(dt.time);
+      return parts.join(' ');
     }
 
     function render() {
-      document.documentElement.style.setProperty('--secret', $('#secretColor').value);
+      document.documentElement.style.setProperty('--cc-bg', $('#bgColor').value);
       const preview = $('#preview');
-      const allowed = selectedTabs();
-      const active = state.activeTab;
+      const outputTabs = selectedOutputTabs();
+      const systemSet = selectedSystemChars();
       const fontSize = Number($('#fontSize').value) || 14;
-      const descNames = $('#descNames').value.split(',').map(function (v) { return v.trim(); }).filter(Boolean);
+      const active = state.activeTab;
+      const position = $('#positionMode').value;
+      const systemPosition = $('#systemPosition').value;
 
-      let messages = state.messages.filter(function (m) { return allowed.includes(m.tab); });
-      if (active !== 'all') messages = messages.filter(function (m) { return m.tab === active; });
+      let messages = state.messages.filter(function (m) { return outputTabs.includes(m.tab); });
+      if (active !== '__all__') messages = messages.filter(function (m) { return m.tab === active; });
 
-      $('#status').textContent = state.title || 'custom log';
+      $('#status').textContent = $('#titleInput').value.trim() || state.title || 'custom log';
       $('#count').textContent = messages.length + ' messages';
 
       if (!messages.length) {
@@ -700,113 +708,52 @@
         return;
       }
 
-      const title = escapeHtml($('#titleInput').value.trim() || state.title || 'CCFOLIA LOG');
-      const topImages = urlList($('#topImages').value).map(function (url) {
-        return '<img class="top-image" src="' + escapeHtml(url) + '">';
-      }).join('');
-      const bottomImages = urlList($('#bottomImages').value).map(function (url) {
-        return '<img class="bottom-image" src="' + escapeHtml(url) + '">';
-      }).join('');
+      let html = '<div class="log-title">' + escapeHtml($('#titleInput').value.trim() || state.title || 'CCFOLIA LOG') + '</div>';
 
-      let html = topImages + '<div class="log-title"><h3>' + title + '</h3></div>';
+      messages.forEach(function (m) {
+        const system = isSystemMessage(m, systemSet);
+        const rowPosition = system ? systemPosition : position;
+        const classes = 'cc-row ' + rowPosition + (system ? ' system' : '');
+        const meta = renderMeta(m.created);
+        const showAvatar = $('#showAvatar').checked && m.icon && !system;
+        const avatar = showAvatar ? '<img class="cc-avatar" src="' + escapeHtml(m.icon) + '" onerror="this.style.visibility=\'hidden\'">' : '<div></div>';
+        const nameLine = system ? '' : '<div class="cc-name-line"><span class="cc-name" style="color:' + escapeHtml(m.color) + '">' + escapeHtml(m.name || 'Unknown') + '</span>' + (meta ? '<span class="cc-meta">' + escapeHtml(meta) + '</span>' : '') + '</div>';
+        const systemMeta = system && meta ? '<span class="cc-meta">' + escapeHtml(meta) + '</span> ' : '';
+        const body = '<div class="cc-body">' + nameLine + '<div class="cc-bubble" style="font-size:' + fontSize + 'px">' + systemMeta + enhanceDice(m.text) + '</div></div>';
 
-      messages.forEach(function (m, index) {
-        const system = !m.name && !m.icon;
-        const desc = descNames.includes(m.name);
-        const cls = 'msg ' + m.tab + (system ? ' system' : '') + (desc ? ' desc' : '');
-        const avatar = system ? '' : '<img class="avatar" src="' + escapeHtml(m.icon || '') + '" onerror="this.style.visibility=\'hidden\'">';
-        const name = system ? '' : '<div class="name" style="color:' + escapeHtml(m.color) + '">' + escapeHtml(m.name || 'Unknown') + ' <span class="time">' + escapeHtml(formatTime(m.time)) + '</span></div>';
-        html += '<article class="' + cls + '" data-real-index="' + state.messages.indexOf(m) + '">' + avatar + '<div class="bubble">' + name + '<div class="text rendered" style="font-size:' + fontSize + 'px">' + enhanceDice(m.text) + '</div><textarea class="editor hidden" style="font-size:' + fontSize + 'px">' + escapeHtml(m.text) + '</textarea></div></article>';
+        if (rowPosition === 'right' && !system) html += '<article class="' + classes + '">' + body + avatar + '</article>';
+        else if (system) html += '<article class="' + classes + '">' + body + '</article>';
+        else html += '<article class="' + classes + '">' + avatar + body + '</article>';
       });
 
-      html += bottomImages;
       preview.innerHTML = html;
-
-      $$('#preview .bubble').forEach(function (bubble) {
-        bubble.addEventListener('dblclick', function () {
-          const rendered = bubble.querySelector('.rendered');
-          const editor = bubble.querySelector('.editor');
-          rendered.classList.toggle('hidden');
-          editor.classList.toggle('hidden');
-          if (!editor.classList.contains('hidden')) editor.focus();
-        });
-      });
-
-      $$('#preview .editor').forEach(function (editor) {
-        editor.addEventListener('change', function () {
-          const article = editor.closest('.msg');
-          const realIndex = Number(article.dataset.realIndex);
-          if (state.messages[realIndex]) state.messages[realIndex].text = editor.value;
-          render();
-        });
-      });
     }
 
     function downloadHtml() {
       render();
-      const clone = $('#preview').cloneNode(true);
-      clone.querySelectorAll('textarea').forEach(function (textarea) { textarea.remove(); });
-      clone.querySelectorAll('.hidden').forEach(function (element) { element.remove(); });
-      const html = '<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + escapeHtml(state.title || 'custom_log') + '</title><style>' + document.querySelector('style').textContent + '</style></head><body><main class="preview">' + clone.innerHTML + '</main></body></html>';
+      const title = $('#titleInput').value.trim() || state.title || 'custom_log';
+      const html = '<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + escapeHtml(title) + '</title><style>' + document.querySelector('style').textContent + '</style></head><body><main class="preview">' + $('#preview').innerHTML + '</main></body></html>';
       const blob = new Blob([html], { type: 'text/html' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'custom_' + String(state.sourceName || 'log').replace(/[^\w가-힣.-]+/g, '_') + '.html';
+      link.download = 'ccfolia_backup_' + String(state.roomId || 'log').replace(/[^\w가-힣.-]+/g, '_') + '.html';
       link.click();
       setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
     }
 
     document.addEventListener('DOMContentLoaded', function () {
       $('#loadRoomBtn').addEventListener('click', loadRoom);
-
       $('#openRoomBtn').addEventListener('click', function () {
         const id = roomIdFrom($('#roomInput').value);
-        if (!id) {
-          log('룸 ID를 입력해주세요.');
-          return;
-        }
+        if (!id) { log('룸 ID를 입력해주세요.'); return; }
         window.open('https://ccfolia.com/rooms/' + encodeURIComponent(id), '_blank');
       });
-
-      $('#parseJsonBtn').addEventListener('click', function () {
-        try {
-          applyData(JSON.parse($('#jsonText').value || '[]'), 'pasted_json');
-        } catch (error) {
-          alert('JSON 파싱 실패: ' + error.message);
-        }
-      });
-
-      $('#sampleBtn').addEventListener('click', function () {
-        applyData({
-          name: '샘플 로그',
-          messages: [
-            { name: '탐사자', text: 'CC<=70 관찰력 → 보통 성공', tab: 'main', color: '#7b5d45' },
-            { name: 'KP', text: '정보 탭 예시입니다.', tab: 'info', color: '#57735b' },
-            { name: '', text: '장면 전환', tab: 'main' },
-            { name: '잡담', text: '잡담 탭은 회색으로 출력됩니다.', tab: 'other' },
-            { name: '비밀', text: '비밀 탭 예시입니다.', tab: 'secret' }
-          ]
-        }, 'sample');
-      });
-
-      $('#htmlFile').addEventListener('change', async function (event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        parseHtmlLog(await file.text(), file.name);
-      });
-
       $('#renderBtn').addEventListener('click', render);
       $('#downloadBtn').addEventListener('click', downloadHtml);
-
-      $$('.tabCheck, #diceStyle, #secretColor, #fontSize').forEach(function (element) {
+      $$('#showDate, #showTime, #showAvatar, #diceStyle, #positionMode, #systemPosition, #fontSize, #bgColor').forEach(function (element) {
         element.addEventListener('change', render);
       });
-
-      $('#titleInput').addEventListener('input', function () {
-        state.title = $('#titleInput').value.trim() || state.title;
-        render();
-      });
-
+      $('#titleInput').addEventListener('input', render);
       $('#previewTabs').addEventListener('click', function (event) {
         const button = event.target.closest('.tab');
         if (!button) return;
