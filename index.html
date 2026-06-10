@@ -187,6 +187,86 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
   .insert-image{width:min(100%,var(--img-width,92%))}
   .standing-image{max-width:55vw}
 }
+
+/* =========================================================
+  UX final patch 2
+========================================================= */
+:root{
+  --log-line-height:1.55;
+  --log-width:1040px;
+}
+.cc-row,
+.custom-block{
+  max-width:var(--log-width)!important;
+}
+.cc-text{
+  line-height:var(--log-line-height)!important;
+}
+.cc-row.compact .cc-avatar,
+.cc-row.compact .cc-name-line{
+  visibility:hidden;
+  height:0;
+  min-height:0;
+  margin:0;
+}
+.cc-row.dragging,
+.custom-block.dragging{
+  opacity:.45;
+  outline:2px dashed rgba(255,255,255,.35);
+}
+.cc-row,
+.custom-block{
+  touch-action:manipulation;
+}
+.character-icon-preview{
+  width:72px;
+  height:72px;
+  object-fit:cover;
+  object-position:var(--icon-x,50%) var(--icon-y,50%);
+  transform:scale(var(--icon-scale,1));
+  border-radius:4px;
+  background:#eee;
+  display:block;
+  margin:6px 0;
+}
+.avatar-adjust-box{
+  width:150px;
+  height:150px;
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#222;
+  cursor:grab;
+}
+.avatar-adjust-box img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:var(--modal-x,50%) var(--modal-y,50%);
+  transform:scale(var(--modal-scale,1));
+  user-select:none;
+  pointer-events:none;
+}
+.inline-preview{
+  padding:8px;
+  border:1px solid rgba(0,0,0,.15);
+  border-radius:6px;
+  background:#303136;
+  color:#eee;
+  font-family:var(--log-font);
+  font-size:var(--log-font-size);
+  line-height:var(--log-line-height);
+  white-space:pre-wrap;
+}
+.inline-editor .format-row input[type=color]{
+  width:42px;
+  flex:0 0 42px;
+}
+@media(max-width:900px){
+  .cc-row,.custom-block{max-width:100%!important}
+}
+
 </style>
 </head>
 
@@ -249,6 +329,10 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
         </select>
         <label>대사 폰트 크기</label>
         <input id="fontSize" type="number" min="10" max="24" value="14">
+        <label>줄간격</label>
+        <input id="lineHeight" type="number" min="1" max="2.4" step="0.05" value="1.55">
+        <label>로그 폭(px)</label>
+        <input id="logWidth" type="number" min="420" max="1400" step="20" value="1040">
       </div>
     </details>
 
@@ -1178,6 +1262,331 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   }
 });
+
+/* =========================================================
+  UX final patch 2:
+  - standing selection replaces avatar icon
+  - no @ label in standing names
+  - compact merge keeps per-message buttons
+  - drag reorder
+  - line-height / width
+  - editable preview + color
+  - character icon URL list removed from modal UI
+========================================================= */
+function standingLabel(standing,index){
+  return standing.name || standing.label || standing.title || ('스탠딩 '+(index+1));
+}
+
+function standingOptionsHtml(c,selectedIndex){
+  const standings=c.standings||[];
+  return standings.map((s,i)=>'<option value="'+i+'" '+(String(i)===String(selectedIndex)?'selected':'')+'>'+esc(standingLabel(s,i))+'</option>').join('');
+}
+
+function getMessageStanding(message,character){
+  const standings=character.standings||[];
+  if(message.standingIndex!==''&&standings[Number(message.standingIndex)])return standings[Number(message.standingIndex)];
+  return null;
+}
+
+function getDisplayIcon(message,character){
+  const standing=getMessageStanding(message,character);
+  if(standing&&standing.url)return standing.url;
+  return message.icon||activeIcon(character);
+}
+
+function groupItems(items,set){
+  if(!$('#mergeSameChar').checked)return items;
+  let lastKey='';
+  return items.map((item)=>{
+    const copy={...item};
+    if(item.kind==='message'&&!isSystemMessage(item,set)){
+      const key=(item.characterId||item.name)+'|'+item.tab;
+      copy.compact=key===lastKey;
+      lastKey=key;
+    }else{
+      lastKey='';
+    }
+    return copy;
+  });
+}
+
+function applyVisualSettings(){
+  document.documentElement.style.setProperty('--cc-bg',$('#bgColor').value||'#303136');
+  document.documentElement.style.setProperty('--log-font',fontValue($('#fontMode').value));
+  document.documentElement.style.setProperty('--log-font-size',(Number($('#fontSize').value)||14)+'px');
+  document.documentElement.style.setProperty('--log-line-height',(Number($('#lineHeight')?.value)||1.55));
+  document.documentElement.style.setProperty('--log-width',(Number($('#logWidth')?.value)||1040)+'px');
+  document.documentElement.style.setProperty('--dice-font-size',(Number($('#diceFontSize').value)||13)+'px');
+  document.documentElement.style.setProperty('--system-font-size',(Number($('#systemFontSize').value)||13)+'px');
+  const sys=$('#systemTextStyle').value;
+  document.documentElement.style.setProperty('--system-weight',sys.includes('bold')?'900':'400');
+  document.documentElement.style.setProperty('--system-style',sys.includes('italic')?'italic':'normal');
+}
+
+function render(){
+  const preview=$('#preview');
+  preview.className='preview '+$('#skinMode').value;
+  applyVisualSettings();
+  const set=selectedSystemCharacters();
+  const items=groupItems(allItems(),set);
+  $('#status').textContent=$('#titleInput').value.trim()||state.title||'custom log';
+  $('#count').textContent=items.length+' items';
+  if(!items.length){
+    preview.innerHTML='<div class="empty">'+(selectedTabs().length?'선택한 탭에 출력할 메시지가 없습니다.':'왼쪽의 출력할 탭을 체크하면 미리보기가 표시됩니다.')+'</div>';
+    return;
+  }
+  preview.innerHTML=items.map((item)=>{
+    if(item.kind==='image')return renderImageBlock(item);
+    if(item.kind==='bgm')return renderBgmBlock(item);
+    return renderMessage(item,set);
+  }).join('');
+  attachBgm();
+  setupDragReorder();
+}
+
+function renderMessage(message,set){
+  const c=findCharacterForMessage(message)||{};
+  const system=isSystemMessage(message,set);
+  const dice=$('#diceSeparate').checked&&isDiceText(message.text);
+  const icon=getDisplayIcon(message,c);
+  const showAvatar=$('#showAvatar').checked&&icon&&!system&&!dice;
+
+  const avatarX=Number(message.avatarX||c.x||50),avatarY=Number(message.avatarY||c.y||50),avatarScale=Number(message.avatarScale||c.scale||100)/100;
+  const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="object-position:'+avatarX+'% '+avatarY+'%;transform:scale('+avatarScale+')"></div>':'<div></div>';
+  const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
+  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
+  const tools=actionTools(message.id,
+    '<button class="ghost small" onclick="toggleEdit(\''+message.id+'\')">✎ 수정</button>'+
+    '<button class="ghost small" onclick="openChatModalAfter(\''+message.id+'\')">아래 채팅 추가</button>'+
+    '<button class="ghost small" onclick="openImageModalAfter(\''+message.id+'\')">아래 이미지 추가</button>'+
+    '<button class="ghost small" onclick="openBgmModalAfter(\''+message.id+'\')">아래 BGM 추가</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',-1)">↑ 위로</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',1)">↓ 아래로</button>'+
+    '<button class="danger small" onclick="deleteItem(\''+message.id+'\')">삭제</button>'
+  );
+  const editor=renderMessageEditor(message,c,icon);
+  const diceClass=dice?'dice-'+$('#diceColorMode').value:'';
+  const sysClass=system?'system-'+$('#systemStyleMode').value:'';
+  const diceColor='--dice-color:'+esc(message.color||c.color||'rgba(255,255,255,.64)');
+  const textHtml=dice?enhanceDice(message.text,displayName):(system?systemMeta+inlineFormat(message.text):inlineFormat(message.text));
+  return '<article class="cc-row '+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="true">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
+}
+
+function renderMessageEditor(m,c,icon){
+  return '<div class="inline-editor hidden" id="editor_'+m.id+'">'+
+    '<label>기존 캐릭터 선택</label>'+
+    '<select onchange="applyCharacterToMessage(\''+m.id+'\',this.value)"><option value="">직접 입력 유지</option>'+characterOptionsHtml(m.characterId||m.name)+'</select>'+
+    '<label>이름</label><input value="'+esc(m.name||c.name||'')+'" onchange="editMsg(\''+m.id+'\',\'name\',this.value)">'+
+    '<label>이름색</label><input type="color" value="'+esc(m.color||c.color||'#f2f2f2')+'" onchange="editMsg(\''+m.id+'\',\'color\',this.value)">'+
+    '<label>대사 색상/서식</label>'+
+    '<div class="format-row"><input type="color" id="color_'+m.id+'" value="#ff7777"><button class="ghost small" onclick="wrapTextColor(\''+m.id+'\')">색상</button><button class="ghost small" onclick="wrapText(\''+m.id+'\',\'**\',\'**\')">볼드</button><button class="ghost small" onclick="wrapText(\''+m.id+'\',\'*\',\'*\')">기울임</button><button class="ghost small" onclick="wrapText(\''+m.id+'\',\'***\',\'***\')">볼드기울임</button></div>'+
+    '<label>인장 URL</label><input value="'+esc(icon||'')+'" onchange="editMsg(\''+m.id+'\',\'icon\',this.value)">'+
+    '<label>스탠딩 선택 / 인장 교체</label>'+
+    '<select onchange="editMsg(\''+m.id+'\',\'standingIndex\',this.value)"><option value="">사용 안 함</option>'+standingOptionsHtml(c,m.standingIndex)+'</select>'+
+    '<label>대사</label><textarea id="text_'+m.id+'" oninput="updateTextPreview(\''+m.id+'\')" onchange="editMsg(\''+m.id+'\',\'text\',this.value)">'+esc(m.text)+'</textarea>'+
+    '<label>미리보기</label><div class="inline-preview" id="preview_'+m.id+'" style="color:'+esc(m.color||c.color||'#eee')+'">'+inlineFormat(m.text)+'</div>'+
+    '</div>';
+}
+
+function updateTextPreview(id){
+  const textarea=$('#text_'+id);
+  const preview=$('#preview_'+id);
+  if(textarea&&preview)preview.innerHTML=inlineFormat(textarea.value);
+}
+
+function wrapText(id,before,after){
+  const textarea=$('#text_'+id);if(!textarea)return;
+  const start=textarea.selectionStart,end=textarea.selectionEnd;
+  const selected=textarea.value.slice(start,end)||'텍스트';
+  textarea.value=textarea.value.slice(0,start)+before+selected+after+textarea.value.slice(end);
+  updateTextPreview(id);
+  textarea.dispatchEvent(new Event('change'));
+}
+
+function wrapTextColor(id){
+  const textarea=$('#text_'+id),color=$('#color_'+id);if(!textarea||!color)return;
+  const start=textarea.selectionStart,end=textarea.selectionEnd;
+  const selected=textarea.value.slice(start,end)||'텍스트';
+  textarea.value=textarea.value.slice(0,start)+'<span style="color:'+color.value+'">'+selected+'</span>'+textarea.value.slice(end);
+  updateTextPreview(id);
+  textarea.dispatchEvent(new Event('change'));
+}
+
+function renderImageBlock(block){
+  return '<div class="custom-block" data-id="'+esc(block.id)+'" data-kind="block" draggable="true"><img class="insert-image" src="'+esc(block.url)+'" style="--img-width:'+esc(block.width||70)+'%;--img-height:'+(block.height?esc(block.height)+'px':'auto')+';--img-fit:'+(block.height?'cover':'contain')+';--img-x:'+esc(block.objectX||50)+'%;--img-y:'+esc(block.objectY||50)+'%;transform:scale('+(Number(block.scale||100)/100)+')"><div class="caption">'+esc(block.caption||'')+'</div>'+actionTools(block.id,'<button class="ghost small" onclick="editBlock(\''+block.id+'\')">✎ 이미지 수정</button><button class="ghost small" onclick="openChatModalAfter(\''+block.id+'\')">아래 채팅 추가</button><button class="ghost small" onclick="openImageModalAfter(\''+block.id+'\')">아래 이미지 추가</button><button class="ghost small" onclick="openBgmModalAfter(\''+block.id+'\')">아래 BGM 추가</button><button class="ghost small" onclick="moveBlock(\''+block.id+'\',-1)">↑ 위로</button><button class="ghost small" onclick="moveBlock(\''+block.id+'\',1)">↓ 아래로</button><button class="danger small" onclick="deleteItem(\''+block.id+'\')">삭제</button>')+'</div>';
+}
+
+function renderBgmBlock(block){
+  return '<div class="custom-block" data-id="'+esc(block.id)+'" data-kind="block" draggable="true"><div class="bgm-area"><button class="bgmButton" data-audio="'+esc(block.url)+'">♪ '+esc(block.label||bgmTitle(block.url))+'</button></div>'+actionTools(block.id,'<button class="ghost small" onclick="editBlock(\''+block.id+'\')">✎ BGM 수정</button><button class="ghost small" onclick="openChatModalAfter(\''+block.id+'\')">아래 채팅 추가</button><button class="ghost small" onclick="openImageModalAfter(\''+block.id+'\')">아래 이미지 추가</button><button class="ghost small" onclick="openBgmModalAfter(\''+block.id+'\')">아래 BGM 추가</button><button class="ghost small" onclick="moveBlock(\''+block.id+'\',-1)">↑ 위로</button><button class="ghost small" onclick="moveBlock(\''+block.id+'\',1)">↓ 아래로</button><button class="danger small" onclick="deleteItem(\''+block.id+'\')">삭제</button>')+'</div>';
+}
+
+/* Character modal without icon URL list */
+function openCharacterModal(characterId){
+  const c=getCharacter(characterId)||createEmptyCharacter(characterId,characterId);
+  if(!state.characters[characterId])state.characters[characterId]=c;
+  const icon=activeIcon(c);
+  openModal('<h3>캐릭터 상세정보</h3>'+
+    '<label>표시 이름</label><input id="modalCharacterName" value="'+esc(c.name||characterId)+'">'+
+    '<label>이름색</label><input id="modalCharacterColor" type="color" value="'+esc(c.color||'#f2f2f2')+'">'+
+    '<label>대표 인장</label>'+
+    '<div class="avatar-adjust-box" id="avatarAdjustBox" style="--modal-x:'+(c.x||50)+'%;--modal-y:'+(c.y||50)+'%;--modal-scale:'+(Number(c.scale||100)/100)+'"><img id="avatarAdjustPreview" src="'+esc(icon||'')+'"></div>'+
+    '<label>대표 인장 URL</label><input id="modalCharacterIcon" value="'+esc(icon||'')+'">'+
+    '<div class="grid3"><div><label>인장 X</label><input id="modalCharacterX" type="number" value="'+esc(c.x||50)+'"></div><div><label>인장 Y</label><input id="modalCharacterY" type="number" value="'+esc(c.y||50)+'"></div><div><label>확대</label><input id="modalCharacterScale" type="number" value="'+esc(c.scale||100)+'"></div></div>'+
+    '<label>스탠딩 일괄 조정</label>'+
+    '<div class="grid3"><div><label>너비</label><input id="batchStandingWidth" type="number" value="'+esc(c.standingWidth||180)+'"></div><div><label>X</label><input id="batchStandingX" type="number" value="'+esc(c.standingX||50)+'"></div><div><label>Y</label><input id="batchStandingY" type="number" value="'+esc(c.standingY||50)+'"></div></div>'+
+    '<div class="grid2"><div><label>높이</label><input id="batchStandingHeight" type="number" value="'+esc(c.standingHeight||'')+'"></div><div><label>확대</label><input id="batchStandingScale" type="number" value="'+esc(c.standingScale||100)+'"></div></div>'+
+    '<button class="ghost" onclick="applyBatchStanding(\''+esc(characterId)+'\')">일괄값을 모든 스탠딩에 저장</button>'+
+    '<label>스탠딩</label><div class="standing-button-list">'+renderStandingButtons(characterId)+'</div>'+
+    '<div class="row" style="margin-top:10px"><button class="ghost" onclick="openStandingAddModal(\''+esc(characterId)+'\')">스탠딩 추가</button></div>'+
+    '<div class="row" style="margin-top:10px"><button onclick="saveCharacterModal(\''+esc(characterId)+'\')">저장</button><button class="ghost" onclick="closeModal()">닫기</button></div>'
+  );
+  setupAvatarDrag();
+  $('#modalCharacterIcon').addEventListener('input',()=>{$('#avatarAdjustPreview').src=$('#modalCharacterIcon').value});
+  $('#modalCharacterScale').addEventListener('input',()=>{$('#avatarAdjustBox').style.setProperty('--modal-scale',Number($('#modalCharacterScale').value||100)/100)});
+}
+
+function saveCharacterModal(characterId){
+  const c=getCharacter(characterId);if(!c)return;
+  c.name=$('#modalCharacterName').value.trim()||c.name;
+  c.color=$('#modalCharacterColor').value||c.color;
+  c.icons=[$('#modalCharacterIcon').value.trim()].filter(Boolean);
+  c.x=Number($('#modalCharacterX').value||50);
+  c.y=Number($('#modalCharacterY').value||50);
+  c.scale=Number($('#modalCharacterScale').value||100);
+  c.standingWidth=Number($('#batchStandingWidth').value||180);
+  c.standingHeight=$('#batchStandingHeight').value||'';
+  c.standingX=Number($('#batchStandingX').value||50);
+  c.standingY=Number($('#batchStandingY').value||50);
+  c.standingScale=Number($('#batchStandingScale').value||100);
+  applyCharacterToLog(characterId);
+  closeModal();buildCharacterList();render();
+}
+
+function setupAvatarDrag(){
+  const box=$('#avatarAdjustBox');if(!box)return;
+  let dragging=false;
+  function update(event){
+    const rect=box.getBoundingClientRect();
+    const clientX=event.touches?event.touches[0].clientX:event.clientX;
+    const clientY=event.touches?event.touches[0].clientY:event.clientY;
+    const x=Math.max(0,Math.min(100,((clientX-rect.left)/rect.width)*100));
+    const y=Math.max(0,Math.min(100,((clientY-rect.top)/rect.height)*100));
+    $('#modalCharacterX').value=Math.round(x);
+    $('#modalCharacterY').value=Math.round(y);
+    box.style.setProperty('--modal-x',Math.round(x)+'%');
+    box.style.setProperty('--modal-y',Math.round(y)+'%');
+  }
+  box.addEventListener('mousedown',(e)=>{dragging=true;update(e)});
+  window.addEventListener('mousemove',(e)=>{if(dragging)update(e)});
+  window.addEventListener('mouseup',()=>{dragging=false});
+  box.addEventListener('touchstart',(e)=>{dragging=true;update(e)},{passive:true});
+  box.addEventListener('touchmove',(e)=>{if(dragging)update(e)},{passive:true});
+  box.addEventListener('touchend',()=>{dragging=false});
+}
+
+/* Insert below item */
+function insertAfterId(id,item){
+  const all=allItems();
+  const base=all.find(e=>e.id===id);
+  item.created=base&&base.created?new Date(new Date(base.created).getTime()+1).toISOString():new Date().toISOString();
+  if(item.kind==='message')state.messages.push(item);else state.blocks.push(item);
+  render();
+}
+let insertTargetId='end';
+function openChatModalAfter(id){insertTargetId=id;openChatModal();}
+function openImageModalAfter(id){insertTargetId=id;openImageModal('end');}
+function openBgmModalAfter(id){insertTargetId=id;openBgmModal('end');}
+
+const oldSaveChatModal=saveChatModal;
+saveChatModal=function(){
+  const key=$('#modalChatCharacter').value,c=getCharacter(key)||null,text=$('#modalChatText').value;
+  if(!text.trim()){alert('대사를 입력해주세요.');return}
+  const name=$('#modalChatName').value.trim()||(c?c.name:'');
+  const item={id:'m_custom_'+Date.now(),kind:'message',characterId:key||name||'__system_blank__',name,text,icon:c?activeIcon(c):'',color:$('#modalChatColor').value||(c?c.color:'#f2f2f2'),tab:selectedTabs()[0]||'메인',created:new Date().toISOString(),avatarX:50,avatarY:50,avatarScale:100,standingIndex:$('#modalChatStanding').value,deleted:false};
+  if(insertTargetId&&insertTargetId!=='end')insertAfterId(insertTargetId,item);else insertAtEnd(item);
+  insertTargetId='end';
+  closeModal();
+}
+
+const oldSaveImageModal=saveImageModal;
+saveImageModal=function(blockId){
+  const url=$('#modalImageUrl').value.trim();
+  if(!url){alert('이미지 URL을 넣어주세요.');return}
+  const data={url,width:$('#modalImageWidth').value||70,height:$('#modalImageHeight').value||'',objectX:$('#modalImageX').value||50,objectY:$('#modalImageY').value||50,scale:$('#modalImageScale').value||100,caption:$('#modalImageCaption').value||''};
+  if(blockId){const b=state.blocks.find((entry)=>entry.id===blockId);if(b)Object.assign(b,data);render()}
+  else{
+    const item={id:'b_'+Date.now(),kind:'image',...data,deleted:false};
+    if(insertTargetId&&insertTargetId!=='end')insertAfterId(insertTargetId,item);else insertAtEnd(item);
+  }
+  insertTargetId='end';
+  closeModal();
+}
+
+const oldSaveBgmModal=saveBgmModal;
+saveBgmModal=function(blockId){
+  const url=$('#modalBgmUrl').value.trim();
+  if(!url){alert('mp3 링크를 넣어주세요.');return}
+  const label=$('#modalBgmLabel').value.trim()||bgmTitle(url);
+  if(blockId){const b=state.blocks.find((entry)=>entry.id===blockId);if(b)Object.assign(b,{url,label});render()}
+  else{
+    const item={id:'b_'+Date.now(),kind:'bgm',url,label,deleted:false};
+    if(insertTargetId&&insertTargetId!=='end')insertAfterId(insertTargetId,item);else insertAtEnd(item);
+  }
+  insertTargetId='end';
+  closeModal();
+}
+
+/* Drag reorder */
+let dragSourceId=null;
+function setupDragReorder(){
+  $$('#preview [draggable="true"]').forEach(el=>{
+    el.addEventListener('dragstart',e=>{
+      dragSourceId=el.dataset.id;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+    el.addEventListener('dragover',e=>e.preventDefault());
+    el.addEventListener('drop',e=>{
+      e.preventDefault();
+      const targetId=el.dataset.id;
+      if(dragSourceId&&targetId&&dragSourceId!==targetId)reorderByIds(dragSourceId,targetId);
+      dragSourceId=null;
+    });
+  });
+}
+function reorderByIds(sourceId,targetId){
+  const items=allItems();
+  const source=items.find(e=>e.id===sourceId);
+  const target=items.find(e=>e.id===targetId);
+  if(!source||!target)return;
+  const old=source.created;
+  source.created=new Date(new Date(target.created||Date.now()).getTime()-1).toISOString();
+  render();
+}
+
+/* Better loading status */
+const originalLoadCharactersFromRoom=loadCharactersFromRoom;
+loadCharactersFromRoom=async function(){
+  const btn=$('#loadCharactersBtn');
+  if(btn){btn.disabled=true;btn.textContent='불러오는 중...';}
+  try{await originalLoadCharactersFromRoom();}
+  finally{
+    if(btn){btn.disabled=false;btn.textContent='캐릭터/인장/스탠딩 불러오기';}
+    log('완료');
+  }
+}
+
+/* Add new setting ids */
+document.addEventListener('DOMContentLoaded',()=>{
+  ['lineHeight','logWidth'].forEach(id=>{
+    const el=$('#'+id);
+    if(el){el.addEventListener('input',render);el.addEventListener('change',render);}
+  });
+});
+
+
 </script>
 </body>
 </html>
