@@ -667,6 +667,72 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
   cursor: default !important;
 }
 
+
+/* =========================================================
+  Patch9: restore desktop side menu, compact buttons, standing X movement
+========================================================= */
+@media (min-width:901px){
+  .layout{
+    display:grid !important;
+    grid-template-columns:340px minmax(0,1fr) !important;
+    gap:12px !important;
+    align-items:start !important;
+  }
+  .left-panel{
+    display:block !important;
+    position:sticky !important;
+    top:10px !important;
+    max-height:calc(100vh - 20px) !important;
+    overflow:auto !important;
+  }
+  .viewer{
+    min-width:0 !important;
+  }
+  .mobile-menu-bar{
+    display:none !important;
+  }
+}
+button{
+  flex:0 0 auto;
+  width:auto;
+  white-space:nowrap;
+}
+.row{
+  align-items:center;
+}
+.row > button,
+.standing-actions > button,
+.inline-tools button,
+.standing-button-list button{
+  flex:0 0 auto !important;
+  width:auto !important;
+  justify-content:center !important;
+}
+.standing-actions{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+}
+.standing-button-list{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+}
+.inline-tools{
+  min-width:max-content !important;
+}
+.crop-adjust-box img,
+.standing-log-preview .cc-avatar img,
+.cc-avatar img{
+  transform-origin:center center !important;
+}
+.standing-log-preview .cc-avatar{
+  overflow:hidden;
+}
+.standing-log-preview .cc-avatar img{
+  object-fit:cover;
+}
+
 </style>
 </head>
 
@@ -3037,6 +3103,116 @@ function applyCharacterDataToMessages(){
 /* keep exported/visible render stable */
 window.cancelHandout=cancelHandout;
 window.applyStandingToAll=applyStandingToAll;
+
+
+/* =========================================================
+  Patch9: stable side menu + standing x translate
+========================================================= */
+function cropTransform(x,y,scale){
+  x = Number(x || 50);
+  y = Number(y || 50);
+  scale = Number(scale || 100) / 100;
+  const tx = (50 - x) * 0.9;
+  const ty = (50 - y) * 0.9;
+  return 'translate(' + tx + '%, ' + ty + '%) scale(' + scale + ')';
+}
+
+function updateStandingLivePreview(){
+  const url=$('#modalStandingUrl').value;
+  const x=Number($('#modalStandingX').value||50);
+  const y=Number($('#modalStandingY').value||50);
+  const scale=Number($('#modalStandingScale').value||100);
+  $('#standingCropPreview').src=url;
+  $('#standingLogPreviewImg').src=url;
+  $('#standingCropBox').style.setProperty('--crop-x',x+'%');
+  $('#standingCropBox').style.setProperty('--crop-y',y+'%');
+  $('#standingCropBox').style.setProperty('--crop-scale',scale/100);
+  $('#standingCropPreview').style.objectPosition=x+'% '+y+'%';
+  $('#standingCropPreview').style.transform=cropTransform(x,y,scale);
+  $('#standingLogPreviewImg').style.objectPosition=x+'% '+y+'%';
+  $('#standingLogPreviewImg').style.transform=cropTransform(x,y,scale);
+}
+
+function renderMessageAvatarStyle(message,c){
+  const standing=getMessageStanding(message,c);
+  const x=standing?Number(standing.x||50):Number(message.avatarX||c.x||50);
+  const y=standing?Number(standing.y||50):Number(message.avatarY||c.y||50);
+  const scale=standing?Number(standing.scale||100):Number(message.avatarScale||c.scale||100);
+  return 'object-position:'+x+'% '+y+'%;transform:'+cropTransform(x,y,scale);
+}
+
+/* Ensure render uses latest avatar style without regex replacement weirdness */
+function renderMessage(message,set){
+  if(message.handoutStyle){
+    return renderHandoutMessage(message,set);
+  }
+  const c=findCharacterForMessage(message)||{};
+  const system=isSystemMessage(message,set);
+  const dice=$('#diceSeparate').checked&&isDiceText(message.text);
+  const inlineDice=!dice&&isDiceText(message.text);
+  const icon=getDisplayIcon(message,c);
+  const quiet=isQuietTabName(message.tab);
+  const showAvatar=$('#showAvatar').checked&&icon&&!system&&!dice&&!quiet;
+  const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(message,c)+'"></div>':'<div></div>';
+  const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
+  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
+  const tools=actionToolsForMessage(message);
+  const editor=renderMessageEditor(message,c,icon);
+  const diceMode=$('#diceColorMode').value;
+  const diceClass=dice ? 'dice-'+diceMode : '';
+  const bgClass=(dice && !$('#diceBackground')?.checked)?'no-dice-bg':'';
+  const sysClass=system?'system-'+$('#systemStyleMode').value:'';
+  const diceColor='--dice-color:'+esc(message.color||c.color||'rgba(255,255,255,.64)');
+  const textHtml=dice
+    ? enhanceDice(message.text,displayName)
+    : (system ? systemMeta+inlineFormat(message.text) : (inlineDice ? enhanceDice(message.text,displayName) : inlineFormat(message.text)));
+  return '<article class="cc-row '+(quiet?'quiet-tab ':'')+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+bgClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="false">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
+}
+
+/* Compact add menu buttons */
+function openAddBelowMenu(id){
+  openModal('<h3>아래에 추가</h3>'+
+    '<div class="row" style="gap:6px">'+
+    '<button onclick="openChatModalAfter(\''+esc(id)+'\')">채팅</button>'+
+    '<button onclick="openImageModalAfter(\''+esc(id)+'\')">이미지</button>'+
+    '<button onclick="openBgmModalAfter(\''+esc(id)+'\')">BGM</button>'+
+    '<button class="ghost" onclick="closeModal()">취소</button>'+
+    '</div>'
+  );
+}
+
+function actionToolsForMessage(message){
+  const handoutBtn = message.handoutStyle
+    ? '<button class="ghost small" onclick="cancelHandout(\''+message.id+'\')">핸드아웃 취소</button><button class="ghost small" onclick="openHandoutModal(\''+message.id+'\')">핸드아웃 설정</button>'
+    : '<button class="ghost small" onclick="openHandoutModal(\''+message.id+'\')">핸드아웃</button>';
+  return actionTools(message.id,
+    '<button class="ghost small" onclick="toggleEdit(\''+message.id+'\')">수정</button>'+
+    handoutBtn+
+    '<button class="ghost small" onclick="openAddBelowMenu(\''+message.id+'\')">추가</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',-1)">↑</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',1)">↓</button>'+
+    '<button class="danger small" onclick="deleteItem(\''+message.id+'\')">삭제</button>'
+  );
+}
+function actionToolsForBlock(block){
+  return actionTools(block.id,
+    '<button class="ghost small" onclick="editBlock(\''+block.id+'\')">수정</button>'+
+    '<button class="ghost small" onclick="openAddBelowMenu(\''+block.id+'\')">추가</button>'+
+    '<button class="ghost small" onclick="moveBlock(\''+block.id+'\',-1)">↑</button>'+
+    '<button class="ghost small" onclick="moveBlock(\''+block.id+'\',1)">↓</button>'+
+    '<button class="danger small" onclick="deleteItem(\''+block.id+'\')">삭제</button>'
+  );
+}
+
+/* Prevent mobile menu class from affecting desktop if viewport wide */
+document.addEventListener('DOMContentLoaded',()=>{
+  function fixDesktopMenu(){
+    if(window.innerWidth>900) document.body.classList.remove('menu-open');
+  }
+  window.addEventListener('resize',fixDesktopMenu);
+  fixDesktopMenu();
+});
 
 </script>
 </body>
