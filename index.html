@@ -616,6 +616,57 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
   background:var(--cc-bg);
 }
 
+
+/* =========================================================
+  Patch8: remove tab colors, handout/standover fixes
+========================================================= */
+.preview {
+  background: var(--cc-bg) !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+.preview > * {
+  background: transparent !important;
+}
+.tab-colored,
+.cc-row.tab-colored,
+.custom-block.tab-colored,
+.outputTabLabel {
+  border-left: 0 !important;
+  padding-left: 0 !important;
+  box-shadow: none !important;
+}
+.cc-row.quiet-tab .cc-avatar {
+  display:none !important;
+}
+.cc-row.quiet-tab {
+  grid-template-columns: 0 minmax(0,1fr) !important;
+  gap:0 !important;
+}
+.cc-row[draggable="false"],
+.custom-block[draggable="false"] {
+  cursor: text;
+}
+.handout-card.handout-basic {
+  background: var(--cc-bg) !important;
+  border: 1px solid rgba(255,255,255,.18);
+  color: var(--cc-text) !important;
+}
+.standing-button-list button::first-letter {
+  text-transform:none;
+}
+.standing-actions {
+  display:grid;
+  gap:7px;
+  margin-top:10px;
+}
+.crop-adjust-box,
+.crop-adjust-box img,
+.avatar-adjust-box,
+.avatar-adjust-box img {
+  cursor: default !important;
+}
+
 </style>
 </head>
 
@@ -659,7 +710,6 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
           <label class="chip"><input type="checkbox" id="showAvatar" checked> 인장</label>
           <label class="chip"><input type="checkbox" id="mergeSameChar"> 같은 캐릭터 이어쓰기</label>
         </div>
-        <label class="chip"><input type="checkbox" id="showTabColor" checked> 탭별 색 표시</label>
         <label>스킨</label>
         <select id="skinMode">
           <option value="skin-dark">코코포리아 다크</option>
@@ -678,9 +728,7 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
       <summary>출력 탭 / 시스템</summary>
       <div class="option-body">
         <label>출력할 탭</label>
-        <div id="tabList" class="list"><div class="hint">로그 파일을 불러오면 탭이 표시됩니다.</div></div>
-        <label>탭 색</label>
-        <div id="tabColorList" class="list"><div class="hint">탭별 색을 바꿀 수 있습니다.</div></div>
+        <div id="tabList" class="list"><div class="hint">로그 파일을 불러오면 탭이 표시됩니다.</div></div></div>
         <label>시스템 캐릭터</label>
         <div id="systemList" class="list">
           <button class="ghost" type="button" onclick="openSystemModal()">시스템 캐릭터 선택</button>
@@ -2793,6 +2841,202 @@ loadCharactersFromRoom=async function(){
   }
 };
 
+
+
+/* =========================================================
+  Patch8
+========================================================= */
+
+/* 2,3. tab color removed */
+function tabColorOf(name){ return 'transparent'; }
+function buildTabs(){
+  const names=[];
+  state.messages.forEach((m)=>{if(!names.includes(m.tab))names.push(m.tab)});
+  $('#tabList').innerHTML=names.length?names.map((n)=>
+    '<label class="chip outputTabLabel"><input type="checkbox" class="outputTab" value="'+esc(n)+'"> '+esc(n)+'</label>'
+  ).join(''):'<div class="hint">탭 없음</div>';
+  const tcl=$('#tabColorList');
+  if(tcl)tcl.innerHTML='';
+}
+
+/* 1. quiet/jabdam tab no avatar */
+function isQuietTabName(tab){
+  return /잡담|雑談|other/i.test(String(tab||''));
+}
+
+/* 4. handout basic preview uses selected bg */
+function updateHandoutPreview(m){
+  const style=$('#modalHandoutStyle').value||'basic';
+  const align=$('#modalHandoutAlign').value;
+  const w=$('#modalHandoutWidth').value;
+  const h=$('#modalHandoutHeight').value;
+  const x=$('#modalHandoutX').value||0;
+  const y=$('#modalHandoutY').value||0;
+  $('#handoutPreviewBox').innerHTML='<div class="handout-card handout-'+style+' '+(align==='center'?'handout-center':'')+'" style="'+(w?'width:'+w+'px;':'')+(h?'min-height:'+h+'px;':'')+'"><div class="handout-inner" style="--handout-x:'+x+'px;--handout-y:'+y+'px">'+inlineFormat(m.text)+'</div></div>';
+}
+
+/* 5,6,18. handout settings from edit menu and cancel */
+function actionToolsForMessage(message){
+  const handoutBtn = message.handoutStyle
+    ? '<button class="ghost small" onclick="cancelHandout(\''+message.id+'\')">핸드아웃 취소</button><button class="ghost small" onclick="openHandoutModal(\''+message.id+'\')">핸드아웃 설정</button>'
+    : '<button class="ghost small" onclick="openHandoutModal(\''+message.id+'\')">핸드아웃으로 설정</button>';
+  return actionTools(message.id,
+    '<button class="ghost small" onclick="toggleEdit(\''+message.id+'\')">✎ 수정</button>'+
+    handoutBtn+
+    '<button class="ghost small" onclick="openAddBelowMenu(\''+message.id+'\')">아래에 추가</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',-1)">↑ 위로</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',1)">↓ 아래로</button>'+
+    '<button class="danger small" onclick="deleteItem(\''+message.id+'\')">삭제</button>'
+  );
+}
+function cancelHandout(id){
+  const m=state.messages.find(entry=>entry.id===id);
+  if(!m)return;
+  m.handoutStyle='';
+  render();
+}
+
+/* 11. no @ in standing names */
+function standingOptionsHtml(c,selectedIndex){
+  const standings=c.standings||[];
+  return standings.map((s,i)=>'<option value="'+i+'" '+(String(i)===String(selectedIndex)?'selected':'')+'>'+esc(standingLabel(s,i))+'</option>').join('');
+}
+function renderStandingButtons(characterId){
+  const c=getCharacter(characterId)||{}, standings=c.standings||[];
+  if(!standings.length)return'<p class="hint">불러온 스탠딩이 없습니다.</p>';
+  return standings.map((s,i)=>'<button class="ghost" onclick="openStandingModal(\''+esc(characterId)+'\','+i+')">'+esc(standingLabel(s,i))+'</button>').join('');
+}
+
+/* 7,10. character modal: no representative icon UI, no batch adjustment */
+function openCharacterModal(characterId){
+  const c=getCharacter(characterId)||createEmptyCharacter(characterId,characterId);
+  if(!state.characters[characterId])state.characters[characterId]=c;
+  openModal('<h3>캐릭터 상세정보</h3>'+
+    '<label>표시 이름</label><input id="modalCharacterName" value="'+esc(c.name||characterId)+'">'+
+    '<label>이름색</label><input id="modalCharacterColor" type="color" value="'+esc(c.color||'#f2f2f2')+'">'+
+    '<label>스탠딩</label><div class="standing-button-list">'+renderStandingButtons(characterId)+'</div>'+
+    '<div class="row" style="margin-top:10px"><button class="ghost" onclick="openStandingAddModal(\''+esc(characterId)+'\')">스탠딩 추가</button></div>'+
+    '<div class="row" style="margin-top:10px"><button onclick="saveCharacterModal(\''+esc(characterId)+'\')">저장</button><button class="ghost" onclick="closeModal()">닫기</button></div>'
+  );
+}
+function saveCharacterModal(characterId){
+  const c=getCharacter(characterId);if(!c)return;
+  c.name=$('#modalCharacterName').value.trim()||c.name;
+  c.color=$('#modalCharacterColor').value||c.color;
+  applyCharacterToLog(characterId);
+  closeModal();buildCharacterList();render();
+}
+
+/* 12,13,14. standing modal: xy input-only live preview, x fixed, apply all */
+function openStandingModal(characterId,index){
+  const c=getCharacter(characterId);if(!c||!c.standings||!c.standings[index])return;
+  const s=c.standings[index];
+  openModal('<h3>'+esc(standingLabel(s,index))+'</h3>'+
+    '<div class="crop-adjust-box standing-crop" id="standingCropBox" style="--crop-x:'+(s.x||50)+'%;--crop-y:'+(s.y||50)+'%;--crop-scale:'+(Number(s.scale||100)/100)+'"><img id="standingCropPreview" src="'+esc(s.url||'')+'"></div>'+
+    '<label>스탠딩 이름</label><input id="modalStandingName" value="'+esc(standingLabel(s,index))+'">'+
+    '<label>이미지 URL</label><input id="modalStandingUrl" value="'+esc(s.url||'')+'">'+
+    '<div class="grid3"><div><label>X</label><input id="modalStandingX" type="number" value="'+esc(s.x||50)+'"></div><div><label>Y</label><input id="modalStandingY" type="number" value="'+esc(s.y||50)+'"></div><div><label>확대</label><input id="modalStandingScale" type="number" value="'+esc(s.scale||100)+'"></div></div>'+
+    '<label>로그 인장 미리보기</label><div class="standing-log-preview"><div class="cc-avatar"><img id="standingLogPreviewImg" src="'+esc(s.url||'')+'"></div><div><div class="cc-name" style="color:'+esc(c.color||'#f2f2f2')+'">'+esc(c.name||'캐릭터')+'</div><p class="cc-text">이렇게 로그 인장에 표시됩니다.</p></div></div>'+
+    '<div class="standing-actions">'+
+    '<button onclick="saveStandingModal(\''+esc(characterId)+'\','+index+')">저장</button>'+
+    '<button class="ghost" onclick="applyStandingToAll(\''+esc(characterId)+'\','+index+')">이 스탠딩값 일괄적용하기</button>'+
+    '<button class="danger" onclick="deleteStanding(\''+esc(characterId)+'\','+index+')">삭제</button>'+
+    '<button class="ghost" onclick="openCharacterModal(\''+esc(characterId)+'\')">뒤로</button>'+
+    '</div>'
+  );
+  ['modalStandingX','modalStandingY','modalStandingScale','modalStandingUrl'].forEach(id=>$('#'+id).addEventListener('input',updateStandingLivePreview));
+  updateStandingLivePreview();
+}
+function setupStandingCrop(){ /* disabled: no mouse drag */ }
+function updateStandingLivePreview(){
+  const url=$('#modalStandingUrl').value;
+  const x=Number($('#modalStandingX').value||50);
+  const y=Number($('#modalStandingY').value||50);
+  const scale=Number($('#modalStandingScale').value||100)/100;
+  $('#standingCropPreview').src=url;
+  $('#standingLogPreviewImg').src=url;
+  $('#standingCropBox').style.setProperty('--crop-x',x+'%');
+  $('#standingCropBox').style.setProperty('--crop-y',y+'%');
+  $('#standingCropBox').style.setProperty('--crop-scale',scale);
+  $('#standingLogPreviewImg').style.objectPosition=x+'% '+y+'%';
+  $('#standingLogPreviewImg').style.transform='scale('+scale+')';
+}
+function saveStandingModal(characterId,index){
+  const c=getCharacter(characterId);if(!c||!c.standings||!c.standings[index])return;
+  const s=c.standings[index];
+  s.name=$('#modalStandingName').value.trim()||standingLabel(s,index);
+  s.url=$('#modalStandingUrl').value.trim();
+  s.x=$('#modalStandingX').value||50;
+  s.y=$('#modalStandingY').value||50;
+  s.scale=$('#modalStandingScale').value||100;
+  openCharacterModal(characterId);render();
+}
+function applyStandingToAll(characterId,index){
+  const c=getCharacter(characterId);if(!c||!c.standings||!c.standings[index])return;
+  const src=c.standings[index];
+  c.standings.forEach(s=>{
+    s.x=$('#modalStandingX').value||src.x||50;
+    s.y=$('#modalStandingY').value||src.y||50;
+    s.scale=$('#modalStandingScale').value||src.scale||100;
+  });
+  alert('모든 스탠딩에 같은 X/Y/확대값을 적용했어요.');
+}
+
+/* 8. text selection should not trigger dragging */
+function renderMessage(message,set){
+  if(message.handoutStyle){
+    return renderHandoutMessage(message,set);
+  }
+  const c=findCharacterForMessage(message)||{};
+  const system=isSystemMessage(message,set);
+  const dice=$('#diceSeparate').checked&&isDiceText(message.text);
+  const inlineDice=!dice&&isDiceText(message.text);
+  const icon=getDisplayIcon(message,c);
+  const quiet=isQuietTabName(message.tab);
+  const showAvatar=$('#showAvatar').checked&&icon&&!system&&!dice&&!quiet;
+
+  const avatarStyle=renderMessageAvatarStyle(message,c);
+  const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+avatarStyle+'"></div>':'<div></div>';
+  const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
+  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
+  const tools=actionToolsForMessage(message);
+  const editor=renderMessageEditor(message,c,icon);
+  const diceMode=$('#diceColorMode').value;
+  const diceClass=dice ? 'dice-'+diceMode : '';
+  const bgClass=(dice && !$('#diceBackground')?.checked)?'no-dice-bg':'';
+  const sysClass=system?'system-'+$('#systemStyleMode').value:'';
+  const diceColor='--dice-color:'+esc(message.color||c.color||'rgba(255,255,255,.64)');
+  const textHtml=dice
+    ? enhanceDice(message.text,displayName)
+    : (system ? systemMeta+inlineFormat(message.text) : (inlineDice ? enhanceDice(message.text,displayName) : inlineFormat(message.text)));
+  return '<article class="cc-row '+(quiet?'quiet-tab ':'')+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+bgClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="false">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
+}
+function renderImageBlock(block){
+  return '<div class="custom-block '+(isQuietTabName(block.tab)?'quiet-tab ':'')+'" data-id="'+esc(block.id)+'" data-kind="block" draggable="false"><img class="insert-image" src="'+esc(block.url)+'" style="--img-width:'+esc(block.width||70)+'%;--img-height:'+(block.height?esc(block.height)+'px':'auto')+';--img-fit:'+(block.height?'cover':'contain')+';--img-x:'+esc(block.objectX||50)+'%;--img-y:'+esc(block.objectY||50)+'%;transform:scale('+(Number(block.scale||100)/100)+')"><div class="caption">'+esc(block.caption||'')+'</div>'+actionToolsForBlock(block)+'</div>';
+}
+function renderBgmBlock(block){
+  return '<div class="custom-block '+(isQuietTabName(block.tab)?'quiet-tab ':'')+'" data-id="'+esc(block.id)+'" data-kind="block" draggable="false"><div class="bgm-area"><button class="bgmButton" data-audio="'+esc(block.url)+'">♪ '+esc(block.label||bgmTitle(block.url))+'</button></div>'+actionToolsForBlock(block)+'</div>';
+}
+function setupDragReorder(){ /* disabled to avoid text-drag conflict */ }
+
+/* 9. best-effort: apply standing by message text marker or stored standing name if imported */
+function applyCharacterDataToMessages(){
+  state.messages.forEach((m)=>{
+    const c=findCharacterForMessage(m);
+    if(!c)return;
+    if(!m.icon)m.icon=activeIcon(c);
+    m.color=m.color||c.color;
+    if(m.standingName && c.standings){
+      const idx=c.standings.findIndex(s=>standingLabel(s,0)===m.standingName);
+      if(idx>=0)m.standingIndex=String(idx);
+    }
+  });
+}
+
+/* keep exported/visible render stable */
+window.cancelHandout=cancelHandout;
+window.applyStandingToAll=applyStandingToAll;
 
 </script>
 </body>
