@@ -109,6 +109,47 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
 .cc-row.dice-log.dice-character .cc-text{color:var(--dice-color,rgba(255,255,255,.64))!important}
 .cc-row.dice-log.dice-simple .cc-text{background:transparent;color:var(--cc-text)!important}
 .cc-row.dice-log .cc-avatar,.cc-row.dice-log .cc-name-line{display:none}
+  /* 판정로그 분리 시 세로로 깨지는 것 수정 */
+.cc-row.dice-log{
+  display:block !important;
+  max-width:var(--log-width) !important;
+  margin:8px auto !important;
+  text-align:left !important;
+}
+
+.cc-row.dice-log .cc-body{
+  padding-right:30px !important;
+}
+
+.cc-row.dice-log .cc-name-line{
+  display:flex !important;
+  margin-bottom:2px !important;
+}
+
+.cc-row.dice-log .cc-text{
+  display:block !important;
+  width:fit-content;
+  max-width:100%;
+  text-align:left !important;
+  white-space:pre-wrap !important;
+}
+  /* 분리 여부와 상관없이 판정 강조색 적용 */
+.dice-hit.character,
+.dice-result.character{
+  color:var(--dice-color,currentColor) !important;
+  font-weight:400 !important;
+}
+
+.dice-hit.character-bold,
+.dice-result.character-bold{
+  color:var(--dice-color,currentColor) !important;
+  font-weight:900 !important;
+}
+
+.dice-hit.bold-only,
+.dice-result.bold-only{
+  font-weight:900 !important;
+}
 .dice-name{font-weight:900;margin-right:6px;opacity:.95}
 .dice-name.hide{display:none}
 .dice-result{border-radius:3px}
@@ -4063,10 +4104,13 @@ function renderMessage(message,set){
   const bgClass=(dice && !$('#diceBackground')?.checked)?'no-dice-bg':'';
   const sysClass=system?'system-'+$('#systemStyleMode').value:'';
   const diceColor='--dice-color:'+esc(message.color||c.color||'rgba(255,255,255,.64)');
-  const textHtml=quiet
-    ? renderJabdamText(message,c)
-    : (dice ? enhanceDice(message.text,'') : (system ? systemMeta+inlineFormat(message.text) : (inlineDice ? enhanceDice(message.text,displayName) : inlineFormat(message.text))));
-  return '<article class="cc-row '+(quiet?'quiet-tab ':'')+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+bgClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="false">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
+const textHtml = quiet
+  ? renderJabdamText(message,c)
+  : (
+      isDiceText(message.text)
+        ? enhanceDice(message.text, dice ? '' : displayName)
+        : (system ? systemMeta + inlineFormat(message.text) : inlineFormat(message.text))
+    );  return '<article class="cc-row '+(quiet?'quiet-tab ':'')+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+bgClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="false">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
 }
 
 function openImageModal(_,blockId){
