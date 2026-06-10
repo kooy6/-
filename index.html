@@ -55,6 +55,124 @@
  .list{max-height:260px}
 }
 
+
+/* =========================================================
+  Final patch: ccfolia exported <p><span> parser / no weird blank char
+========================================================= */
+.cc-row:not(.system):not(.dice-log),
+.cc-row:not(.system):not(.dice-log) .cc-body,
+.cc-row:not(.system):not(.dice-log) .cc-text {
+  text-align: left !important;
+}
+
+.inline-tools {
+  display: none !important;
+}
+
+.inline-tools.active {
+  display: flex !important;
+}
+
+.action-toggle {
+  margin-top: 3px;
+  padding: 2px 8px !important;
+  min-height: 22px !important;
+  border-color: rgba(255,255,255,.18) !important;
+  background: rgba(255,255,255,.06) !important;
+  color: rgba(255,255,255,.75) !important;
+  font-size: 11px !important;
+}
+
+.image-adjust-box {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #222;
+  cursor: grab;
+}
+
+.image-adjust-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--modal-x, 50%) var(--modal-y, 50%);
+  user-select: none;
+  pointer-events: none;
+}
+
+.tistory-ccfolia-backup {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+}
+
+.tistory-ccfolia-backup * {
+  max-width: 100%;
+}
+
+
+/* =========================================================
+  Standing UI patch: named standing controls, no URL dump
+========================================================= */
+.standing-list {
+  display: grid;
+  gap: 8px;
+}
+
+.standing-item {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.standing-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.standing-thumb {
+  width: 100%;
+  max-height: 90px;
+  object-fit: contain;
+  background: #eee;
+  border-radius: 6px;
+}
+
+.standing-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+
+.standing-mini-grid label {
+  margin: 0 0 3px;
+  font-size: 10px;
+}
+
+.standing-mini-grid input {
+  padding: 5px;
+  font-size: 11px;
+}
+
+@media(max-width:900px){
+  .standing-mini-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -470,6 +588,811 @@ function exportTistoryHtml(){
   return '<style>'+document.querySelector('style').textContent+'.tistory-ccfolia-backup{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;overflow:hidden!important;border-radius:0!important;}.tistory-ccfolia-backup *{max-width:100%;}</style><div class="tistory-ccfolia-backup '+cls+'">'+cleanForExport()+'</div>'+bgmExportScript();
 }
 window.toggleTools=toggleTools;
+
+
+/* =========================================================
+  Final patch: exact ccfolia export parser + robust character icons
+========================================================= */
+function finalIsBlankName(value) {
+  const text = String(value || '').replace(/\u00a0/g, ' ').trim();
+  return !text || /^이름\s*없는\s*애\s*[:：]?\s*$/i.test(text) || text === ':';
+}
+
+function finalStyleColor(element) {
+  if (!element) return '';
+  const style = element.getAttribute('style') || '';
+  const match = style.match(/color\s*:\s*([^;]+)/i);
+  return match ? match[1].trim() : '';
+}
+
+function finalNormalizeTab(tab) {
+  const text = String(tab || '').replace(/[\[\]]/g, '').trim();
+  if (!text) return '메인';
+  const low = text.toLowerCase();
+  if (low === 'main' || text === 'メイン') return '메인';
+  if (low === 'other' || text === '雑談') return '잡담';
+  if (low === 'info' || text === '情報') return '정보';
+  if (low === 'secret' || text === '秘匿') return '비밀';
+  return text;
+}
+
+function finalSpanText(span) {
+  if (!span) return '';
+  return span.innerText.replace(/\u00a0/g, ' ').trim();
+}
+
+function parseHtmlLog(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const paragraphs = Array.from(doc.querySelectorAll('p')).filter((p) => p.querySelectorAll('span').length >= 3);
+
+  if (paragraphs.length) {
+    return paragraphs.map((p, index) => {
+      const spans = Array.from(p.querySelectorAll('span'));
+      const tab = finalNormalizeTab(finalSpanText(spans[0]));
+      let name = finalSpanText(spans[1]);
+      let text = spans.slice(2).map((span) => span.innerText.replace(/\u00a0/g, ' ').trim()).join('\n').trim();
+
+      if (finalIsBlankName(name)) name = '';
+      if (!text || finalIsBlankName(text)) return null;
+
+      const color = finalStyleColor(p) || '#888888';
+      const msg = makeMsg(
+        'm_p_' + index + '_' + Math.random().toString(36).slice(2),
+        name,
+        text,
+        tab,
+        new Date(Date.now() + index).toISOString(),
+        ''
+      );
+
+      msg.color = color;
+      msg.characterId = name || '__system_blank__';
+      return msg;
+    }).filter(Boolean);
+  }
+
+  return parseTextLog(doc.body ? doc.body.innerText : html);
+}
+
+function parseTextLog(text) {
+  let i = 0;
+  let currentTab = '메인';
+  const out = [];
+
+  text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).forEach((line) => {
+    if (finalIsBlankName(line)) return;
+
+    const tab = line.match(/^\[?\s*(메인|정보|잡담|비밀|秘匿|情報|雑談|main|other|info|secret)\s*\]?$/i);
+    if (tab) {
+      currentTab = finalNormalizeTab(tab[1]);
+      return;
+    }
+
+    const match = line.match(/^([^：:]{1,40})[：:](.*)$/);
+    let name = match ? match[1].trim() : '';
+    const body = match ? match[2].trim() : line;
+
+    if (finalIsBlankName(name)) name = '';
+    if (!body || finalIsBlankName(body)) return;
+
+    const msg = makeMsg('m_text_' + (i++), name, body, currentTab, new Date(Date.now() + i).toISOString(), '');
+    msg.characterId = name || '__system_blank__';
+    out.push(msg);
+  });
+
+  return out;
+}
+
+function finalCollectImageUrls(value, path = [], out = []) {
+  if (!value) return out;
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => finalCollectImageUrls(item, path.concat(index), out));
+    return out;
+  }
+
+  if (typeof value === 'object') {
+    Object.entries(value).forEach(([key, item]) => {
+      if (typeof item === 'string' && /^https?:\/\//i.test(item)) {
+        out.push({
+          path: path.concat(key).join('.'),
+          url: item,
+          name: value.name || value.label || value.title || ''
+        });
+      } else {
+        finalCollectImageUrls(item, path.concat(key), out);
+      }
+    });
+    return out;
+  }
+
+  if (typeof value === 'string' && /^https?:\/\//i.test(value)) {
+    out.push({ path: path.join('.'), url: value, name: '' });
+  }
+
+  return out;
+}
+
+function finalPickIcon(urls) {
+  const icon = urls.find((item) => /icon|avatar|portrait|face|thumbnail|thumb/i.test(item.path));
+  if (icon) return icon.url;
+  const image = urls.find((item) => /image|img|url/i.test(item.path));
+  return image ? image.url : '';
+}
+
+function finalPickStandings(urls, iconUrl) {
+  const seen = new Set();
+  const standings = [];
+
+  urls.forEach((item) => {
+    if (!item.url || item.url === iconUrl || seen.has(item.url)) return;
+
+    const key = String(item.path || '');
+    const likelyStanding = /stand|standing|立ち|立絵|tachie|cutin|image|images|picture|token/i.test(key) &&
+      !/icon|avatar|thumbnail|thumb/i.test(key);
+
+    if (!likelyStanding) return;
+
+    seen.add(item.url);
+    standings.push({
+      name: item.name || key.split('.').slice(-2).join(' ') || ('스탠딩 ' + (standings.length + 1)),
+      url: item.url
+    });
+  });
+
+  return standings;
+}
+
+function extractCharacter(doc, index) {
+  const fields = doc.fields ? fsFields(doc.fields) : doc;
+  const flatFields = flat(fields);
+  const id = String(doc.name || fields.id || index).split('/').pop();
+  const urls = finalCollectImageUrls(fields);
+  const icon = first(flatFields, [
+    'iconUrl',
+    'imageUrl',
+    'portraitUrl',
+    'avatar',
+    'image',
+    'url',
+    'data.iconUrl',
+    'data.imageUrl',
+    'character.iconUrl',
+    'character.imageUrl'
+  ]) || finalPickIcon(urls);
+
+  const color = first(flatFields, [
+    'color',
+    'nameColor',
+    'textColor',
+    'fontColor',
+    'data.color',
+    'data.nameColor',
+    'data.textColor',
+    'character.color',
+    'character.nameColor'
+  ]) || '#f2f2f2';
+
+  return {
+    id,
+    name: first(flatFields, ['name', 'data.name', 'character.name', 'displayName', 'label']) || id,
+    icons: [icon].filter(Boolean),
+    activeIcon: 0,
+    color,
+    x: 50,
+    y: 50,
+    scale: 100,
+    standings: finalPickStandings(urls, icon),
+    activeStanding: '',
+    standingWidth: 180,
+    standingX: 50,
+    standingY: 50,
+    standingHeight: '',
+    standingScale: 100
+  };
+}
+
+function hydrateCharactersFromMessages() {
+  state.messages.forEach((message) => {
+    if (!message.name) return;
+
+    const key = message.characterId || message.name;
+    if (!state.characters[key]) {
+      state.characters[key] = createEmptyCharacter(key, message.name, message.icon, message.color);
+    }
+
+    const character = state.characters[key];
+    character.name = character.name || message.name;
+    character.color = message.color || character.color;
+
+    if (message.icon && !character.icons.includes(message.icon)) {
+      character.icons.push(message.icon);
+    }
+  });
+}
+
+function uniqueCharacters() {
+  const seen = new Set();
+  const list = [];
+
+  state.messages.forEach((message) => {
+    if (!message.name) return;
+
+    const key = message.characterId || message.name;
+    if (seen.has(key)) return;
+    seen.add(key);
+
+    const character = getCharacter(key) || findCharacterForMessage(message) || {};
+    list.push({
+      id: key,
+      name: character.name || message.name
+    });
+  });
+
+  return list;
+}
+
+function buildSystemList() {
+  $('#systemList').innerHTML =
+    '<label class="chip"><input type="checkbox" class="systemChar" value="__system_blank__"> 시스템 / 이름 없음</label>';
+}
+
+function isSystemMessage(message, systemSet) {
+  return systemSet.has(message.characterId) || systemSet.has(message.name) || !message.name;
+}
+
+function findCharacterForMessage(message) {
+  if (!message.name) return null;
+  return (
+    getCharacter(message.characterId) ||
+    getCharacter(message.name) ||
+    Object.values(state.characters).find((character) => character.name === message.name) ||
+    null
+  );
+}
+
+function mergeCharacters(newCharacters) {
+  Object.entries(newCharacters).forEach(([key, character]) => {
+    if (!state.characters[key]) {
+      state.characters[key] = character;
+      return;
+    }
+
+    const old = state.characters[key];
+    old.name = old.name || character.name;
+    old.color = character.color || old.color;
+
+    (character.icons || []).forEach((icon) => {
+      if (icon && !old.icons.includes(icon)) old.icons.push(icon);
+    });
+
+    (character.standings || []).forEach((standing) => {
+      if (standing.url && !(old.standings || []).some((item) => item.url === standing.url)) {
+        old.standings.push(standing);
+      }
+    });
+  });
+}
+
+function applyCharacterDataToMessages() {
+  state.messages.forEach((message) => {
+    const character = findCharacterForMessage(message);
+    if (!character) return;
+
+    if (!message.icon) message.icon = activeIcon(character);
+    message.color = message.color || character.color;
+  });
+}
+
+function standingOptionsHtml(character, selectedIndex) {
+  const standings = character.standings || [];
+  return standings.map((standing, index) => {
+    const selected = String(index) === String(selectedIndex) ? ' selected' : '';
+    const label = standing.name || ('스탠딩 ' + (index + 1));
+    return '<option value="' + index + '"' + selected + '>' + esc(label) + '</option>';
+  }).join('');
+}
+
+function actionTools(id, inner) {
+  return '<button class="action-toggle" onclick="toggleTools(\'' + id + '\')">⋯</button><div class="inline-tools" id="tools_' + id + '">' + inner + '</div>';
+}
+
+function toggleTools(id) {
+  const element = $('#tools_' + id);
+  if (element) element.classList.toggle('active');
+}
+
+function render() {
+  const preview = $('#preview');
+  preview.className = 'preview ' + $('#skinMode').value;
+  document.documentElement.style.setProperty('--bg', $('#bgColor').value || '#303136');
+
+  const systemSet = selectedSystemCharacters();
+  const items = groupItems(allItems(), systemSet);
+
+  $('#status').textContent = $('#titleInput').value.trim() || state.title || 'custom log';
+  $('#count').textContent = items.length + ' items';
+
+  if (!items.length) {
+    preview.innerHTML =
+      '<div class="empty">' +
+      (selectedTabs().length ? '선택한 탭에 출력할 메시지가 없습니다.' : '왼쪽의 출력할 탭을 체크하면 미리보기가 표시됩니다.') +
+      '</div>';
+    return;
+  }
+
+  let html = insertControl('start');
+
+  items.forEach((item) => {
+    if (item.kind === 'image') html += renderImageBlock(item) + insertControl(item.id);
+    else if (item.kind === 'bgm') html += renderBgmBlock(item) + insertControl(item.id);
+    else html += renderMessage(item, systemSet) + insertControl(item.id);
+  });
+
+  preview.innerHTML = html;
+  attachBgm();
+}
+
+function renderMessage(message, systemSet) {
+  const character = findCharacterForMessage(message) || {};
+  const system = isSystemMessage(message, systemSet);
+  const dice = $('#diceSeparate').checked && isDiceText(message.text);
+
+  const icon = message.icon || activeIcon(character);
+  const standing = getMessageStanding(message, character);
+  const showAvatar = $('#showAvatar').checked && icon && !system && !dice;
+
+  const avatarX = Number(message.avatarX || character.x || 50);
+  const avatarY = Number(message.avatarY || character.y || 50);
+  const avatarScale = Number(message.avatarScale || character.scale || 100) / 100;
+
+  const avatar = showAvatar
+    ? '<div class="cc-avatar"><img src="' +
+      esc(icon) +
+      '" style="object-position:' +
+      avatarX +
+      '% ' +
+      avatarY +
+      '%;transform:scale(' +
+      avatarScale +
+      ')"></div>'
+    : '<div></div>';
+
+  const meta = renderMeta(message.created);
+  const displayName = message.name || character.name || '';
+
+  const nameLine = system || dice
+    ? ''
+    : '<div class="cc-name-line"><span class="cc-name" style="color:' +
+      esc(message.color || character.color || '#f2f2f2') +
+      '">' +
+      esc(displayName) +
+      '</span>' +
+      (meta ? '<span class="cc-meta">' + esc(meta) + '</span>' : '') +
+      '</div>';
+
+  const systemMeta = system && meta ? '<span class="cc-meta">' + esc(meta) + '</span> ' : '';
+  const standingHtml = standing && !system && !dice ? renderStandingImage(standing, character) : '';
+
+  const tools = actionTools(
+    message.id,
+    '<button class="ghost small" onclick="toggleEdit(\'' + message.id + '\')">✎ 수정</button>' +
+    '<button class="ghost small" onclick="moveMessage(\'' + message.id + '\',-1)">↑</button>' +
+    '<button class="ghost small" onclick="moveMessage(\'' + message.id + '\',1)">↓</button>' +
+    '<button class="ghost small" onclick="openImageModal(\'' + message.id + '\')">이미지+</button>' +
+    '<button class="ghost small" onclick="openBgmModal(\'' + message.id + '\')">BGM+</button>' +
+    '<button class="ghost small" onclick="openChatModal(\'' + message.id + '\')">채팅+</button>' +
+    '<button class="danger small" onclick="deleteItem(\'' + message.id + '\')">삭제</button>'
+  );
+
+  const editor = renderMessageEditor(message, character, icon);
+  const diceColor = '--dice-color:' + esc(message.color || character.color || 'rgba(255,255,255,.64)');
+
+  return (
+    '<article class="cc-row ' +
+    (system ? 'system ' : '') +
+    (dice ? 'dice-log ' : '') +
+    (showAvatar ? '' : 'no-avatar') +
+    '" style="' +
+    diceColor +
+    '">' +
+    (system || dice ? '' : avatar) +
+    '<div class="cc-body">' +
+    nameLine +
+    standingHtml +
+    '<p class="cc-text" style="font-size:' +
+    (Number($('#fontSize').value) || 14) +
+    'px">' +
+    systemMeta +
+    enhanceDice(message.text) +
+    '</p>' +
+    tools +
+    editor +
+    '</div>' +
+    '</article>'
+  );
+}
+
+function renderImageBlock(block) {
+  return (
+    '<div class="custom-block">' +
+    '<img class="insert-image" src="' +
+    esc(block.url) +
+    '" style="--img-width:' +
+    esc(block.width || 70) +
+    '%;--img-height:' +
+    (block.height ? esc(block.height) + 'px' : 'auto') +
+    ';--img-fit:' +
+    (block.height ? 'cover' : 'contain') +
+    ';--img-x:' +
+    esc(block.objectX || 50) +
+    '%;--img-y:' +
+    esc(block.objectY || 50) +
+    '%">' +
+    '<div class="caption">' +
+    esc(block.caption || '') +
+    '</div>' +
+    actionTools(
+      block.id,
+      '<button class="ghost small" onclick="editBlock(\'' + block.id + '\')">✎ 이미지 수정</button>' +
+      '<button class="ghost small" onclick="moveBlock(\'' + block.id + '\',-1)">↑</button>' +
+      '<button class="ghost small" onclick="moveBlock(\'' + block.id + '\',1)">↓</button>' +
+      '<button class="danger small" onclick="deleteItem(\'' + block.id + '\')">삭제</button>'
+    ) +
+    '</div>'
+  );
+}
+
+function renderBgmBlock(block) {
+  return (
+    '<div class="custom-block">' +
+    '<div class="bgm-area"><button class="bgmButton" data-audio="' +
+    esc(block.url) +
+    '">♪ ' +
+    esc(block.label || bgmTitle(block.url)) +
+    '</button></div>' +
+    actionTools(
+      block.id,
+      '<button class="ghost small" onclick="editBlock(\'' + block.id + '\')">✎ BGM 수정</button>' +
+      '<button class="ghost small" onclick="moveBlock(\'' + block.id + '\',-1)">↑</button>' +
+      '<button class="ghost small" onclick="moveBlock(\'' + block.id + '\',1)">↓</button>' +
+      '<button class="danger small" onclick="deleteItem(\'' + block.id + '\')">삭제</button>'
+    ) +
+    '</div>'
+  );
+}
+
+function openImageModal(afterId, blockId) {
+  const block = blockId ? state.blocks.find((entry) => entry.id === blockId) : null;
+  const url = block ? block.url : '';
+  const x = block ? block.objectX || 50 : 50;
+  const y = block ? block.objectY || 50 : 50;
+
+  openModal(
+    '<h3>이미지 추가/수정</h3>' +
+    '<label>이미지 URL</label>' +
+    '<input id="modalImageUrl" value="' +
+    esc(url) +
+    '">' +
+    '<div class="image-adjust-box" id="imageAdjustBox" style="--modal-x:' +
+    x +
+    '%;--modal-y:' +
+    y +
+    '%"><img id="imageAdjustPreview" src="' +
+    esc(url) +
+    '"></div>' +
+    '<p class="hint">위 미리보기에서 이미지를 드래그하면 X/Y가 바뀝니다.</p>' +
+    '<label>이미지 너비(%)</label>' +
+    '<input id="modalImageWidth" type="number" value="' +
+    esc(block ? block.width || 70 : 70) +
+    '">' +
+    '<label>자르기 높이(px, 비우면 원본 비율)</label>' +
+    '<input id="modalImageHeight" type="number" value="' +
+    esc(block ? block.height || '' : '') +
+    '">' +
+    '<div class="grid2">' +
+    '<div><label>위치 X</label><input id="modalImageX" type="number" value="' +
+    esc(x) +
+    '"></div>' +
+    '<div><label>위치 Y</label><input id="modalImageY" type="number" value="' +
+    esc(y) +
+    '"></div>' +
+    '</div>' +
+    '<label>캡션</label>' +
+    '<input id="modalImageCaption" value="' +
+    esc(block ? block.caption || '' : '') +
+    '">' +
+    '<div class="row" style="margin-top:10px">' +
+    '<button onclick="saveImageModal(\'' +
+    esc(afterId || 'start') +
+    "','" +
+    esc(blockId || '') +
+    '\')">저장</button>' +
+    '<button class="ghost" onclick="closeModal()">취소</button>' +
+    '</div>'
+  );
+
+  setupImageDrag();
+
+  const urlInput = $('#modalImageUrl');
+  if (urlInput) {
+    urlInput.addEventListener('input', () => {
+      const image = $('#imageAdjustPreview');
+      if (image) image.src = urlInput.value;
+    });
+  }
+}
+
+function setupImageDrag() {
+  const box = $('#imageAdjustBox');
+  if (!box) return;
+
+  let dragging = false;
+
+  function update(event) {
+    const rect = box.getBoundingClientRect();
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+
+    $('#modalImageX').value = Math.round(x);
+    $('#modalImageY').value = Math.round(y);
+    box.style.setProperty('--modal-x', Math.round(x) + '%');
+    box.style.setProperty('--modal-y', Math.round(y) + '%');
+  }
+
+  box.addEventListener('mousedown', (event) => {
+    dragging = true;
+    update(event);
+  });
+
+  window.addEventListener('mousemove', (event) => {
+    if (dragging) update(event);
+  });
+
+  window.addEventListener('mouseup', () => {
+    dragging = false;
+  });
+
+  box.addEventListener('touchstart', (event) => {
+    dragging = true;
+    update(event);
+  }, { passive: true });
+
+  box.addEventListener('touchmove', (event) => {
+    if (dragging) update(event);
+  }, { passive: true });
+
+  box.addEventListener('touchend', () => {
+    dragging = false;
+  });
+}
+
+function cleanForExport() {
+  const clone = $('#preview').cloneNode(true);
+  clone.querySelectorAll('.insert-toggle,.insert-control,.action-toggle,.inline-tools,.inline-editor,.modal-backdrop,.log-title').forEach((element) => {
+    element.remove();
+  });
+  return clone.innerHTML;
+}
+
+function exportTistoryHtml() {
+  render();
+  const cls = 'preview ' + $('#skinMode').value;
+
+  return (
+    '<style>' +
+    document.querySelector('style').textContent +
+    '.tistory-ccfolia-backup{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;overflow:hidden!important;border-radius:0!important;}' +
+    '.tistory-ccfolia-backup *{max-width:100%;}' +
+    '</style><div class="tistory-ccfolia-backup ' +
+    cls +
+    '">' +
+    cleanForExport() +
+    '</div>' +
+    bgmExportScript()
+  );
+}
+
+window.toggleTools = toggleTools;
+
+
+/* =========================================================
+  Standing UI patch: named controls
+========================================================= */
+function standingDisplayName(standing, index) {
+  return standing.name || standing.label || standing.title || ('스탠딩 ' + (index + 1));
+}
+
+function buildCharacterList() {
+  const list = uniqueCharacters();
+
+  if (!list.length) {
+    $('#characterList').innerHTML = '<div class="hint">캐릭터 없음</div>';
+    return;
+  }
+
+  $('#characterList').innerHTML = list.map((item) => {
+    const c = getCharacter(item.id) || createEmptyCharacter(item.id, item.name);
+    const standings = c.standings || [];
+
+    return (
+      '<div class="card">' +
+      '<b>' + esc(c.name || item.name) + '</b>' +
+
+      '<label>표시 이름</label>' +
+      '<input value="' + esc(c.name || item.name) + '" onchange="editCharacter(\'' + esc(item.id) + '\',\'name\',this.value)">' +
+
+      '<label>이름색</label>' +
+      '<input type="color" value="' + esc(c.color || '#f2f2f2') + '" onchange="editCharacter(\'' + esc(item.id) + '\',\'color\',this.value)">' +
+
+      '<label>인장 URL 여러 개</label>' +
+      '<textarea onchange="editCharacterIcons(\'' + esc(item.id) + '\',this.value)">' +
+      esc((c.icons || []).join('\n')) +
+      '</textarea>' +
+
+      '<label>스탠딩 추가</label>' +
+      '<div class="row">' +
+      '<button class="ghost" onclick="openStandingAddModal(\'' + esc(item.id) + '\')">스탠딩 추가</button>' +
+      '</div>' +
+
+      '<label>스탠딩 일괄 조정</label>' +
+      '<div class="grid3">' +
+      '<div><label>너비</label><input type="number" value="' + esc(c.standingWidth || 180) + '" onchange="editCharacter(\'' + esc(item.id) + '\',\'standingWidth\',Number(this.value))"></div>' +
+      '<div><label>X</label><input type="number" value="' + esc(c.standingX || 50) + '" onchange="editCharacter(\'' + esc(item.id) + '\',\'standingX\',Number(this.value))"></div>' +
+      '<div><label>Y</label><input type="number" value="' + esc(c.standingY || 50) + '" onchange="editCharacter(\'' + esc(item.id) + '\',\'standingY\',Number(this.value))"></div>' +
+      '</div>' +
+      '<div class="grid2">' +
+      '<div><label>높이</label><input type="number" value="' + esc(c.standingHeight || '') + '" onchange="editCharacter(\'' + esc(item.id) + '\',\'standingHeight\',this.value)"></div>' +
+      '<div><label>확대</label><input type="number" value="' + esc(c.standingScale || 100) + '" onchange="editCharacter(\'' + esc(item.id) + '\',\'standingScale\',Number(this.value))"></div>' +
+      '</div>' +
+
+      '<label>스탠딩 이름별 조정</label>' +
+      '<div class="standing-list">' +
+      (standings.length ? standings.map((standing, index) => renderStandingControl(item.id, standing, index)).join('') : '<p class="hint">불러온 스탠딩이 없습니다.</p>') +
+      '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+function renderStandingControl(characterId, standing, index) {
+  const name = standingDisplayName(standing, index);
+
+  return (
+    '<div class="standing-item">' +
+    '<div class="standing-title"><span>' + esc(name) + '</span><button class="danger small" onclick="deleteStanding(\'' + esc(characterId) + '\',' + index + ')">삭제</button></div>' +
+    '<img class="standing-thumb" src="' + esc(standing.url || '') + '">' +
+
+    '<label>스탠딩 이름</label>' +
+    '<input value="' + esc(name) + '" onchange="editStanding(\'' + esc(characterId) + '\',' + index + ',\'name\',this.value)">' +
+
+    '<div class="standing-mini-grid">' +
+    '<div><label>너비</label><input type="number" value="' + esc(standing.width || '') + '" placeholder="일괄" onchange="editStanding(\'' + esc(characterId) + '\',' + index + ',\'width\',this.value)"></div>' +
+    '<div><label>높이</label><input type="number" value="' + esc(standing.height || '') + '" placeholder="일괄" onchange="editStanding(\'' + esc(characterId) + '\',' + index + ',\'height\',this.value)"></div>' +
+    '<div><label>X</label><input type="number" value="' + esc(standing.x || '') + '" placeholder="일괄" onchange="editStanding(\'' + esc(characterId) + '\',' + index + ',\'x\',this.value)"></div>' +
+    '<div><label>Y</label><input type="number" value="' + esc(standing.y || '') + '" placeholder="일괄" onchange="editStanding(\'' + esc(characterId) + '\',' + index + ',\'y\',this.value)"></div>' +
+    '<div><label>확대</label><input type="number" value="' + esc(standing.scale || '') + '" placeholder="일괄" onchange="editStanding(\'' + esc(characterId) + '\',' + index + ',\'scale\',this.value)"></div>' +
+    '</div>' +
+
+    '<details>' +
+    '<summary class="hint">URL 보기/수정</summary>' +
+    '<input value="' + esc(standing.url || '') + '" onchange="editStanding(\'' + esc(characterId) + '\',' + index + ',\'url\',this.value)">' +
+    '</details>' +
+    '</div>'
+  );
+}
+
+function editStanding(characterId, index, field, value) {
+  const c = getCharacter(characterId);
+  if (!c || !c.standings || !c.standings[index]) return;
+
+  c.standings[index][field] = value;
+  render();
+  buildCharacterList();
+}
+
+function deleteStanding(characterId, index) {
+  const c = getCharacter(characterId);
+  if (!c || !c.standings) return;
+
+  c.standings.splice(index, 1);
+  render();
+  buildCharacterList();
+}
+
+function openStandingAddModal(characterId) {
+  openModal(
+    '<h3>스탠딩 추가</h3>' +
+    '<label>스탠딩 이름</label>' +
+    '<input id="modalStandingName" placeholder="예: 기본 / 분노 / 웃음">' +
+    '<label>이미지 URL</label>' +
+    '<input id="modalStandingUrl">' +
+    '<div class="row" style="margin-top:10px">' +
+    '<button onclick="saveStandingAddModal(\'' + esc(characterId) + '\')">저장</button>' +
+    '<button class="ghost" onclick="closeModal()">취소</button>' +
+    '</div>'
+  );
+}
+
+function saveStandingAddModal(characterId) {
+  const c = getCharacter(characterId);
+  if (!c) return;
+
+  const name = $('#modalStandingName').value.trim() || ('스탠딩 ' + ((c.standings || []).length + 1));
+  const url = $('#modalStandingUrl').value.trim();
+
+  if (!url) {
+    alert('이미지 URL을 넣어주세요.');
+    return;
+  }
+
+  if (!c.standings) c.standings = [];
+  c.standings.push({ name, url });
+
+  closeModal();
+  buildCharacterList();
+  render();
+}
+
+function standingOptionsHtml(character, selectedIndex) {
+  const standings = character.standings || [];
+
+  return standings.map((standing, index) => {
+    const selected = String(index) === String(selectedIndex) ? ' selected' : '';
+    return '<option value="' + index + '"' + selected + '>' + esc(standingDisplayName(standing, index)) + '</option>';
+  }).join('');
+}
+
+function finalPickStandings(urls, iconUrl) {
+  const seen = new Set();
+  const standings = [];
+
+  urls.forEach((item) => {
+    if (!item.url || item.url === iconUrl || seen.has(item.url)) return;
+
+    const key = String(item.path || '');
+    const likelyStanding = /stand|standing|立ち|立絵|tachie|cutin|image|images|picture|token/i.test(key) &&
+      !/icon|avatar|thumbnail|thumb/i.test(key);
+
+    if (!likelyStanding) return;
+
+    seen.add(item.url);
+    standings.push({
+      name: item.name || key.split('.').slice(-2).join(' ') || ('스탠딩 ' + (standings.length + 1)),
+      url: item.url
+    });
+  });
+
+  return standings;
+}
+
+function extractStandingsFromFields(fields) {
+  const urls = collectUrlsDeep(fields);
+  const seen = new Set();
+  const standings = [];
+
+  urls.forEach((item) => {
+    const key = String(item.path || '').toLowerCase();
+    const isStanding = /stand|standing|立ち|立絵|tachie|face|cutin|image/.test(key) && !/icon|avatar/.test(key);
+
+    if (!isStanding || seen.has(item.url)) return;
+
+    seen.add(item.url);
+    standings.push({
+      name: item.name || item.path.split('.').slice(-2).join(' ') || ('스탠딩 ' + (standings.length + 1)),
+      url: item.url
+    });
+  });
+
+  return standings;
+}
+
+window.editStanding = editStanding;
+window.deleteStanding = deleteStanding;
+window.openStandingAddModal = openStandingAddModal;
+window.saveStandingAddModal = saveStandingAddModal;
 
 </script>
 </body>
