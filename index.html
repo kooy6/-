@@ -267,6 +267,83 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
   .cc-row,.custom-block{max-width:100%!important}
 }
 
+
+/* =========================================================
+  Stability patch 3
+========================================================= */
+.modal-backdrop.stable {
+  pointer-events: auto;
+}
+.modal-box {
+  pointer-events: auto;
+}
+.crop-adjust-box {
+  width: 240px;
+  height: 240px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background:
+    linear-gradient(45deg,#ddd 25%,transparent 25%),
+    linear-gradient(-45deg,#ddd 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#ddd 75%),
+    linear-gradient(-45deg,transparent 75%,#ddd 75%);
+  background-size: 18px 18px;
+  background-position: 0 0,0 9px,9px -9px,-9px 0;
+  cursor: grab;
+  margin: 8px 0;
+}
+.crop-adjust-box:active {
+  cursor: grabbing;
+}
+.crop-adjust-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--crop-x,50%) var(--crop-y,50%);
+  transform: scale(var(--crop-scale,1));
+  transform-origin: center;
+  pointer-events: none;
+  user-select: none;
+}
+.inline-color-tools {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.inline-color-tools input[type=color] {
+  width: 46px;
+  flex: 0 0 46px;
+}
+.inline-editor .save-row {
+  display: flex;
+  gap: 6px;
+}
+.inline-editor .save-row button {
+  flex: 1;
+}
+.dice-result.result-character {
+  color: var(--dice-color, currentColor) !important;
+  font-weight: 900;
+}
+
+
+/* Avatar box size patch */
+:root { --avatar-size:48px; }
+.cc-row {
+  grid-template-columns: calc(var(--avatar-size) + 6px) minmax(0,1fr) !important;
+}
+.cc-avatar {
+  width: var(--avatar-size) !important;
+  height: var(--avatar-size) !important;
+}
+@media(max-width:900px){
+  .cc-row {
+    grid-template-columns: calc(var(--avatar-size) + 4px) minmax(0,1fr) !important;
+  }
+}
+
 </style>
 </head>
 
@@ -298,6 +375,29 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
           <button class="ghost" id="openRoomBtn">룸 열기</button>
         </div>
         <div id="progress" class="progress hidden"></div>
+      </div>
+    </details>
+
+<details class="option-group">
+      <summary>로그 표시</summary>
+      <div class="option-body">
+        <div class="grid2">
+          <label class="chip"><input type="checkbox" id="showDate"> 날짜</label>
+          <label class="chip"><input type="checkbox" id="showTime"> 시간</label>
+          <label class="chip"><input type="checkbox" id="showAvatar" checked> 인장</label>
+          <label class="chip"><input type="checkbox" id="mergeSameChar"> 같은 캐릭터 이어쓰기</label>
+        </div>
+        <label>스킨</label>
+        <select id="skinMode">
+          <option value="skin-dark">코코포리아 다크</option>
+          <option value="skin-light">코코포리아 라이트</option>
+          <option value="skin-tistory">티스토리 백업형</option>
+          <option value="skin-paper">리플북 종이풍</option>
+        </select>
+        <label>인장 크기(px)</label>
+        <input id="avatarSize" type="number" min="24" max="120" step="2" value="48">
+        <label>배경색</label>
+        <input type="color" id="bgColor" value="#303136">
       </div>
     </details>
 
@@ -384,26 +484,7 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
       </div>
     </details>
 
-    <details class="option-group">
-      <summary>로그 표시</summary>
-      <div class="option-body">
-        <div class="grid2">
-          <label class="chip"><input type="checkbox" id="showDate"> 날짜</label>
-          <label class="chip"><input type="checkbox" id="showTime" checked> 시간</label>
-          <label class="chip"><input type="checkbox" id="showAvatar" checked> 인장</label>
-          <label class="chip"><input type="checkbox" id="mergeSameChar"> 같은 캐릭터 이어쓰기</label>
-        </div>
-        <label>스킨</label>
-        <select id="skinMode">
-          <option value="skin-dark">코코포리아 다크</option>
-          <option value="skin-light">코코포리아 라이트</option>
-          <option value="skin-tistory">티스토리 백업형</option>
-          <option value="skin-paper">리플북 종이풍</option>
-        </select>
-        <label>배경색</label>
-        <input type="color" id="bgColor" value="#303136">
-      </div>
-    </details>
+    
 
     <details class="option-group">
       <summary>캐릭터 / 스탠딩</summary>
@@ -1586,6 +1667,283 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 });
 
+
+
+/* =========================================================
+  Stability patch 3:
+  - color span renders as real color
+  - editor does not close on color apply
+  - modal crop adjustment is stable
+  - representative avatar defaults to standing #1
+  - dice gray + result character color
+========================================================= */
+
+/* Add gray+character-result option once */
+document.addEventListener('DOMContentLoaded', () => {
+  const diceSelect = $('#diceColorMode');
+  if (diceSelect && !Array.from(diceSelect.options).some(o => o.value === 'gray-character-result')) {
+    const opt = document.createElement('option');
+    opt.value = 'gray-character-result';
+    opt.textContent = '회색 + 결과값 캐릭터색';
+    diceSelect.appendChild(opt);
+  }
+});
+
+/* Replace inlineFormat so safe color spans render instead of showing code */
+function inlineFormat(text){
+  let raw = String(text ?? '');
+  const placeholders = [];
+  raw = raw.replace(/<span\s+style=["']color:\s*(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)["']>([\s\S]*?)<\/span>/gi, (m, color, inner) => {
+    const key = '§§COLORSPAN' + placeholders.length + '§§';
+    placeholders.push({
+      key,
+      html: '<span style="color:' + esc(color) + '">' + inlineFormat(inner) + '</span>'
+    });
+    return key;
+  });
+
+  let html = esc(raw);
+  html = html.replace(/\*\*\*([^*]+)\*\*\*/g,'<b><i>$1</i></b>');
+  html = html.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  html = html.replace(/\*([^*]+)\*/g,'<i>$1</i>');
+
+  placeholders.forEach(item => {
+    html = html.replace(esc(item.key), item.html);
+  });
+
+  return html;
+}
+
+/* Dice result: gray text + result in character color */
+function enhanceDice(text, characterName){
+  let html = inlineFormat(text);
+  if($('#diceStyle').checked){
+    const resultClass = $('#diceColorMode').value === 'gray-character-result'
+      ? 'result-character'
+      : $('#diceResultMode').value;
+    html = html.replace(
+      /(대단한 성공|극단적 성공|어려운 성공|보통 성공|대성공|성공|실패|대실패|펌블)/g,
+      '<span class="dice-result ' + resultClass + '">$1</span>'
+    );
+  }
+  const namePart = characterName
+    ? '<span class="dice-name '+($('#diceNameMode').value==='hide'?'hide':'')+'">'+esc(characterName)+'</span>'
+    : '';
+  return namePart + html;
+}
+
+/* Treat gray-character-result as gray line */
+const oldRenderMessagePatch3 = renderMessage;
+renderMessage = function(message,set){
+  const html = oldRenderMessagePatch3(message,set);
+  return html.replace('dice-gray-character-result', 'dice-gray');
+};
+
+/* Styling should apply even when dice is not separated */
+function renderMessage(message,set){
+  const c=findCharacterForMessage(message)||{};
+  const system=isSystemMessage(message,set);
+  const dice=$('#diceSeparate').checked&&isDiceText(message.text);
+  const inlineDice=!dice&&isDiceText(message.text);
+  const icon=getDisplayIcon(message,c);
+  const showAvatar=$('#showAvatar').checked&&icon&&!system&&!dice;
+
+  const avatarX=Number(message.avatarX||c.x||50),avatarY=Number(message.avatarY||c.y||50),avatarScale=Number(message.avatarScale||c.scale||100)/100;
+  const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="object-position:'+avatarX+'% '+avatarY+'%;transform:scale('+avatarScale+')"></div>':'<div></div>';
+  const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
+  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
+  const tools=actionTools(message.id,
+    '<button class="ghost small" onclick="toggleEdit(\''+message.id+'\')">✎ 수정</button>'+
+    '<button class="ghost small" onclick="openChatModalAfter(\''+message.id+'\')">아래 채팅 추가</button>'+
+    '<button class="ghost small" onclick="openImageModalAfter(\''+message.id+'\')">아래 이미지 추가</button>'+
+    '<button class="ghost small" onclick="openBgmModalAfter(\''+message.id+'\')">아래 BGM 추가</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',-1)">↑ 위로</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',1)">↓ 아래로</button>'+
+    '<button class="danger small" onclick="deleteItem(\''+message.id+'\')">삭제</button>'
+  );
+  const editor=renderMessageEditor(message,c,icon);
+  const diceMode = $('#diceColorMode').value;
+  const diceClass=dice ? (diceMode==='gray-character-result' ? 'dice-gray' : 'dice-'+diceMode) : '';
+  const sysClass=system?'system-'+$('#systemStyleMode').value:'';
+  const diceColor='--dice-color:'+esc(message.color||c.color||'rgba(255,255,255,.64)');
+  const textHtml=dice
+    ? enhanceDice(message.text,displayName)
+    : (system ? systemMeta+inlineFormat(message.text) : (inlineDice ? enhanceDice(message.text,'') : inlineFormat(message.text)));
+  return '<article class="cc-row '+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="true">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
+};
+
+/* Editor: remove bold/italic buttons, no onchange-render while coloring, save explicitly */
+function renderMessageEditor(m,c,icon){
+  return '<div class="inline-editor hidden" id="editor_'+m.id+'">'+
+    '<label>기존 캐릭터 선택</label>'+
+    '<select onchange="applyCharacterToMessage(\''+m.id+'\',this.value)"><option value="">직접 입력 유지</option>'+characterOptionsHtml(m.characterId||m.name)+'</select>'+
+    '<label>이름</label><input id="editName_'+m.id+'" value="'+esc(m.name||c.name||'')+'">'+
+    '<label>이름색</label><input id="editColor_'+m.id+'" type="color" value="'+esc(m.color||c.color||'#f2f2f2')+'">'+
+    '<label>대사 색상 적용</label>'+
+    '<div class="inline-color-tools"><input type="color" id="color_'+m.id+'" value="#ff7777"><button class="ghost small" type="button" onclick="wrapTextColorNoClose(\''+m.id+'\')">선택 문장에 색상</button></div>'+
+    '<label>인장 URL</label><input id="editIcon_'+m.id+'" value="'+esc(icon||'')+'">'+
+    '<label>스탠딩 선택 / 인장 교체</label>'+
+    '<select id="editStanding_'+m.id+'"><option value="">사용 안 함</option>'+standingOptionsHtml(c,m.standingIndex)+'</select>'+
+    '<label>대사</label><textarea id="text_'+m.id+'" oninput="updateTextPreview(\''+m.id+'\')">'+esc(m.text)+'</textarea>'+
+    '<label>미리보기</label><div class="inline-preview" id="preview_'+m.id+'" style="color:'+esc(m.color||c.color||'#eee')+'">'+inlineFormat(m.text)+'</div>'+
+    '<div class="save-row"><button type="button" onclick="saveInlineEditor(\''+m.id+'\')">수정 적용</button><button class="ghost" type="button" onclick="toggleEdit(\''+m.id+'\')">닫기</button></div>'+
+    '</div>';
+}
+
+function updateTextPreview(id){
+  const textarea=$('#text_'+id);
+  const preview=$('#preview_'+id);
+  if(textarea&&preview)preview.innerHTML=inlineFormat(textarea.value);
+}
+
+function wrapTextColorNoClose(id){
+  const textarea=$('#text_'+id),color=$('#color_'+id);
+  if(!textarea||!color)return;
+  const start=textarea.selectionStart,end=textarea.selectionEnd;
+  const selected=textarea.value.slice(start,end)||'텍스트';
+  textarea.value=textarea.value.slice(0,start)+'<span style="color:'+color.value+'">'+selected+'</span>'+textarea.value.slice(end);
+  updateTextPreview(id);
+  textarea.focus();
+}
+
+function saveInlineEditor(id){
+  const m=state.messages.find(entry=>entry.id===id);
+  if(!m)return;
+  m.name=$('#editName_'+id).value;
+  m.color=$('#editColor_'+id).value;
+  m.icon=$('#editIcon_'+id).value;
+  m.standingIndex=$('#editStanding_'+id).value;
+  m.text=$('#text_'+id).value;
+  render();
+}
+
+/* Stable modal: do not close by accidental backdrop click while adjusting */
+function openModal(html){
+  const old=$('#modalRoot');if(old)old.remove();
+  const wrapper=document.createElement('div');
+  wrapper.id='modalRoot';
+  wrapper.className='modal-backdrop stable';
+  wrapper.innerHTML='<div class="modal-box">'+html+'</div>';
+  document.body.appendChild(wrapper);
+}
+
+/* Character: representative icon = standing 1 if available */
+const oldExtractCharacterPatch3 = extractCharacter;
+extractCharacter = function(doc,index){
+  const c = oldExtractCharacterPatch3(doc,index);
+  if((c.standings||[]).length && c.standings[0].url){
+    c.icons = [c.standings[0].url];
+    c.activeIcon = 0;
+  }
+  return c;
+};
+
+function activeIcon(character){
+  if(character && character.icons && character.icons.length)return character.icons[character.activeIcon||0];
+  if(character && character.standings && character.standings[0] && character.standings[0].url)return character.standings[0].url;
+  return '';
+}
+
+/* Replace avatar/modal adjustment UI with square crop box and no accidental close */
+function openCharacterModal(characterId){
+  const c=getCharacter(characterId)||createEmptyCharacter(characterId,characterId);
+  if(!state.characters[characterId])state.characters[characterId]=c;
+  if((c.standings||[]).length && (!c.icons || !c.icons.length))c.icons=[c.standings[0].url];
+  const icon=activeIcon(c);
+  openModal('<h3>캐릭터 상세정보</h3>'+
+    '<label>표시 이름</label><input id="modalCharacterName" value="'+esc(c.name||characterId)+'">'+
+    '<label>이름색</label><input id="modalCharacterColor" type="color" value="'+esc(c.color||'#f2f2f2')+'">'+
+    '<label>대표 인장 / 스탠딩 1번 기본</label>'+
+    '<div class="crop-adjust-box" id="avatarAdjustBox" style="--crop-x:'+(c.x||50)+'%;--crop-y:'+(c.y||50)+'%;--crop-scale:'+(Number(c.scale||100)/100)+'"><img id="avatarAdjustPreview" src="'+esc(icon||'')+'"></div>'+
+    '<label>대표 인장 URL</label><input id="modalCharacterIcon" value="'+esc(icon||'')+'">'+
+    '<div class="grid3"><div><label>인장 X</label><input id="modalCharacterX" type="number" value="'+esc(c.x||50)+'"></div><div><label>인장 Y</label><input id="modalCharacterY" type="number" value="'+esc(c.y||50)+'"></div><div><label>확대</label><input id="modalCharacterScale" type="number" value="'+esc(c.scale||100)+'"></div></div>'+
+    '<label>스탠딩 일괄 조정</label>'+
+    '<div class="grid3"><div><label>너비</label><input id="batchStandingWidth" type="number" value="'+esc(c.standingWidth||180)+'"></div><div><label>X</label><input id="batchStandingX" type="number" value="'+esc(c.standingX||50)+'"></div><div><label>Y</label><input id="batchStandingY" type="number" value="'+esc(c.standingY||50)+'"></div></div>'+
+    '<div class="grid2"><div><label>높이</label><input id="batchStandingHeight" type="number" value="'+esc(c.standingHeight||'')+'"></div><div><label>확대</label><input id="batchStandingScale" type="number" value="'+esc(c.standingScale||100)+'"></div></div>'+
+    '<button class="ghost" onclick="applyBatchStanding(\''+esc(characterId)+'\')">일괄값을 모든 스탠딩에 저장</button>'+
+    '<label>스탠딩</label><div class="standing-button-list">'+renderStandingButtons(characterId)+'</div>'+
+    '<div class="row" style="margin-top:10px"><button class="ghost" onclick="openStandingAddModal(\''+esc(characterId)+'\')">스탠딩 추가</button></div>'+
+    '<div class="row" style="margin-top:10px"><button onclick="saveCharacterModal(\''+esc(characterId)+'\')">저장</button><button class="ghost" onclick="closeModal()">닫기</button></div>'
+  );
+  setupCropDrag('avatarAdjustBox','modalCharacterX','modalCharacterY','modalCharacterScale');
+  $('#modalCharacterIcon').addEventListener('input',()=>{$('#avatarAdjustPreview').src=$('#modalCharacterIcon').value});
+  $('#modalCharacterScale').addEventListener('input',()=>{$('#avatarAdjustBox').style.setProperty('--crop-scale',Number($('#modalCharacterScale').value||100)/100)});
+}
+
+function setupCropDrag(boxId,xId,yId,scaleId){
+  const box=$('#'+boxId);if(!box)return;
+  let dragging=false;
+  function update(event){
+    const rect=box.getBoundingClientRect();
+    const clientX=event.touches?event.touches[0].clientX:event.clientX;
+    const clientY=event.touches?event.touches[0].clientY:event.clientY;
+    const x=Math.max(0,Math.min(100,((clientX-rect.left)/rect.width)*100));
+    const y=Math.max(0,Math.min(100,((clientY-rect.top)/rect.height)*100));
+    $('#'+xId).value=Math.round(x);
+    $('#'+yId).value=Math.round(y);
+    box.style.setProperty('--crop-x',Math.round(x)+'%');
+    box.style.setProperty('--crop-y',Math.round(y)+'%');
+  }
+  box.addEventListener('mousedown',e=>{dragging=true;update(e);e.stopPropagation();});
+  window.addEventListener('mousemove',e=>{if(dragging)update(e);});
+  window.addEventListener('mouseup',()=>{dragging=false;});
+  box.addEventListener('touchstart',e=>{dragging=true;update(e);},{passive:true});
+  box.addEventListener('touchmove',e=>{if(dragging)update(e);},{passive:true});
+  box.addEventListener('touchend',()=>{dragging=false;});
+}
+
+/* Image modal uses rectangular crop preview, stable */
+function openImageModal(_,blockId){
+  const block=blockId?state.blocks.find((entry)=>entry.id===blockId):null;
+  const url=block?block.url:'',x=block?block.objectX||50:50,y=block?block.objectY||50:50,scale=block?block.scale||100:100;
+  openModal('<h3>이미지 추가/수정</h3><label>이미지 URL</label><input id="modalImageUrl" value="'+esc(url)+'">'+
+    '<div class="crop-adjust-box" id="imageAdjustBox" style="width:100%;height:220px;--crop-x:'+x+'%;--crop-y:'+y+'%;--crop-scale:'+(Number(scale)/100)+'"><img id="imageAdjustPreview" src="'+esc(url)+'"></div>'+
+    '<p class="hint">칸 안에서 이미지를 움직이듯 드래그해 위치를 맞춰주세요.</p>'+
+    '<label>이미지 너비(%)</label><input id="modalImageWidth" type="number" value="'+esc(block?block.width||70:70)+'">'+
+    '<label>자르기 높이(px, 비우면 원본 비율)</label><input id="modalImageHeight" type="number" value="'+esc(block?block.height||'':'')+'">'+
+    '<div class="grid3"><div><label>위치 X</label><input id="modalImageX" type="number" value="'+esc(x)+'"></div><div><label>위치 Y</label><input id="modalImageY" type="number" value="'+esc(y)+'"></div><div><label>확대</label><input id="modalImageScale" type="number" value="'+esc(scale)+'"></div></div>'+
+    '<label>캡션</label><input id="modalImageCaption" value="'+esc(block?block.caption||'':'')+'">'+
+    '<div class="row" style="margin-top:10px"><button onclick="saveImageModal(\''+esc(blockId||'')+'\')">저장</button><button class="ghost" onclick="closeModal()">취소</button></div>'
+  );
+  setupCropDrag('imageAdjustBox','modalImageX','modalImageY','modalImageScale');
+  $('#modalImageUrl').addEventListener('input',()=>{$('#imageAdjustPreview').src=$('#modalImageUrl').value});
+  $('#modalImageScale').addEventListener('input',()=>{$('#imageAdjustBox').style.setProperty('--crop-scale',Number($('#modalImageScale').value||100)/100)});
+}
+
+/* Also save line-height/log-width in settings */
+const oldCollectSettingsPatch3 = collectSettings;
+collectSettings = function(){
+  const data = oldCollectSettingsPatch3();
+  data.values.lineHeight = $('#lineHeight')?.value || '1.55';
+  data.values.logWidth = $('#logWidth')?.value || '1040';
+  return data;
+};
+
+
+
+/* Avatar size patch */
+const oldApplyVisualSettingsAvatarPatch = applyVisualSettings;
+applyVisualSettings = function(){
+  oldApplyVisualSettingsAvatarPatch();
+  const avatarSize = Number($('#avatarSize')?.value || 48);
+  document.documentElement.style.setProperty('--avatar-size', avatarSize + 'px');
+};
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const avatarSize = $('#avatarSize');
+  if(avatarSize){
+    avatarSize.addEventListener('input', render);
+    avatarSize.addEventListener('change', render);
+  }
+});
+
+const oldCollectSettingsAvatarPatch = collectSettings;
+collectSettings = function(){
+  const data = oldCollectSettingsAvatarPatch();
+  data.values.avatarSize = $('#avatarSize')?.value || '48';
+  return data;
+};
 
 </script>
 </body>
