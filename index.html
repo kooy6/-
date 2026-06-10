@@ -996,6 +996,39 @@ button{
   outline:2px dashed rgba(255,255,255,.45);
 }
 
+
+/* =========================================================
+  FINAL PATCH: 3rd-line spacing + clean long-press outline
+========================================================= */
+
+/* 여러 줄 대사는 3번째 줄부터 너무 벌어져 보이지 않게 조금 압축 */
+.cc-text.multi-line-text {
+  line-height: calc(var(--log-line-height) - 0.12) !important;
+}
+
+/* 그래도 첫 줄 위치는 안정적으로 */
+.cc-row:not(.system):not(.dice-log) .cc-text.multi-line-text {
+  padding-top: 0 !important;
+}
+
+/* 점선은 실제 롱프레스 성공 상태에서만 */
+.cc-row.drag-ready,
+.custom-block.drag-ready {
+  outline: 1px dashed rgba(255,255,255,.42) !important;
+  cursor: grab !important;
+}
+
+.cc-row:not(.drag-ready):not(.dragging),
+.custom-block:not(.drag-ready):not(.dragging) {
+  outline: none !important;
+}
+
+.cc-row.dragging,
+.custom-block.dragging {
+  opacity: .45 !important;
+  outline: 2px dashed rgba(255,255,255,.52) !important;
+}
+
 </style>
 </head>
 
@@ -4017,6 +4050,128 @@ if(typeof renderHandoutMessage === 'function'){
     return __oldRenderHandoutFinal(clone,set);
   };
 }
+
+
+/* =========================================================
+  FINAL PATCH: multi-line class + long-press outline cleanup
+========================================================= */
+function isMultiLineText(text){
+  return displayTextFinal ? displayTextFinal(text).split('\n').length >= 3 : String(text||'').split('\n').length >= 3;
+}
+
+/* renderMessage에 3줄 이상 class 주기 */
+const __oldRenderMessageLinePatch = renderMessage;
+renderMessage = function(message,set){
+  const output = __oldRenderMessageLinePatch(message,set);
+  if(isMultiLineText(message.text)){
+    return output.replace('class="cc-text"', 'class="cc-text multi-line-text"');
+  }
+  return output;
+};
+
+function clearAllDragReady(){
+  document.querySelectorAll('.drag-ready,.dragging').forEach(el=>{
+    el.classList.remove('drag-ready','dragging');
+    el.draggable=false;
+  });
+  finalDragSourceId=null;
+  clearTimeout(finalLongPressTimer);
+}
+
+/* 꾹 눌러 이동: hover/mouseover로는 점선 안 뜨게 재정의 */
+function setupLongPressMoveFinal(){
+  document.querySelectorAll('#preview .cc-row[data-id], #preview .custom-block[data-id]').forEach((el)=>{
+    el.draggable=false;
+    el.classList.remove('drag-ready','dragging');
+
+    el.onmousedown=null;
+    el.onmouseup=null;
+    el.onmouseleave=null;
+    el.onmousemove=null;
+    el.ondragstart=null;
+    el.ondragover=null;
+    el.ondrop=null;
+    el.ondragend=null;
+
+    el.addEventListener('mousedown',(e)=>{
+      if(hasOpenEditorOrModalFinal()) return;
+      if(e.target.closest('button,input,textarea,select,.inline-editor,.inline-tools,.bgmButton,a')) return;
+
+      clearAllDragReady();
+
+      finalLongPressTimer=setTimeout(()=>{
+        if(hasOpenEditorOrModalFinal()) return;
+        el.draggable=true;
+        el.classList.add('drag-ready');
+      },650);
+    });
+
+    el.addEventListener('mouseup',()=>{
+      clearTimeout(finalLongPressTimer);
+      if(!el.classList.contains('dragging')){
+        el.classList.remove('drag-ready');
+        el.draggable=false;
+      }
+    });
+
+    el.addEventListener('mouseleave',()=>{
+      clearTimeout(finalLongPressTimer);
+      if(!el.classList.contains('dragging')){
+        el.classList.remove('drag-ready');
+        el.draggable=false;
+      }
+    });
+
+    el.addEventListener('dragstart',(e)=>{
+      if(hasOpenEditorOrModalFinal() || !el.classList.contains('drag-ready')){
+        e.preventDefault();
+        clearAllDragReady();
+        return;
+      }
+      finalDragSourceId=el.dataset.id;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+
+    el.addEventListener('dragend',()=>{
+      clearAllDragReady();
+    });
+
+    el.addEventListener('dragover',(e)=>{
+      if(!finalDragSourceId || hasOpenEditorOrModalFinal()) return;
+      e.preventDefault();
+    });
+
+    el.addEventListener('drop',(e)=>{
+      e.preventDefault();
+      if(!finalDragSourceId || hasOpenEditorOrModalFinal()){
+        clearAllDragReady();
+        return;
+      }
+      reorderByIdsFinal(finalDragSourceId, el.dataset.id);
+      clearAllDragReady();
+    });
+  });
+}
+
+/* 화면 아무 데나 클릭/ESC/스크롤하면 남은 점선 제거 */
+document.addEventListener('mouseup',()=>{
+  setTimeout(()=>{
+    document.querySelectorAll('.drag-ready:not(.dragging)').forEach(el=>{
+      el.classList.remove('drag-ready');
+      el.draggable=false;
+    });
+  },30);
+});
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='Escape') clearAllDragReady();
+});
+document.addEventListener('scroll',()=>{
+  document.querySelectorAll('.drag-ready:not(.dragging)').forEach(el=>{
+    el.classList.remove('drag-ready');
+    el.draggable=false;
+  });
+}, true);
 
 </script>
 </body>
