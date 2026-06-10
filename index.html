@@ -253,7 +253,82 @@
       }
     }
 
-  </style>
+  
+/* =========================================================
+  Patch: less lag, click-edit, Tistory containment
+========================================================= */
+.cc-row:not(.system):not(.dice-log) {
+  text-align: left;
+}
+
+.inline-tools {
+  display: none !important;
+}
+
+.inline-tools.active {
+  display: flex !important;
+}
+
+.action-toggle {
+  margin-top: 3px;
+  padding: 2px 8px !important;
+  min-height: 22px !important;
+  border-color: rgba(255,255,255,.18) !important;
+  background: rgba(255,255,255,.06) !important;
+  color: rgba(255,255,255,.75) !important;
+  font-size: 11px !important;
+}
+
+.action-toggle:hover {
+  background: rgba(255,255,255,.12) !important;
+}
+
+.image-adjust-box {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #222;
+  cursor: grab;
+}
+
+.image-adjust-box:active {
+  cursor: grabbing;
+}
+
+.image-adjust-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--modal-x, 50%) var(--modal-y, 50%);
+  user-select: none;
+  pointer-events: none;
+}
+
+.tistory-ccfolia-backup {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  overflow: hidden !important;
+}
+
+.tistory-ccfolia-backup .preview,
+.tistory-ccfolia-backup.preview {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 900px) {
+  .action-toggle {
+    opacity: .9;
+  }
+}
+
+</style>
 </head>
 <body>
 <div class="app">
@@ -453,7 +528,536 @@ function bgmTitle(url){try{return decodeURIComponent(url.split('/').pop().split(
 function attachBgm(){let current=null;$$('.bgmButton').forEach(btn=>{btn.onclick=()=>{const src=btn.dataset.audio;if(current){current.pause();current.currentTime=0}if(btn.dataset.playing==='1'){btn.dataset.playing='0';return}$$('.bgmButton').forEach(b=>b.dataset.playing='0');current=new Audio(src);current.loop=true;current.play();btn.dataset.playing='1'}})}
 function cleanForExport(){const clone=$('#preview').cloneNode(true);clone.querySelectorAll('.insert-toggle,.insert-control,.inline-tools,.inline-editor,.modal-backdrop').forEach(el=>el.remove());return clone.innerHTML}
 function bgmExportScript(){return '<scr'+'ipt>let currentAudio=null;document.querySelectorAll(".bgmButton").forEach(function(btn){btn.addEventListener("click",function(){var src=btn.dataset.audio;if(currentAudio){currentAudio.pause();currentAudio.currentTime=0}if(btn.dataset.playing==="1"){btn.dataset.playing="0";return}document.querySelectorAll(".bgmButton").forEach(function(b){b.dataset.playing="0"});currentAudio=new Audio(src);currentAudio.loop=true;currentAudio.play();btn.dataset.playing="1"})});</scr'+'ipt>'}
-function exportHtml(){render();const title=$('#titleInput').value.trim()||state.title||'custom_log';const cls='preview '+$('#skinMode').value;return'<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+esc(title)+'</title><style>'+document.querySelector('style').textContent+'</style></head><body><main class="'+cls+'">'+cleanForExport()+'</main>'+bgmExportScript()+'</body></html>'}
+function exportHtml(){render();const title=$('#titleInput').value.trim()||state.title||'custom_log';const cls='preview '+$('#skinMode').value;return'<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+esc(title)+'</title><style>'+document.querySelector('style').textContent+'</style></head><body><main class="'+cls+'">'+cleanForExport()+'</main>'+bgmExportScript()+'
+<script>
+/* =========================================================
+  Stability patch: parser, click-edit, image drag, standing/color
+========================================================= */
+function isBlankNameLabel(value) {
+  return /^이름\s*없는\s*애\s*[:：]?\s*$/i.test(String(value || '').trim());
+}
+
+function getInlineColor(element) {
+  if (!element) return '';
+  const style = element.getAttribute('style') || '';
+  const match = style.match(/color\s*:\s*([^;]+)/i);
+  return match ? match[1].trim() : '';
+}
+
+function rowToMessage(row, i) {
+  const ne = row.querySelector('.name,.msg-name,.message-name,.speaker,.character-name,[class*=name],[class*=speaker]');
+  const te = row.querySelector('.text,.msg-text,.message-text,.chat-text,.content,[class*=text],[class*=content]');
+  const ti = row.querySelector('.time,.timestamp,.msg-timestamp,time,[class*=time]');
+  const img = row.querySelector('img');
+
+  const rowText = (te ? te.innerText : row.innerText || '').trim();
+  if (!rowText || isBlankNameLabel(rowText)) return null;
+
+  let name = ne ? ne.innerText.trim() : guessName(rowText);
+  let text = name && rowText.startsWith(name) ? rowText.slice(name.length).trim() : rowText;
+
+  if (isBlankNameLabel(name)) {
+    name = '';
+    text = text.replace(/^[:：]\s*/, '').trim();
+  }
+
+  if (!text || isBlankNameLabel(text)) return null;
+
+  const message = makeMsg(
+    'm_file_' + i + '_' + Math.random().toString(36).slice(2),
+    name,
+    text,
+    guessTab(row),
+    ti ? ti.innerText.trim() : new Date(Date.now() + i).toISOString(),
+    img ? img.src : ''
+  );
+
+  const color = getInlineColor(ne);
+  if (color) message.color = color;
+
+  return message;
+}
+
+function parseTextLog(text) {
+  let i = 0;
+  let currentTab = '메인';
+  const out = [];
+
+  text.split(/\r?\n/).map(line => line.trim()).filter(Boolean).forEach(line => {
+    if (isBlankNameLabel(line)) return;
+
+    const tab = line.match(/^\[?\s*(메인|정보|잡담|비밀|秘匿|情報|雑談|main|info|other|secret)\s*\]?$/i);
+    if (tab) {
+      currentTab = normalizeTab(tab[1]);
+      return;
+    }
+
+    const m = line.match(/^([^：:]{1,40})[：:](.*)$/);
+    let name = m ? m[1].trim() : '';
+    let body = m ? m[2].trim() : line;
+
+    if (isBlankNameLabel(name)) name = '';
+    if (!body || isBlankNameLabel(body)) return;
+
+    out.push(makeMsg('m_text_' + (i++), name, body, currentTab, new Date(Date.now() + i).toISOString(), ''));
+  });
+
+  return out;
+}
+
+function isSystemMessage(message, systemSet) {
+  return (
+    systemSet.has(message.characterId) ||
+    systemSet.has(message.name) ||
+    (systemSet.has('__blank_name__') && !message.name)
+  );
+}
+
+function collectUrlsDeep(value, path = [], out = []) {
+  if (!value) return out;
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => collectUrlsDeep(item, path.concat(index), out));
+    return out;
+  }
+
+  if (typeof value === 'object') {
+    const maybeUrl = value.url || value.imageUrl || value.iconUrl || value.src;
+    if (typeof maybeUrl === 'string' && /^https?:\/\//i.test(maybeUrl)) {
+      out.push({
+        path: path.join('.'),
+        url: maybeUrl,
+        name: value.name || value.label || value.title || ''
+      });
+    }
+
+    Object.entries(value).forEach(([key, item]) => {
+      collectUrlsDeep(item, path.concat(key), out);
+    });
+    return out;
+  }
+
+  if (typeof value === 'string' && /^https?:\/\//i.test(value)) {
+    out.push({
+      path: path.join('.'),
+      url: value,
+      name: ''
+    });
+  }
+
+  return out;
+}
+
+function extractStandingsFromFields(fields) {
+  const urls = collectUrlsDeep(fields);
+  const seen = new Set();
+  const standings = [];
+
+  urls.forEach((item) => {
+    const key = String(item.path || '').toLowerCase();
+    const isStanding =
+      /stand|standing|立ち|立絵|tachie|face|cutin|image/.test(key) &&
+      !/icon|avatar/.test(key);
+
+    if (!isStanding || seen.has(item.url)) return;
+
+    seen.add(item.url);
+    standings.push({
+      name: item.name || item.path.split('.').slice(-2).join(' ') || '스탠딩 ' + (standings.length + 1),
+      url: item.url
+    });
+  });
+
+  return standings;
+}
+
+function extractCharacter(doc, i) {
+  const f = doc.fields ? fsFields(doc.fields) : doc;
+  const fl = flat(f);
+  const id = String(doc.name || f.id || i).split('/').pop();
+
+  const icon = first(fl, [
+    'iconUrl',
+    'imageUrl',
+    'portraitUrl',
+    'avatar',
+    'image',
+    'url',
+    'data.iconUrl',
+    'data.imageUrl',
+    'character.iconUrl',
+    'character.imageUrl'
+  ]);
+
+  const color = first(fl, [
+    'color',
+    'nameColor',
+    'textColor',
+    'fontColor',
+    'data.color',
+    'data.nameColor',
+    'data.textColor',
+    'character.color',
+    'character.nameColor'
+  ]) || '#f2f2f2';
+
+  return {
+    id,
+    name: first(fl, ['name', 'data.name', 'character.name', 'displayName', 'label']) || id,
+    icons: [icon].filter(Boolean),
+    activeIcon: 0,
+    color,
+    x: 50,
+    y: 50,
+    scale: 100,
+    standings: extractStandingsFromFields(f),
+    activeStanding: '',
+    standingWidth: 180,
+    standingX: 50,
+    standingY: 50,
+    standingHeight: '',
+    standingScale: 100
+  };
+}
+
+function mergeCharacters(newChars) {
+  Object.entries(newChars).forEach(([key, character]) => {
+    if (!state.characters[key]) {
+      state.characters[key] = character;
+      return;
+    }
+
+    const old = state.characters[key];
+
+    old.name = old.name || character.name;
+    old.color = character.color || old.color;
+
+    (character.icons || []).forEach(icon => {
+      if (icon && !old.icons.includes(icon)) old.icons.push(icon);
+    });
+
+    (character.standings || []).forEach(standing => {
+      if (standing.url && !(old.standings || []).some(s => s.url === standing.url)) {
+        old.standings.push(standing);
+      }
+    });
+  });
+}
+
+function standingOptionsHtml(character, selectedIndex) {
+  const standings = character.standings || [];
+
+  return standings.map((standing, index) => {
+    const selected = String(index) === String(selectedIndex) ? ' selected' : '';
+    const label = standing.name || ('스탠딩 ' + (index + 1));
+    return '<option value="' + index + '"' + selected + '>' + esc(label) + '</option>';
+  }).join('');
+}
+
+function render() {
+  const preview = $('#preview');
+  preview.className = 'preview ' + $('#skinMode').value;
+
+  document.documentElement.style.setProperty('--cc-bg', $('#bgColor').value || '#303136');
+
+  const systemSet = selectedSystemCharacters();
+  const items = groupItems(allItems(), systemSet);
+
+  $('#status').textContent = $('#titleInput').value.trim() || state.title || 'custom log';
+  $('#count').textContent = items.length + ' items';
+
+  if (!items.length) {
+    preview.innerHTML =
+      '<div class="empty">' +
+      (selectedTabs().length
+        ? '선택한 탭에 출력할 메시지가 없습니다.'
+        : '왼쪽의 출력할 탭을 체크하면 미리보기가 표시됩니다.') +
+      '</div>';
+    return;
+  }
+
+  let html = insertControl('start');
+
+  items.forEach((item) => {
+    if (item.kind === 'image') {
+      html += renderImageBlock(item) + insertControl(item.id);
+    } else if (item.kind === 'bgm') {
+      html += renderBgmBlock(item) + insertControl(item.id);
+    } else {
+      html += renderMessage(item, systemSet) + insertControl(item.id);
+    }
+  });
+
+  preview.innerHTML = html;
+  attachBgm();
+}
+
+function actionTools(id, inner) {
+  return (
+    '<button class="action-toggle" onclick="toggleTools(\'' + id + '\')">⋯</button>' +
+    '<div class="inline-tools" id="tools_' + id + '">' + inner + '</div>'
+  );
+}
+
+function toggleTools(id) {
+  const el = $('#tools_' + id);
+  if (el) el.classList.toggle('active');
+}
+
+function renderMessage(message, systemSet) {
+  const character = findCharacterForMessage(message) || {};
+  const system = isSystemMessage(message, systemSet);
+  const dice = $('#diceSeparate').checked && isDiceText(message.text);
+
+  const icon = message.icon || activeIcon(character);
+  const standing = getMessageStanding(message, character);
+  const showAvatar = $('#showAvatar').checked && icon && !system && !dice;
+
+  const avatarX = Number(message.avatarX || character.x || 50);
+  const avatarY = Number(message.avatarY || character.y || 50);
+  const avatarScale = Number(message.avatarScale || character.scale || 100) / 100;
+
+  const avatar = showAvatar
+    ? '<div class="cc-avatar"><img src="' +
+      esc(icon) +
+      '" style="object-position:' +
+      avatarX +
+      '% ' +
+      avatarY +
+      '%;transform:scale(' +
+      avatarScale +
+      ')"></div>'
+    : '<div></div>';
+
+  const meta = renderMeta(message.created);
+  const displayName = message.name || character.name || '';
+
+  const nameLine = system || dice
+    ? ''
+    : '<div class="cc-name-line"><span class="cc-name" style="color:' +
+      esc(message.color || character.color || '#f2f2f2') +
+      '">' +
+      esc(displayName) +
+      '</span>' +
+      (meta ? '<span class="cc-meta">' + esc(meta) + '</span>' : '') +
+      '</div>';
+
+  const systemMeta = system && meta
+    ? '<span class="cc-meta">' + esc(meta) + '</span> '
+    : '';
+
+  const standingHtml = standing && !system && !dice
+    ? renderStandingImage(standing, character)
+    : '';
+
+  const tools = actionTools(
+    message.id,
+    '<button class="ghost small" onclick="toggleEdit(\'' + message.id + '\')">✎ 수정</button>' +
+    '<button class="ghost small" onclick="moveMessage(\'' + message.id + '\',-1)">↑</button>' +
+    '<button class="ghost small" onclick="moveMessage(\'' + message.id + '\',1)">↓</button>' +
+    '<button class="ghost small" onclick="openImageModal(\'' + message.id + '\')">이미지+</button>' +
+    '<button class="ghost small" onclick="openBgmModal(\'' + message.id + '\')">BGM+</button>' +
+    '<button class="ghost small" onclick="openChatModal(\'' + message.id + '\')">채팅+</button>' +
+    '<button class="danger small" onclick="deleteItem(\'' + message.id + '\')">삭제</button>'
+  );
+
+  const editor = renderMessageEditor(message, character, icon);
+  const diceColor = '--dice-color:' + esc(message.color || character.color || 'rgba(255,255,255,.64)');
+
+  return (
+    '<article class="cc-row ' +
+    (system ? 'system ' : '') +
+    (dice ? 'dice-log ' : '') +
+    (showAvatar ? '' : 'no-avatar') +
+    '" style="' +
+    diceColor +
+    '">' +
+    (system || dice ? '' : avatar) +
+    '<div class="cc-body">' +
+    nameLine +
+    standingHtml +
+    '<p class="cc-text" style="font-size:' +
+    (Number($('#fontSize').value) || 14) +
+    'px">' +
+    systemMeta +
+    enhanceDice(message.text) +
+    '</p>' +
+    tools +
+    editor +
+    '</div>' +
+    '</article>'
+  );
+}
+
+function renderImageBlock(block) {
+  return (
+    '<div class="custom-block">' +
+    '<img class="insert-image" src="' +
+    esc(block.url) +
+    '" style="--img-width:' +
+    esc(block.width || 70) +
+    '%;--img-height:' +
+    (block.height ? esc(block.height) + 'px' : 'auto') +
+    ';--img-fit:' +
+    (block.height ? 'cover' : 'contain') +
+    ';--img-x:' +
+    esc(block.objectX || 50) +
+    '%;--img-y:' +
+    esc(block.objectY || 50) +
+    '%">' +
+    '<div class="caption">' +
+    esc(block.caption || '') +
+    '</div>' +
+    actionTools(
+      block.id,
+      '<button class="ghost small" onclick="editBlock(\'' + block.id + '\')">✎ 이미지 수정</button>' +
+      '<button class="ghost small" onclick="moveBlock(\'' + block.id + '\',-1)">↑</button>' +
+      '<button class="ghost small" onclick="moveBlock(\'' + block.id + '\',1)">↓</button>' +
+      '<button class="danger small" onclick="deleteItem(\'' + block.id + '\')">삭제</button>'
+    ) +
+    '</div>'
+  );
+}
+
+function renderBgmBlock(block) {
+  return (
+    '<div class="custom-block">' +
+    '<div class="bgm-area"><button class="bgmButton" data-audio="' +
+    esc(block.url) +
+    '">♪ ' +
+    esc(block.label || bgmTitle(block.url)) +
+    '</button></div>' +
+    actionTools(
+      block.id,
+      '<button class="ghost small" onclick="editBlock(\'' + block.id + '\')">✎ BGM 수정</button>' +
+      '<button class="ghost small" onclick="moveBlock(\'' + block.id + '\',-1)">↑</button>' +
+      '<button class="ghost small" onclick="moveBlock(\'' + block.id + '\',1)">↓</button>' +
+      '<button class="danger small" onclick="deleteItem(\'' + block.id + '\')">삭제</button>'
+    ) +
+    '</div>'
+  );
+}
+
+function openImageModal(afterId, blockId) {
+  const b = blockId ? state.blocks.find(e => e.id === blockId) : null;
+  const url = b ? b.url : '';
+  const x = b ? b.objectX || 50 : 50;
+  const y = b ? b.objectY || 50 : 50;
+
+  openModal(
+    '<h3>이미지 추가/수정</h3>' +
+    '<label>이미지 URL</label>' +
+    '<input id="modalImageUrl" value="' + esc(url) + '">' +
+    '<div class="image-adjust-box" id="imageAdjustBox" style="--modal-x:' + x + '%;--modal-y:' + y + '%">' +
+    '<img id="imageAdjustPreview" src="' + esc(url) + '">' +
+    '</div>' +
+    '<p class="hint">위 미리보기에서 이미지를 드래그하면 X/Y가 바뀝니다.</p>' +
+    '<label>이미지 너비(%)</label>' +
+    '<input id="modalImageWidth" type="number" value="' + esc(b ? b.width || 70 : 70) + '">' +
+    '<label>자르기 높이(px, 비우면 원본 비율)</label>' +
+    '<input id="modalImageHeight" type="number" value="' + esc(b ? b.height || '' : '') + '">' +
+    '<div class="grid2">' +
+    '<div><label>위치 X</label><input id="modalImageX" type="number" value="' + esc(x) + '"></div>' +
+    '<div><label>위치 Y</label><input id="modalImageY" type="number" value="' + esc(y) + '"></div>' +
+    '</div>' +
+    '<label>캡션</label>' +
+    '<input id="modalImageCaption" value="' + esc(b ? b.caption || '' : '') + '">' +
+    '<div class="row" style="margin-top:10px">' +
+    '<button onclick="saveImageModal(\'' + esc(afterId || 'start') + '\',\'' + esc(blockId || '') + '\')">저장</button>' +
+    '<button class="ghost" onclick="closeModal()">취소</button>' +
+    '</div>'
+  );
+
+  setupImageDrag();
+  const urlInput = $('#modalImageUrl');
+  if (urlInput) {
+    urlInput.addEventListener('input', () => {
+      const img = $('#imageAdjustPreview');
+      if (img) img.src = urlInput.value;
+    });
+  }
+}
+
+function setupImageDrag() {
+  const box = $('#imageAdjustBox');
+  if (!box) return;
+
+  let dragging = false;
+
+  function update(event) {
+    const rect = box.getBoundingClientRect();
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+
+    $('#modalImageX').value = Math.round(x);
+    $('#modalImageY').value = Math.round(y);
+    box.style.setProperty('--modal-x', Math.round(x) + '%');
+    box.style.setProperty('--modal-y', Math.round(y) + '%');
+  }
+
+  box.addEventListener('mousedown', (event) => {
+    dragging = true;
+    update(event);
+  });
+
+  window.addEventListener('mousemove', (event) => {
+    if (dragging) update(event);
+  });
+
+  window.addEventListener('mouseup', () => {
+    dragging = false;
+  });
+
+  box.addEventListener('touchstart', (event) => {
+    dragging = true;
+    update(event);
+  }, { passive: true });
+
+  box.addEventListener('touchmove', (event) => {
+    if (dragging) update(event);
+  }, { passive: true });
+
+  box.addEventListener('touchend', () => {
+    dragging = false;
+  });
+}
+
+function cleanForExport() {
+  const clone = $('#preview').cloneNode(true);
+
+  clone.querySelectorAll(
+    '.insert-toggle,.insert-control,.action-toggle,.inline-tools,.inline-editor,.modal-backdrop,.log-title'
+  ).forEach((element) => {
+    element.remove();
+  });
+
+  return clone.innerHTML;
+}
+
+function exportTistoryHtml() {
+  render();
+  const cls = 'preview ' + $('#skinMode').value;
+
+  return (
+    '<style>' +
+    document.querySelector('style').textContent +
+    '.tistory-ccfolia-backup{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;overflow:hidden!important;border-radius:0!important;}' +
+    '.tistory-ccfolia-backup *{max-width:100%;}' +
+    '</style><div class="tistory-ccfolia-backup ' +
+    cls +
+    '">' +
+    cleanForExport() +
+    '</div>' +
+    bgmExportScript()
+  );
+}
+
+window.toggleTools = toggleTools;
+</script>
+
+</body></html>'}
 function exportTistoryHtml(){render();const cls='preview '+$('#skinMode').value;return'<style>'+document.querySelector('style').textContent+'.tistory-ccfolia-backup{width:100vw!important;max-width:100vw!important;margin-left:calc(50% - 50vw)!important;margin-right:calc(50% - 50vw)!important;border-radius:0!important;}</style><div class="tistory-ccfolia-backup '+cls+'">'+cleanForExport()+'</div>'+bgmExportScript()}
 function downloadHtml(){const blob=new Blob([exportHtml()],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ccfolia_backup_'+String(state.roomId||'log').replace(/[^\w가-힣.-]+/g,'_')+'.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 async function copyTistory(){await navigator.clipboard.writeText(exportTistoryHtml());alert('티스토리용 HTML을 복사했어요. HTML 모드에 붙여넣어주세요.')}
