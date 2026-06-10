@@ -733,6 +733,100 @@ button{
   object-fit:cover;
 }
 
+
+/* =========================================================
+  Patch10: force original two-column editor layout
+========================================================= */
+@media (min-width:901px){
+  .app{
+    width:min(1540px,calc(100% - 20px)) !important;
+    margin:0 auto !important;
+    padding:16px 0 36px !important;
+  }
+  .layout{
+    display:grid !important;
+    grid-template-columns:340px minmax(0,1fr) !important;
+    gap:12px !important;
+    align-items:start !important;
+  }
+  aside.left-panel{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    display:block !important;
+    position:sticky !important;
+    top:10px !important;
+    max-height:calc(100vh - 20px) !important;
+    overflow:auto !important;
+    width:340px !important;
+    min-width:340px !important;
+  }
+  main.viewer{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    min-width:0 !important;
+    width:100% !important;
+  }
+  body > details.option-group,
+  body > .option-group,
+  .app > details.option-group,
+  .layout > details.option-group{
+    display:block !important;
+  }
+  .mobile-menu-bar{
+    display:none !important;
+  }
+}
+.left-panel details.option-group{
+  display:block;
+}
+.left-panel .option-body{
+  display:block;
+}
+
+
+/* =========================================================
+  Patch11: hard layout containment
+========================================================= */
+@media (min-width:901px){
+  .layout{
+    display:grid !important;
+    grid-template-columns:340px minmax(0, 1fr) !important;
+    grid-template-areas:"menu preview" !important;
+    gap:12px !important;
+    align-items:start !important;
+  }
+  .left-panel{
+    grid-area:menu !important;
+    display:block !important;
+    width:340px !important;
+    min-width:340px !important;
+    max-width:340px !important;
+    position:sticky !important;
+    top:10px !important;
+    max-height:calc(100vh - 20px) !important;
+    overflow:auto !important;
+  }
+  .viewer{
+    grid-area:preview !important;
+    display:block !important;
+    min-width:0 !important;
+    width:100% !important;
+    align-self:start !important;
+  }
+  .layout > *:not(.left-panel):not(.viewer){
+    display:none !important;
+  }
+  body > details.option-group,
+  .app > details.option-group,
+  body > .option-body,
+  .app > .option-body{
+    display:none !important;
+  }
+}
+.left-panel > details.option-group{
+  display:block !important;
+}
+
 </style>
 </head>
 
@@ -927,7 +1021,9 @@ button{
         </div>
       </div>
     </details>
-  </aside>
+  
+
+</aside>
 
   <main class="panel viewer">
     <div class="toolbar">
@@ -3213,6 +3309,104 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('resize',fixDesktopMenu);
   fixDesktopMenu();
 });
+
+
+/* =========================================================
+  Patch10: restore broken menu DOM into left panel
+========================================================= */
+function restoreMenuDom(){
+  const layout=document.querySelector('.layout');
+  const left=document.querySelector('.left-panel');
+  const viewer=document.querySelector('.viewer');
+  if(!layout||!left||!viewer)return;
+
+  // Move any option groups that accidentally escaped back into left panel.
+  document.querySelectorAll('details.option-group').forEach((details)=>{
+    if(!left.contains(details)){
+      left.appendChild(details);
+    }
+  });
+
+  // Make sure left and viewer are direct children of layout and ordered.
+  if(left.parentElement!==layout) layout.insertBefore(left, layout.firstChild);
+  if(viewer.parentElement!==layout) layout.appendChild(viewer);
+  if(layout.firstElementChild!==left) layout.insertBefore(left, layout.firstChild);
+  if(viewer.previousElementSibling!==left && left.nextElementSibling!==viewer) layout.insertBefore(viewer, left.nextSibling);
+
+  // Remove accidental menu-open state on desktop.
+  if(window.innerWidth>900) document.body.classList.remove('menu-open');
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  restoreMenuDom();
+  window.addEventListener('resize',restoreMenuDom);
+});
+
+const oldRenderPatch10 = render;
+render = function(){
+  restoreMenuDom();
+  oldRenderPatch10();
+  restoreMenuDom();
+};
+
+
+/* =========================================================
+  Patch11: hard move menu groups into left panel before anything else
+========================================================= */
+(function(){
+  function hardFixLayout(){
+    const app=document.querySelector('.app');
+    const layout=document.querySelector('.layout');
+    let left=document.querySelector('.left-panel');
+    let viewer=document.querySelector('.viewer');
+    if(!layout) return;
+
+    if(!left){
+      left=document.createElement('aside');
+      left.className='panel left-panel';
+      layout.insertBefore(left, layout.firstChild);
+    }
+    if(!viewer){
+      viewer=document.createElement('main');
+      viewer.className='panel viewer';
+      viewer.innerHTML='<div class="toolbar"><span id="status">미리보기</span><span id="count">0 items</span></div><div class="preview skin-dark" id="preview"><div class="empty">로그 파일을 먼저 불러오세요.</div></div>';
+      layout.appendChild(viewer);
+    }
+
+    // Move every option group anywhere in app/body into left panel.
+    document.querySelectorAll('details.option-group').forEach(d=>{
+      if(!left.contains(d)) left.appendChild(d);
+    });
+
+    // Ensure direct children and order.
+    if(left.parentElement!==layout) layout.insertBefore(left, layout.firstChild);
+    if(viewer.parentElement!==layout) layout.appendChild(viewer);
+    layout.insertBefore(left, layout.firstChild);
+    layout.insertBefore(viewer, left.nextSibling);
+
+    // Hide/remove stray non-layout siblings inside layout.
+    Array.from(layout.children).forEach(child=>{
+      if(child!==left && child!==viewer){
+        child.style.display='none';
+      }
+    });
+
+    if(window.innerWidth>900) document.body.classList.remove('menu-open');
+  }
+
+  window.hardFixLayout=hardFixLayout;
+  document.addEventListener('DOMContentLoaded', hardFixLayout);
+  requestAnimationFrame(hardFixLayout);
+  setTimeout(hardFixLayout, 50);
+  setTimeout(hardFixLayout, 300);
+})();
+
+const oldRenderPatch11 = render;
+render = function(){
+  if(window.hardFixLayout) window.hardFixLayout();
+  oldRenderPatch11();
+  if(window.hardFixLayout) window.hardFixLayout();
+};
 
 </script>
 </body>
