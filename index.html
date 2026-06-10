@@ -1198,6 +1198,67 @@ button{
   }
 }
 
+
+/* =========================================================
+  GROUP EDIT FORMAT PATCH
+  - 묶음수정에도 부분 색상 / 대사색 / 개별 폰트
+  - 모든 색상 코드 입력칸 정리
+========================================================= */
+.group-edit-row{
+  grid-template-columns:28px minmax(0,1fr) !important;
+  gap:6px !important;
+  align-items:start;
+  padding:7px;
+  border:1px solid rgba(0,0,0,.1);
+  border-radius:8px;
+  background:rgba(255,255,255,.68);
+}
+.group-edit-main{
+  display:grid;
+  gap:6px;
+}
+.group-edit-tools{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  align-items:center;
+}
+.group-edit-tools input[type="color"]{
+  width:42px !important;
+  min-width:42px !important;
+  height:30px;
+  padding:2px !important;
+}
+.group-edit-tools input[type="text"]{
+  width:92px !important;
+  min-width:92px !important;
+  font-family:monospace;
+  padding:5px 6px;
+}
+.group-edit-tools select{
+  width:auto !important;
+  min-width:120px;
+  padding:5px 6px;
+}
+.group-edit-tools button{
+  flex:0 0 auto !important;
+}
+.group-edit-row textarea{
+  min-height:52px;
+}
+.cc-text[data-font-mode],
+.inline-preview[data-font-mode]{
+  font-family:var(--message-font-family, var(--log-font)) !important;
+}
+.color-code-row{
+  display:grid !important;
+  grid-template-columns:44px minmax(0,1fr) !important;
+  gap:6px !important;
+}
+.color-code-row input[type="text"]{
+  font-family:monospace !important;
+}
+
 </style>
 </head>
 
@@ -5005,6 +5066,257 @@ render = function(){
 
 window.toggleGroupEditPatch=toggleGroupEditPatch;
 window.saveGroupEditPatch=saveGroupEditPatch;
+
+
+/* =========================================================
+  GROUP EDIT FORMAT PATCH JS
+========================================================= */
+
+function fontOptionHtmlPatch(selected){
+  const opts=[
+    ['','기본'],
+    ['cc-default','코코포리아 기본'],
+    ['gowun-dodum','Gowun Dodum'],
+    ['ibm','IBM Plex Sans KR'],
+    ['noto-serif','Noto Serif KR'],
+    ['gowun-batang','Gowun Batang'],
+    ['kcc-kimhwanki','KCC김환기체'],
+    ['ongleip-yoonwoo','온글잎 윤우체'],
+    ['dunggeunmo','둥근모꼴+ Fixedsys'],
+    ['chosun-myungjo','조선일보명조체'],
+    ['orbit','Orbit']
+  ];
+  return opts.map(([value,label])=>'<option value="'+esc(value)+'" '+(String(selected||'')===value?'selected':'')+'>'+esc(label)+'</option>').join('');
+}
+
+function cssFontVarPatch(mode){
+  if(!mode)return 'var(--log-font)';
+  return fontValue(mode);
+}
+
+function textColorStylePatch(message){
+  const parts=[];
+  if(message && message.textColor) parts.push('color:'+esc(message.textColor));
+  if(message && message.fontMode){
+    parts.push('--message-font-family:'+esc(cssFontVarPatch(message.fontMode)));
+    parts.push('font-family:var(--message-font-family)');
+  }
+  return parts.length ? ' style="'+parts.join(';')+'"' : '';
+}
+
+function textFontAttrPatch(message){
+  return message && message.fontMode ? ' data-font-mode="'+esc(message.fontMode)+'"' : '';
+}
+
+/* 모든 #색상코드 input 동기화 */
+function bindColorCodePairPatch(colorInput, codeInput, onChange){
+  if(!colorInput || !codeInput)return;
+  colorInput.oninput=()=>{
+    codeInput.value=colorInput.value;
+    if(onChange)onChange(colorInput.value);
+  };
+  codeInput.oninput=()=>{
+    const v=codeInput.value.trim();
+    if(/^#[0-9a-fA-F]{6}$/.test(v)){
+      colorInput.value=v;
+      if(onChange)onChange(v);
+    }
+  };
+}
+
+/* textarea 선택문장에 색상 span 삽입 */
+function wrapSelectedTextColorInTextareaPatch(textarea, color){
+  if(!textarea)return;
+  const start=textarea.selectionStart;
+  const end=textarea.selectionEnd;
+  const selected=textarea.value.slice(start,end) || '텍스트';
+  const insert='<span style="color:'+color+'">'+selected+'</span>';
+  textarea.value=textarea.value.slice(0,start)+insert+textarea.value.slice(end);
+  textarea.focus();
+  const pos=start+insert.length;
+  textarea.setSelectionRange(pos,pos);
+}
+
+/* 단일수정: 폰트 + 모든 색 코드칸 */
+function renderMessageEditor(m,c,icon){
+  const textColor=m.textColor || '#eeeeee';
+  return '<div class="inline-editor hidden" id="editor_'+m.id+'">'+
+    '<label>기존 캐릭터 선택</label>'+
+    '<select onchange="applyCharacterToMessage(\''+m.id+'\',this.value)"><option value="">직접 입력 유지</option>'+characterOptionsHtml(m.characterId||m.name)+'</select>'+
+    '<label>이름</label><input id="editName_'+m.id+'" value="'+esc(m.name||c.name||'')+'">'+
+    '<label>이름색</label><div class="color-code-row"><input id="editColor_'+m.id+'" type="color" value="'+esc(m.color||c.color||'#f2f2f2')+'"><input id="editColorCode_'+m.id+'" type="text" value="'+esc(m.color||c.color||'#f2f2f2')+'"></div>'+
+    '<label>대사색</label><div class="color-code-row"><input id="editTextColor_'+m.id+'" type="color" value="'+esc(textColor)+'"><input id="editTextColorCode_'+m.id+'" type="text" value="'+esc(textColor)+'"></div>'+
+    '<label>이 대사만 폰트</label><select id="editFontMode_'+m.id+'">'+fontOptionHtmlPatch(m.fontMode||'')+'</select>'+
+    '<label>드래그한 문장만 색상 적용</label>'+
+    '<div class="inline-color-tools"><input type="color" id="color_'+m.id+'" value="#ff7777"><input type="text" id="colorCode_'+m.id+'" value="#ff7777" style="width:92px;font-family:monospace"><button class="ghost small" type="button" onclick="wrapTextColorNoClose(\''+m.id+'\')">선택문장 색상</button></div>'+
+    '<label>인장 URL</label><input id="editIcon_'+m.id+'" value="'+esc(icon||'')+'">'+
+    '<label>스탠딩 선택 / 인장 교체</label>'+
+    '<select id="editStanding_'+m.id+'"><option value="">사용 안 함</option>'+standingOptionsHtml(c,m.standingIndex)+'</select>'+
+    '<label>대사</label><textarea id="text_'+m.id+'" oninput="updateTextPreview(\''+m.id+'\')">'+esc(m.text)+'</textarea>'+
+    '<label>미리보기</label><div class="inline-preview" id="preview_'+m.id+'" '+textFontAttrPatch(m)+' style="color:'+esc(textColor)+';--message-font-family:'+esc(cssFontVarPatch(m.fontMode||''))+'">'+inlineFormat(m.text)+'</div>'+
+    '<div class="save-row"><button type="button" onclick="saveInlineEditor(\''+m.id+'\')">수정 적용</button><button class="ghost" type="button" onclick="toggleEdit(\''+m.id+'\')">닫기</button></div>'+
+    '</div>';
+}
+
+function updateTextPreview(id){
+  const textarea=$('#text_'+id);
+  const preview=$('#preview_'+id);
+  if(textarea&&preview)preview.innerHTML=inlineFormat(textarea.value);
+}
+
+function wrapTextColorNoClose(id){
+  const textarea=$('#text_'+id);
+  const color=$('#color_'+id);
+  const code=$('#colorCode_'+id);
+  const picked=(code?.value && /^#[0-9a-fA-F]{6}$/.test(code.value))?code.value:(color?.value||'#ff7777');
+  wrapSelectedTextColorInTextareaPatch(textarea,picked);
+  updateTextPreview(id);
+}
+
+function saveInlineEditor(id){
+  const m=state.messages.find(entry=>entry.id===id);
+  if(!m)return;
+  m.name=$('#editName_'+id)?.value ?? m.name;
+  m.color=$('#editColorCode_'+id)?.value || $('#editColor_'+id)?.value || m.color;
+  m.textColor=$('#editTextColorCode_'+id)?.value || $('#editTextColor_'+id)?.value || m.textColor || '';
+  m.fontMode=$('#editFontMode_'+id)?.value || '';
+  m.icon=$('#editIcon_'+id)?.value ?? m.icon;
+  m.standingIndex=$('#editStanding_'+id)?.value ?? m.standingIndex;
+  m.text=$('#text_'+id)?.value ?? m.text;
+  render();
+}
+
+const __oldToggleEditFormatPatch=toggleEdit;
+toggleEdit=function(id){
+  __oldToggleEditFormatPatch(id);
+  const nameColor=$('#editColor_'+id), nameCode=$('#editColorCode_'+id);
+  const textColor=$('#editTextColor_'+id), textCode=$('#editTextColorCode_'+id);
+  const partialColor=$('#color_'+id), partialCode=$('#colorCode_'+id);
+  const preview=$('#preview_'+id);
+  bindColorCodePairPatch(nameColor,nameCode);
+  bindColorCodePairPatch(textColor,textCode,(v)=>{if(preview)preview.style.color=v;});
+  bindColorCodePairPatch(partialColor,partialCode);
+  const font=$('#editFontMode_'+id);
+  if(font&&preview){
+    font.onchange=()=>{
+      preview.style.setProperty('--message-font-family',cssFontVarPatch(font.value));
+      preview.style.fontFamily='var(--message-font-family)';
+    };
+  }
+};
+
+/* 묶음수정: 일반수정급 기능 */
+function groupEditorHtmlPatch(baseId,messages){
+  const rows=messages.map((m,i)=>{
+    const color=m.textColor || '#eeeeee';
+    const partial='#ff7777';
+    return '<div class="group-edit-row">'+
+      '<div class="group-edit-index">'+(i+1)+'</div>'+
+      '<div class="group-edit-main">'+
+        '<textarea data-message-id="'+esc(m.id)+'" id="groupText_'+esc(m.id)+'">'+esc(m.text||'')+'</textarea>'+
+        '<div class="group-edit-tools">'+
+          '<span style="font-size:12px;color:#777;font-weight:800">대사색</span>'+
+          '<input type="color" data-color-id="'+esc(m.id)+'" value="'+esc(color)+'">'+
+          '<input class="group-color-code" type="text" data-color-code-id="'+esc(m.id)+'" value="'+esc(color)+'">'+
+          '<span style="font-size:12px;color:#777;font-weight:800">부분색</span>'+
+          '<input type="color" data-partial-color-id="'+esc(m.id)+'" value="'+partial+'">'+
+          '<input class="group-color-code" type="text" data-partial-code-id="'+esc(m.id)+'" value="'+partial+'">'+
+          '<button class="ghost small" type="button" onclick="wrapGroupSelectedColorPatch(\''+esc(m.id)+'\')">선택문장 색상</button>'+
+          '<select data-font-id="'+esc(m.id)+'">'+fontOptionHtmlPatch(m.fontMode||'')+'</select>'+
+          '<button class="danger small" onclick="deleteOneFromGroupPatch(\''+esc(m.id)+'\')">삭제</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="group-editor hidden" id="group_editor_'+esc(baseId)+'">'+
+    rows+
+    '<div class="row">'+
+      '<button onclick="saveGroupEditPatch(\''+esc(baseId)+'\')">묶음 수정 저장</button>'+
+      '<button class="ghost" onclick="toggleGroupEditPatch(\''+esc(baseId)+'\')">닫기</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function wrapGroupSelectedColorPatch(id){
+  const textarea=$('#groupText_'+id);
+  const color=$('[data-partial-color-id="'+CSS.escape(id)+'"]');
+  const code=$('[data-partial-code-id="'+CSS.escape(id)+'"]');
+  const picked=(code?.value && /^#[0-9a-fA-F]{6}$/.test(code.value))?code.value:(color?.value||'#ff7777');
+  wrapSelectedTextColorInTextareaPatch(textarea,picked);
+}
+
+function syncGroupColorInputsPatch(root){
+  root.querySelectorAll('input[type="color"][data-color-id]').forEach(color=>{
+    const id=color.dataset.colorId;
+    const code=root.querySelector('input[data-color-code-id="'+CSS.escape(id)+'"]');
+    bindColorCodePairPatch(color,code);
+  });
+  root.querySelectorAll('input[type="color"][data-partial-color-id]').forEach(color=>{
+    const id=color.dataset.partialColorId;
+    const code=root.querySelector('input[data-partial-code-id="'+CSS.escape(id)+'"]');
+    bindColorCodePairPatch(color,code);
+  });
+}
+
+function saveGroupEditPatch(baseId){
+  const editor=document.getElementById('group_editor_'+baseId);
+  if(!editor)return;
+
+  editor.querySelectorAll('textarea[data-message-id]').forEach((textarea)=>{
+    const id=textarea.dataset.messageId;
+    const m=state.messages.find(entry=>entry.id===id);
+    if(m){
+      m.text=textarea.value;
+      const code=editor.querySelector('input[data-color-code-id="'+CSS.escape(id)+'"]');
+      const color=editor.querySelector('input[data-color-id="'+CSS.escape(id)+'"]');
+      const font=editor.querySelector('select[data-font-id="'+CSS.escape(id)+'"]');
+      m.textColor=code?.value || color?.value || m.textColor || '';
+      m.fontMode=font?.value || '';
+    }
+  });
+  render();
+}
+
+/* 출력: 단일/묶음 둘 다 대사색+폰트 적용 */
+function renderGroupedMessagePatch(group,set){
+  const messages=group.groupedMessages || [group];
+  const first=messages[0];
+  const c=findCharacterForMessage(first) || {};
+  const icon=getDisplayIcon(first,c);
+  const showAvatar=$('#showAvatar').checked && icon;
+  const avatar=showAvatar
+    ? '<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(first,c)+'"></div>'
+    : '<div></div>';
+  const meta=renderMeta(first.created);
+  const displayName=first.name || c.name || '';
+  const nameLine='<div class="cc-name-line"><span class="cc-name" style="color:'+esc(first.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
+  const textHtml=messages.map((m)=>{
+    return '<p class="cc-text" data-sub-id="'+esc(m.id)+'" '+textFontAttrPatch(m)+textColorStylePatch(m)+'>'+inlineFormat(m.text)+'</p>';
+  }).join('');
+  const tools=actionToolsForGroupedPatch(first.id,messages);
+  const groupEditor=groupEditorHtmlPatch(first.id,messages);
+  return '<article class="cc-row grouped-message" style="--dice-color:'+esc(first.color||c.color||'rgba(255,255,255,.64)')+'" data-id="'+esc(first.id)+'" data-kind="message" draggable="false">'+
+    avatar+'<div class="cc-body">'+nameLine+textHtml+tools+groupEditor+'</div></article>';
+}
+
+const __oldRenderMessageFontPatch=renderMessage;
+renderMessage=function(message,set){
+  let output=__oldRenderMessageFontPatch(message,set);
+  const styles=[];
+  if(message?.textColor)styles.push('color:'+esc(message.textColor));
+  if(message?.fontMode){
+    styles.push('--message-font-family:'+esc(cssFontVarPatch(message.fontMode)));
+    styles.push('font-family:var(--message-font-family)');
+  }
+  if(styles.length){
+    output=output.replace('<p class="cc-text">','<p class="cc-text" style="'+styles.join(';')+'">');
+    output=output.replace('<p class="cc-text multi-line-text">','<p class="cc-text multi-line-text" style="'+styles.join(';')+'">');
+  }
+  return output;
+};
+
+window.wrapGroupSelectedColorPatch=wrapGroupSelectedColorPatch;
 
 </script>
 </body>
