@@ -6,12 +6,264 @@
 <title>CCFOLIA LOG BACKUP EDITOR</title>
 <style>
 :root{--bg:#303136;--text:#eee;--name:#fff;--meta:rgba(255,255,255,.45);--sys:rgba(255,255,255,.65);--panel:#fffdf8;--ink:#29231f;--line:#ddd3c8;--accent:#806a58}*{box-sizing:border-box}html,body{margin:0;min-height:100%}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:#ece6de;color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:800}button.ghost{background:#fff;color:#5e4d41}button.gray{background:#777;border-color:#777}button.danger{background:#9a3a34;border-color:#9a3a34}button.small{padding:4px 8px;font-size:11px}.app{width:min(1540px,calc(100% - 20px));margin:auto;padding:16px 0 36px}header{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}h1{margin:0;font-size:clamp(23px,3vw,36px)}.sub{margin:5px 0 0;color:#7e746c;font-size:13px;line-height:1.5}.layout{display:grid;grid-template-columns:330px 1fr;gap:12px}.panel{background:rgba(255,253,248,.96);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 14px 34px rgba(65,45,25,.08)}.left{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}.sec{padding:13px}.sec+.sec{border-top:1px solid var(--line)}h2{font-size:14px;margin:0 0 9px;color:#5e4d41}label{display:block;margin:9px 0 5px;color:#7e746c;font-size:12px;font-weight:800}input,select,textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-size:13px}textarea{min-height:58px;resize:vertical}input[type=color]{height:36px;padding:3px}.row{display:flex;gap:7px;flex-wrap:wrap}.row>*{flex:1}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.hint{font-size:12px;color:#7e746c;line-height:1.5;margin:7px 0}.progress{max-height:110px;overflow:auto;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:9px;background:#fff;color:#7e746c;font-size:12px}.hidden{display:none!important}.chip{display:flex;gap:6px;align-items:center;padding:7px 8px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:12px;font-weight:700}.list{display:grid;gap:7px;max-height:240px;overflow:auto;padding:7px;border:1px solid var(--line);border-radius:9px;background:#fff}.card{display:grid;gap:6px;padding:8px;border:1px solid var(--line);border-radius:9px;background:#fffaf4}.toolbar{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);color:#7e746c;font-size:12px}.preview{min-height:760px;padding:18px 12px 40px;background:var(--bg);color:var(--text)}body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}.empty{display:grid;place-items:center;min-height:560px;color:rgba(255,255,255,.55);text-align:center}.log-title{max-width:1040px;margin:0 auto 14px;padding:9px 0;border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.72);font-size:13px;font-weight:800;text-align:center}.cc-row{display:grid;grid-template-columns:54px minmax(0,1fr);gap:8px;max-width:1040px;margin:0 auto 6px;align-items:start}.cc-row.system,.cc-row.dice-log{display:block;text-align:center;margin:8px auto}.cc-avatar{width:48px;height:48px;overflow:hidden;border-radius:3px}.cc-avatar img{display:block;width:100%;height:100%;object-fit:cover;transform-origin:center}.cc-name-line{display:flex;gap:8px;align-items:baseline;margin:0 0 2px}.cc-name{color:var(--name);font-size:13px;font-weight:700}.cc-meta{color:var(--meta);font-size:11px}.cc-text{margin:0;color:var(--text);font-size:14px;line-height:1.55;white-space:pre-wrap}.cc-row.system .cc-text{color:var(--sys);font-size:13px}.cc-row.dice-log .cc-text{display:inline-block;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.035);color:var(--dice-color,rgba(255,255,255,.64))!important;font-size:13px}.cc-row.dice-log .cc-avatar,.cc-row.dice-log .cc-name-line{display:none}.dice-result{font-weight:900}.dice-macro{font-weight:600}.insert-toggle{max-width:1040px;margin:0 auto 2px;text-align:center;opacity:0;transition:.15s}.insert-toggle:hover{opacity:1}.insert-toggle button{padding:2px 8px;border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.06);font-size:10px}.insert-control{display:none;max-width:1040px;margin:0 auto 8px;gap:6px}.insert-toggle:hover+.insert-control,.insert-control:hover,.insert-control.active{display:flex}.insert-control button{border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.08)}.inline-tools{display:none;gap:5px;flex-wrap:wrap;margin-top:4px}.cc-name-line:hover+.cc-text+.inline-tools,.cc-text:hover+.inline-tools,.inline-tools:hover,.custom-block:hover .inline-tools{display:flex}.inline-editor{display:grid;gap:5px;margin-top:6px;padding:7px;border:1px solid rgba(0,0,0,.15);border-radius:6px;background:rgba(255,255,255,.94)}.inline-editor input,.inline-editor textarea,.inline-editor select{padding:6px;border:1px solid rgba(0,0,0,.18);border-radius:4px;background:#fff;color:#222;font-size:12px}.custom-block{max-width:1040px;margin:8px auto 12px;text-align:center}.insert-image,.standing-image{display:block;width:var(--img-width,70%);max-width:1040px;height:var(--img-height,auto);margin:8px auto 12px;border-radius:4px;object-fit:var(--img-fit,contain);object-position:var(--img-x,50%) var(--img-y,50%);box-shadow:0 2px 8px rgba(0,0,0,.22)}.standing-image{width:var(--standing-width,180px);height:var(--standing-height,auto);margin:4px 0 6px;object-fit:var(--standing-fit,contain);object-position:var(--standing-x,50%) var(--standing-y,50%);box-shadow:none}.caption{color:var(--meta);font-size:12px}.bgm-area{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:1040px;margin:8px auto 12px}.bgmButton{border:1px solid rgba(255,255,255,.34);background:rgba(255,255,255,.08);color:#fff}.modal-backdrop{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(0,0,0,.46)}.modal-box{width:min(480px,calc(100% - 28px));max-height:calc(100vh - 28px);overflow:auto;padding:16px;border:1px solid #ddd3c8;border-radius:14px;background:#fffdf8;color:#29231f;box-shadow:0 18px 60px rgba(0,0,0,.35)}.modal-box h3{margin:0 0 10px;font-size:16px}.skin-light{--bg:#eee;--name:#333;--text:#333;--meta:rgba(0,0,0,.42);--sys:#777}.skin-tistory{--bg:#f7f3ee;--name:#2d2926;--text:#2d2926;--meta:rgba(0,0,0,.42);--sys:#7a7169}.skin-paper{--bg:#eee4d5;--name:#312922;--text:#312922;--meta:rgba(0,0,0,.42);--sys:#6d6258}@media(max-width:900px){.app{width:100%;padding:0}.layout{grid-template-columns:1fr}.left{position:relative;top:auto;max-height:none;border-radius:0}.preview{min-height:70vh;padding:14px 7px 32px}.cc-row{grid-template-columns:42px minmax(0,1fr);gap:7px}.cc-avatar{width:38px;height:38px}.cc-text{font-size:13px!important}.grid2,.grid3{grid-template-columns:1fr}.insert-image{width:min(100%,var(--img-width,80%))}.inline-tools{display:flex}.insert-toggle{opacity:.8}}
-</style>
+
+    /* =========================================================
+      Mobile menu / phone readability
+    ========================================================= */
+    .mobile-menu-bar {
+      display: none;
+      margin: 0 0 10px;
+    }
+
+    .mobile-menu-bar button {
+      width: 100%;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        background: var(--cc-bg);
+      }
+
+      .app {
+        width: 100%;
+        padding: 0;
+      }
+
+      header {
+        display: block;
+        padding: 12px 14px;
+        margin: 0;
+        background: var(--panel-bg);
+        border-bottom: 1px solid var(--line);
+      }
+
+      header h1 {
+        font-size: 20px;
+        line-height: 1.25;
+      }
+
+      .sub {
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .version {
+        display: none;
+      }
+
+      .mobile-menu-bar {
+        display: block;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        padding: 8px;
+        background: var(--panel-bg);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .layout {
+        display: block;
+      }
+
+      .left-panel {
+        display: none;
+        position: fixed;
+        inset: 52px 8px 8px 8px;
+        z-index: 100;
+        max-height: none;
+        overflow: auto;
+        border-radius: 14px;
+        box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      }
+
+      body.menu-open .left-panel {
+        display: block;
+      }
+
+      body.menu-open::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        background: rgba(0,0,0,.38);
+      }
+
+      body.menu-open .mobile-menu-bar {
+        z-index: 110;
+      }
+
+      body.menu-open .left-panel {
+        z-index: 120;
+      }
+
+      .section {
+        padding: 14px;
+      }
+
+      .section h2 {
+        font-size: 15px;
+      }
+
+      label,
+      .hint,
+      .chip {
+        font-size: 12px;
+      }
+
+      input,
+      select,
+      textarea {
+        font-size: 14px;
+        padding: 10px;
+      }
+
+      button {
+        min-height: 38px;
+        font-size: 13px;
+      }
+
+      .viewer {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 54px;
+        z-index: 20;
+        padding: 8px 10px;
+        background: rgba(255,253,248,.96);
+        font-size: 11px;
+      }
+
+      .preview {
+        min-height: calc(100vh - 92px);
+        padding: 12px 8px 32px;
+      }
+
+      .log-title {
+        margin-bottom: 12px;
+        padding: 8px 0;
+        font-size: 12px;
+      }
+
+      .cc-row {
+        grid-template-columns: 40px minmax(0, 1fr);
+        gap: 7px;
+        margin-bottom: 8px;
+      }
+
+      .cc-avatar {
+        width: 36px;
+        height: 36px;
+      }
+
+      .cc-name-line {
+        gap: 6px;
+        margin-bottom: 1px;
+      }
+
+      .cc-name {
+        font-size: 12px;
+      }
+
+      .cc-meta {
+        font-size: 10px;
+      }
+
+      .cc-text {
+        font-size: 13px !important;
+        line-height: 1.55;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      .cc-row.dice-log .cc-text,
+      .cc-row.system .cc-text {
+        font-size: 12px !important;
+      }
+
+      .inline-tools {
+        display: flex;
+        gap: 4px;
+      }
+
+      .inline-tools button {
+        min-height: 28px;
+        padding: 3px 7px;
+        font-size: 10px;
+      }
+
+      .inline-editor {
+        padding: 8px;
+      }
+
+      .insert-toggle {
+        opacity: .85;
+      }
+
+      .insert-toggle button {
+        min-height: 24px;
+      }
+
+      .insert-control.active,
+      .insert-toggle:hover + .insert-control,
+      .insert-control:hover {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .insert-control button {
+        min-height: 32px;
+        padding: 5px;
+        font-size: 11px;
+      }
+
+      .insert-image {
+        width: min(100%, var(--img-width, 92%));
+        max-width: 100%;
+      }
+
+      .standing-image {
+        max-width: 55vw;
+      }
+
+      .modal-box {
+        width: calc(100% - 22px);
+        max-height: calc(100vh - 22px);
+        padding: 14px;
+      }
+
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .list {
+        max-height: 260px;
+      }
+    }
+
+  </style>
 </head>
 <body>
 <div class="app">
 <header><div><h1>CCFOLIA LOG BACKUP EDITOR</h1><p class="sub">로그 파일을 읽고, 룸 ID로 캐릭터/인장만 불러옵니다.</p></div><div class="version">file log + room icons</div></header>
-<div class="layout">
+
+    <div class="mobile-menu-bar">
+      <button id="mobileMenuToggle" type="button">☰ 메뉴 열기</button>
+    </div>
+
+    <div class="layout">
 <aside class="panel left">
 <div class="sec"><h2>1. 로그 파일 불러오기</h2><label>코코포리아 로그 HTML / TXT</label><input id="logFileInput" type="file" accept=".html,.htm,.txt,text/html,text/plain"><p class="hint">대사는 파일에서 읽고, 룸에서는 캐릭터/인장만 가져옵니다.</p></div>
 <div class="sec"><h2>2. 룸에서 캐릭터/인장 불러오기</h2><label>룸 주소 / 룸 ID</label><input id="roomInput" type="text" placeholder="https://ccfolia.com/rooms/... 또는 ID"><div class="row" style="margin-top:8px"><button id="loadCharactersBtn">캐릭터/인장 불러오기</button><button class="ghost" id="openRoomBtn">룸 열기</button></div><div id="progress" class="progress hidden"></div></div>
@@ -34,11 +286,113 @@ function flat(o,p='',out={}){if(!o||typeof o!=='object')return out;Object.entrie
 function first(o,keys){for(const k of keys){if(o&&o[k]!=null&&String(o[k]).trim()!=='')return o[k]}return''}
 function activeIcon(c){return c&&c.icons&&c.icons.length?c.icons[c.activeIcon||0]:''}
 async function loadLogFile(file){if(!file)return;const text=await file.text();state.title=file.name.replace(/\.(html?|txt)$/i,'');$('#titleInput').value=state.title;state.messages=(/\.html?$/i.test(file.name)||text.includes('<html')||text.includes('<body'))?parseHtmlLog(text):parseTextLog(text);state.blocks=[];hydrateCharactersFromMessages();buildTabs();buildSystemList();buildCharacterList();render();$('#status').textContent=state.title;$('#count').textContent=state.messages.length+' messages'}
-function parseHtmlLog(html){const doc=new DOMParser().parseFromString(html,'text/html');let rows=[];for(const s of ['.message','.message-row','.chat-line','.msg','.msg_container','li','article']){rows=Array.from(doc.querySelectorAll(s));if(rows.length>=3)break}if(!rows.length)return parseTextLog(doc.body?doc.body.innerText:html);return rows.map((row,i)=>{const ne=row.querySelector('.name,.msg-name,.message-name,.speaker,.character-name');const te=row.querySelector('.text,.msg-text,.message-text,.chat-text,.content');const ti=row.querySelector('.time,.timestamp,.msg-timestamp');const img=row.querySelector('img');const rowText=(te?te.innerText:row.innerText||'').trim();if(!rowText)return null;const name=ne?ne.innerText.trim():guessName(rowText);const text=name&&rowText.startsWith(name)?rowText.slice(name.length).trim():rowText;return makeMsg('m_file_'+i+'_'+Math.random().toString(36).slice(2),name,text||rowText,guessTab(row),ti?ti.innerText.trim():new Date(Date.now()+i).toISOString(),img?img.src:'')}).filter(Boolean)}
-function parseTextLog(text){let i=0;return text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{const m=line.match(/^([^：:]{1,40})[：:](.*)$/);const name=m?m[1].trim():'';const body=m?m[2].trim():line;return makeMsg('m_text_'+(i++),name,body,'메인',new Date(Date.now()+i).toISOString(),'')})}
-function makeMsg(id,name,text,tab,created,icon){return{id,kind:'message',characterId:name||'__blank_name__',name,icon,color:'#f2f2f2',text,tab,created,avatarX:50,avatarY:50,avatarScale:100,standingIndex:'',deleted:false}}
+function parseHtmlLog(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const body=doc.body||doc;
+  let rows=[];
+  for(const s of ['.message','.message-row','.chat-line','.msg','.msg_container','[data-message-id]','[data-testid*=message]','li','article']){
+    rows=Array.from(body.querySelectorAll(s)).filter(el=>String(el.innerText||'').trim());
+    if(rows.length>=3)break;
+  }
+  if(!rows.length)return parseTextLog(body?body.innerText:html);
+  const messages=rows.map((row,i)=>rowToMessage(row,i)).filter(Boolean);
+  if(messages.length&&new Set(messages.map(m=>m.tab)).size===1&&messages[0].tab==='메인'){
+    const rebuilt=parseHtmlByTabSections(body);
+    if(new Set(rebuilt.map(m=>m.tab)).size>1)return rebuilt;
+  }
+  return messages;
+}
+function rowToMessage(row,i){
+  const ne=row.querySelector('.name,.msg-name,.message-name,.speaker,.character-name,[class*=name],[class*=speaker]');
+  const te=row.querySelector('.text,.msg-text,.message-text,.chat-text,.content,[class*=text],[class*=content]');
+  const ti=row.querySelector('.time,.timestamp,.msg-timestamp,time,[class*=time]');
+  const img=row.querySelector('img');
+  const rowText=(te?te.innerText:row.innerText||'').trim();
+  if(!rowText)return null;
+  const name=ne?ne.innerText.trim():guessName(rowText);
+  const text=name&&rowText.startsWith(name)?rowText.slice(name.length).trim():rowText;
+  return makeMsg('m_file_'+i+'_'+Math.random().toString(36).slice(2),name,text||rowText,guessTab(row),ti?ti.innerText.trim():new Date(Date.now()+i).toISOString(),img?img.src:'');
+}
+function parseHtmlByTabSections(root){
+  const messages=[];
+  let currentTab='메인';
+  let index=0;
+  const messageLike=['message','message-row','chat-line','msg','msg_container'];
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT);
+  while(walker.nextNode()){
+    const el=walker.currentNode;
+    const text=String(el.innerText||'').trim();
+    if(!text)continue;
+    const tab=tabFromElement(el);
+    if(tab)currentTab=tab;
+    const cls=String(el.className||'');
+    const isMsg=messageLike.some(c=>cls.includes(c))||(el.matches&&el.matches('li,article,[data-message-id],[data-testid*=message]'));
+    if(!isMsg)continue;
+    const m=rowToMessage(el,index++);
+    if(m){m.tab=currentTab;m.id='m_section_'+index+'_'+Math.random().toString(36).slice(2);messages.push(m)}
+  }
+  return messages;
+}
+function parseTextLog(text){
+  let i=0,currentTab='메인';
+  const out=[];
+  text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).forEach(line=>{
+    const tab=line.match(/^\[?\s*(메인|정보|잡담|비밀|秘匿|情報|雑談|main|info|other|secret)\s*\]?$/i);
+    if(tab){currentTab=normalizeTab(tab[1]);return}
+    const m=line.match(/^([^：:]{1,40})[：:](.*)$/);
+    const name=m?m[1].trim():'';
+    const body=m?m[2].trim():line;
+    out.push(makeMsg('m_text_'+(i++),name,body,currentTab,new Date(Date.now()+i).toISOString(),''));
+  });
+  return out;
+}
+function makeMsg(id,name,text,tab,created,icon){return{id,kind:'message',characterId:name||'__blank_name__',name,icon,color:'#f2f2f2',text,tab:normalizeTab(tab),created,avatarX:50,avatarY:50,avatarScale:100,standingIndex:'',deleted:false}}
 function guessName(text){const m=String(text).trim().match(/^([^：:]{1,40})[：:]/);return m?m[1].trim():''}
-function guessTab(row){const t=(row.className+' '+row.textContent).toLowerCase();if(t.includes('info')||t.includes('정보')||t.includes('情報'))return'정보';if(t.includes('other')||t.includes('잡담')||t.includes('雑談'))return'잡담';if(t.includes('secret')||t.includes('비밀')||t.includes('秘匿'))return'비밀';return'메인'}
+function normalizeTab(tab){
+  const t=String(tab||'').trim();
+  if(!t)return'메인';
+  const low=t.toLowerCase();
+  if(['main','메인'].includes(low))return'메인';
+  if(['info','정보','情報'].includes(low))return'정보';
+  if(['other','잡담','雑談'].includes(low))return'잡담';
+  if(['secret','비밀','秘匿'].includes(low))return'비밀';
+  return t.replace(/^#/,'').replace(/^(tab|channel|채널|탭)[:：\s-]*/i,'').trim()||'메인';
+}
+function tabFromElement(el){
+  const attrs=['data-tab','data-tab-name','data-channel','data-channel-name','data-room-chat-tab','aria-label','title'];
+  for(const a of attrs){const v=el.getAttribute&&el.getAttribute(a);if(v&&isLikelyTab(v))return normalizeTab(v)}
+  const cls=String(el.className||'');
+  const id=String(el.id||'');
+  const src=(cls+' '+id).toLowerCase();
+  if(src.includes('secret')||src.includes('秘匿')||src.includes('비밀'))return'비밀';
+  if(src.includes('info')||src.includes('情報')||src.includes('정보'))return'정보';
+  if(src.includes('other')||src.includes('雑談')||src.includes('잡담'))return'잡담';
+  if(src.includes('main')||src.includes('메인'))return'메인';
+  if(/^H[1-6]$/.test(el.tagName)||/tab|channel|room-chat|category/.test(src)){
+    const tx=String(el.textContent||'').trim();
+    if(isLikelyTab(tx))return normalizeTab(tx)
+  }
+  return'';
+}
+function isLikelyTab(v){
+  const t=String(v||'').trim();
+  if(!t||t.length>30)return false;
+  return /(메인|정보|잡담|비밀|秘匿|情報|雑談|main|info|other|secret|tab|channel|채널|탭)/i.test(t)||/^#[^\s]+$/.test(t);
+}
+function guessTab(row){
+  let el=row;
+  while(el){const t=tabFromElement(el);if(t)return t;el=el.parentElement}
+  const prev=findPreviousTabHeading(row);if(prev)return prev;
+  return'메인';
+}
+function findPreviousTabHeading(row){
+  let el=row;
+  while(el&&el.previousElementSibling){
+    el=el.previousElementSibling;
+    const t=tabFromElement(el);if(t)return t;
+  }
+  return'';
+}
 function fsValue(v){if(!v||typeof v!=='object')return v;if('stringValue'in v)return v.stringValue;if('integerValue'in v)return Number(v.integerValue);if('doubleValue'in v)return Number(v.doubleValue);if('booleanValue'in v)return Boolean(v.booleanValue);if('timestampValue'in v)return v.timestampValue;if('nullValue'in v)return null;if('arrayValue'in v)return(v.arrayValue.values||[]).map(fsValue);if('mapValue'in v)return fsFields(v.mapValue.fields||{});return v}
 function fsFields(f){const o={};Object.entries(f||{}).forEach(([k,v])=>o[k]=fsValue(v));return o}
 async function fetchJson(url){const r=await fetch(url);if(!r.ok)throw new Error(r.status+' '+r.statusText);return r.json()}
@@ -105,6 +459,37 @@ function downloadHtml(){const blob=new Blob([exportHtml()],{type:'text/html'});c
 async function copyTistory(){await navigator.clipboard.writeText(exportTistoryHtml());alert('티스토리용 HTML을 복사했어요. HTML 모드에 붙여넣어주세요.')}
 window.toggleEdit=toggleEdit;window.editMsg=editMsg;window.deleteItem=deleteItem;window.openChatModal=openChatModal;window.openImageModal=openImageModal;window.openBgmModal=openBgmModal;window.saveChatModal=saveChatModal;window.saveImageModal=saveImageModal;window.saveBgmModal=saveBgmModal;window.editBlock=editBlock;window.toggleInsertControl=toggleInsertControl;window.applyCharacterToMessage=applyCharacterToMessage;window.moveMessage=moveMessage;window.moveBlock=moveBlock;window.editCharacter=editCharacter;window.editCharacterIcons=editCharacterIcons;window.editCharacterStandings=editCharacterStandings;window.closeModal=closeModal;
 document.addEventListener('DOMContentLoaded',()=>{$('#logFileInput').addEventListener('change',e=>loadLogFile(e.target.files[0]));$('#loadCharactersBtn').onclick=loadCharactersFromRoom;$('#openRoomBtn').onclick=()=>{const roomId=roomIdFrom($('#roomInput').value);if(!roomId){log('룸 ID를 입력해주세요.');return}window.open('https://ccfolia.com/rooms/'+encodeURIComponent(roomId),'_blank')};$('#downloadBtn').onclick=downloadHtml;$('#copyTistoryBtn').onclick=copyTistory;['showDate','showTime','showAvatar','diceStyle','diceSeparate','mergeSameChar','skinMode','fontSize','bgColor','titleInput'].forEach(id=>{const el=$('#'+id);if(!el)return;el.addEventListener('input',render);el.addEventListener('change',render)});$('#tabList').addEventListener('change',render);$('#systemList').addEventListener('change',render);$('#tabColorList').addEventListener('input',e=>{if(!e.target.classList.contains('tabColorInput'))return;localStorage.setItem('tabColor_'+e.target.dataset.tab,e.target.value);render()})});
-</script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('mobileMenuToggle');
+      if (!toggle) return;
+
+      toggle.addEventListener('click', () => {
+        document.body.classList.toggle('menu-open');
+        toggle.textContent = document.body.classList.contains('menu-open')
+          ? '× 메뉴 닫기'
+          : '☰ 메뉴 열기';
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!document.body.classList.contains('menu-open')) return;
+        if (event.target.closest('.left-panel')) return;
+        if (event.target.closest('#mobileMenuToggle')) return;
+
+        document.body.classList.remove('menu-open');
+        toggle.textContent = '☰ 메뉴 열기';
+      });
+
+      document.querySelectorAll('.left-panel button, .left-panel input, .left-panel select').forEach((element) => {
+        element.addEventListener('change', () => {
+          if (element.classList.contains('outputTab')) {
+            document.body.classList.remove('menu-open');
+            toggle.textContent = '☰ 메뉴 열기';
+          }
+        });
+      });
+    });
+
+  </script>
 </body>
 </html>
