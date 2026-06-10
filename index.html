@@ -1034,27 +1034,66 @@ button{
   FINAL USER REQUEST PATCH:
   같은 캐릭터 이어쓰기 3번째부터 간격 보정
 ========================================================= */
-/* 같은 캐릭터 이어쓰기 간격 강제 보정 */
 .cc-row.compact-level2{
-  margin-top:-22px !important;
+  margin-top:-4px !important;
 }
-
 .cc-row.compact-level3{
-  margin-top:-24px !important;
+  margin-top:-8px !important;
 }
-
 .cc-row.compact-level4{
-  margin-top:-24px !important;
-}
-.cc-row.compact .cc-body{
-  padding-top:0 !important;
-  min-height:0 !important;
+  margin-top:-10px !important;
 }
 
-.cc-row.compact .cc-text{
+
+/* =========================================================
+  GROUPED SPEECH FINAL PATCH
+  같은 캐릭터/같은 인장/같은 탭의 연속 대사를 한 박스 안에 묶기
+========================================================= */
+
+/* 예전 compact 강제 간격 보정은 묶기 방식에 방해되므로 무력화 */
+.cc-row.compact-level2,
+.cc-row.compact-level3,
+.cc-row.compact-level4{
   margin-top:0 !important;
+}
+
+.cc-row.grouped-message{
+  margin-bottom:7px !important;
+}
+
+.cc-row.grouped-message .cc-body{
+  padding-top:0 !important;
+}
+
+.cc-row.grouped-message .cc-text{
+  margin:0 0 2px 0 !important;
+  line-height:var(--log-line-height) !important;
+  white-space:pre-wrap !important;
+}
+
+.cc-row.grouped-message .cc-text:last-of-type{
   margin-bottom:0 !important;
 }
+
+/* 묶인 대사 안에서 각 줄이 너무 따로 놀지 않게 */
+.cc-row.grouped-message .cc-text + .cc-text{
+  margin-top:1px !important;
+}
+
+/* 묶음 행은 기존 compact 숨김을 쓰지 않음 */
+.cc-row.grouped-message.compact .cc-avatar,
+.cc-row.grouped-message.compact .cc-name-line{
+  visibility:visible !important;
+  height:auto !important;
+  min-height:initial !important;
+  margin:initial !important;
+}
+
+/* 작업 버튼은 묶음 오른쪽에 유지 */
+.cc-row.grouped-message .action-toggle{
+  top:0;
+}
+
 </style>
 </head>
 
@@ -4239,6 +4278,178 @@ render = function(){
 document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(applyCompactSpacingLevels, 50);
 });
+
+
+/* =========================================================
+  GROUPED SPEECH FINAL PATCH
+  - 같은 캐릭터 + 같은 인장 + 같은 탭 + 일반 대사면 하나의 행으로 묶음
+  - 예시처럼 한 캐릭터 박스 안에 div/p 여러 개로 출력
+  - 인장/스탠딩이 바뀌면 새 묶음으로 분리
+========================================================= */
+
+function messageGroupKeyForPatch(message,set){
+  if(!message || message.kind !== 'message') return '';
+  if(message.deleted) return '';
+  if(message.handoutStyle) return '';
+  if(isSystemMessage(message,set)) return '';
+  if($('#diceSeparate')?.checked && isDiceText(message.text)) return '';
+  if(isQuietTabName(message.tab)) return '';
+
+  const c = findCharacterForMessage(message) || {};
+  const icon = getDisplayIcon(message,c) || '';
+  const name = message.name || c.name || '';
+  const color = message.color || c.color || '';
+  const standing = message.standingIndex ?? '';
+  const tab = message.tab || '';
+  return [tab, message.characterId || name, name, color, icon, standing].join('||');
+}
+
+function groupedItemsForPatch(items,set){
+  if(!$('#mergeSameChar')?.checked) return items.map(item => ({...item, groupedMessages:null}));
+
+  const result = [];
+  let currentGroup = null;
+
+  items.forEach((item)=>{
+    if(item.kind !== 'message'){
+      currentGroup = null;
+      result.push(item);
+      return;
+    }
+
+    const key = messageGroupKeyForPatch(item,set);
+
+    if(!key){
+      currentGroup = null;
+      result.push(item);
+      return;
+    }
+
+    if(currentGroup && currentGroup.__groupKey === key){
+      currentGroup.groupedMessages.push(item);
+    }else{
+      const clone = {...item, __groupKey:key, groupedMessages:[item]};
+      result.push(clone);
+      currentGroup = clone;
+    }
+  });
+
+  return result;
+}
+
+function renderGroupedMessagePatch(group,set){
+  const messages = group.groupedMessages || [group];
+  const first = messages[0];
+  const c = findCharacterForMessage(first) || {};
+  const icon = getDisplayIcon(first,c);
+  const showAvatar = $('#showAvatar').checked && icon;
+  const avatar = showAvatar
+    ? '<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(first,c)+'"></div>'
+    : '<div></div>';
+
+  const meta = renderMeta(first.created);
+  const displayName = first.name || c.name || '';
+  const nameLine =
+    '<div class="cc-name-line">' +
+      '<span class="cc-name" style="color:'+esc(first.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>' +
+      (meta ? '<span class="cc-meta">'+esc(meta)+'</span>' : '') +
+    '</div>';
+
+  const textHtml = messages.map((m)=>{
+    return '<p class="cc-text" data-sub-id="'+esc(m.id)+'">'+inlineFormat(m.text)+'</p>';
+  }).join('');
+
+  const tools = actionToolsForGroupedPatch(first.id, messages);
+  const editor = renderMessageEditor(first,c,icon);
+
+  return '<article class="cc-row grouped-message" style="--dice-color:'+esc(first.color||c.color||'rgba(255,255,255,.64)')+'" data-id="'+esc(first.id)+'" data-kind="message" draggable="false">' +
+    avatar +
+    '<div class="cc-body">' +
+      nameLine +
+      textHtml +
+      tools +
+      editor +
+    '</div>' +
+  '</article>';
+}
+
+function actionToolsForGroupedPatch(baseId,messages){
+  const ids = messages.map(m=>m.id);
+  const buttons = [
+    '<button class="ghost small" onclick="toggleEdit(\''+baseId+'\')">수정</button>',
+    '<button class="ghost small" onclick="openAddBelowMenu(\''+baseId+'\')">추가</button>',
+    '<button class="ghost small" onclick="moveGroupedPatch('+JSON.stringify(ids).replace(/"/g,'&quot;')+',-1)">↑</button>',
+    '<button class="ghost small" onclick="moveGroupedPatch('+JSON.stringify(ids).replace(/"/g,'&quot;')+',1)">↓</button>',
+    '<button class="danger small" onclick="deleteGroupedPatch('+JSON.stringify(ids).replace(/"/g,'&quot;')+')">삭제</button>'
+  ];
+  return actionTools(baseId, buttons.join(''));
+}
+
+function deleteGroupedPatch(ids){
+  ids.forEach(id=>{
+    const m = state.messages.find(entry=>entry.id===id);
+    if(m) m.deleted = true;
+  });
+  render();
+}
+
+function moveGroupedPatch(ids,dir){
+  if(!ids || !ids.length) return;
+  const items = allItems();
+  const first = items.find(e=>e.id===ids[0]);
+  const last = items.find(e=>e.id===ids[ids.length-1]);
+  if(!first || !last) return;
+
+  const anchor = dir < 0 ? first : last;
+  const idx = items.findIndex(e=>e.id===anchor.id);
+  const target = items[idx + dir];
+  if(!target) return;
+
+  const baseTime = new Date(target.created || Date.now()).getTime();
+  ids.forEach((id,i)=>{
+    const m = state.messages.find(entry=>entry.id===id);
+    if(m) m.created = new Date(baseTime + (dir < 0 ? -ids.length + i : i + 1)).toISOString();
+  });
+  render();
+}
+
+/* 기존 render를 묶음 방식으로 교체 */
+render = function(){
+  const preview = $('#preview');
+  preview.className = 'preview ' + $('#skinMode').value;
+  applyVisualSettings();
+
+  const set = selectedSystemCharacters();
+  const items = groupedItemsForPatch(allItems(),set);
+
+  $('#status').textContent = $('#titleInput').value.trim() || state.title || 'custom log';
+  $('#count').textContent = items.length + ' items';
+
+  if(!items.length){
+    preview.innerHTML =
+      '<div class="empty">' +
+      (selectedTabs().length ? '선택한 탭에 출력할 메시지가 없습니다.' : '왼쪽의 출력할 탭을 체크하면 미리보기가 표시됩니다.') +
+      '</div>';
+    return;
+  }
+
+  preview.innerHTML = items.map((item)=>{
+    if(item.kind === 'image') return renderImageBlock(item);
+    if(item.kind === 'bgm') return renderBgmBlock(item);
+    if(item.groupedMessages) return renderGroupedMessagePatch(item,set);
+    return renderMessage(item,set);
+  }).join('');
+
+  attachBgm();
+
+  if(typeof setupLongPressMoveFinal === 'function'){
+    setupLongPressMoveFinal();
+  }else if(typeof setupLongPressMove === 'function'){
+    setupLongPressMove();
+  }else if(typeof setupDragReorder === 'function'){
+    setupDragReorder();
+  }
+};
 
 </script>
 </body>
