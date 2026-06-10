@@ -7,7 +7,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Orbit&display=swap" rel="stylesheet">
 
 <style>
 /* =========================================================
@@ -344,6 +344,117 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
   }
 }
 
+
+/* =========================================================
+  Patch5: requested fonts, Tistory-ish width, tab colors, handouts
+========================================================= */
+@font-face {
+  font-family: 'KCC-Kimhwanki';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201@1.0/KCC-Kimhwanki.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'OngleipYoonwoo';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105@1.1/Yoonwoo.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DungGeunMo';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chosunilbo_myungjo';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/Chosunilbo_myungjo.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
+:root {
+  --log-width: 760px;
+}
+.outputTabLabel {
+  border-color: var(--tab-color, var(--line)) !important;
+  box-shadow: inset 4px 0 0 var(--tab-color, transparent);
+}
+.cc-row.tab-colored:not(.system):not(.dice-log):not(.handout-row) {
+  border-left: 3px solid var(--tab-color, transparent);
+  padding-left: 7px;
+}
+.custom-block.tab-colored {
+  border-left: 3px solid var(--tab-color, transparent);
+  padding-left: 7px;
+}
+.cc-row.handout-row {
+  display: block;
+  max-width: var(--log-width) !important;
+  margin: 14px auto;
+  text-align: left;
+}
+.handout-card {
+  position: relative;
+  padding: 16px 18px;
+  color: #2e2722;
+  line-height: var(--log-line-height);
+  white-space: pre-wrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+}
+.handout-card.handout-basic {
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 8px;
+  background: rgba(255,255,255,.08);
+  color: var(--cc-text);
+}
+.handout-card.handout-memo {
+  border: 1px solid #e7d28f;
+  border-radius: 4px;
+  background:
+    linear-gradient(transparent 31px, rgba(180,140,60,.17) 32px),
+    #fff6bd;
+  background-size: 100% 32px;
+  color: #3b2f1e;
+  transform: rotate(-0.25deg);
+}
+.handout-card.handout-paper {
+  border: 1px solid #d7c8ad;
+  border-radius: 2px;
+  background:
+    radial-gradient(circle at 18px 18px, rgba(120,90,50,.08), transparent 24px),
+    linear-gradient(90deg, rgba(120,90,50,.09), transparent 55px),
+    #f7f0df;
+  color: #2f2920;
+}
+.handout-label {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.12);
+  color: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  opacity: .75;
+}
+.handout-card .action-toggle {
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,.15) !important;
+}
+.handout-card .inline-tools {
+  top: 34px;
+  right: 8px;
+}
+.add-below-menu {
+  display: grid;
+  gap: 5px;
+}
+@media(max-width:900px){
+  :root { --log-width: 100%; }
+  .handout-card { padding: 14px 14px; }
+}
+
 </style>
 </head>
 
@@ -426,13 +537,18 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
           <option value="ibm">IBM Plex Sans KR</option>
           <option value="noto-serif">Noto Serif KR</option>
           <option value="gowun-batang">Gowun Batang</option>
+          <option value="kcc-kimhwanki">KCC김환기체</option>
+          <option value="ongleip-yoonwoo">온글잎 윤우체</option>
+          <option value="dunggeunmo">둥근모꼴+ Fixedsys</option>
+          <option value="chosun-myungjo">조선일보명조체</option>
+          <option value="orbit">Orbit</option>
         </select>
         <label>대사 폰트 크기</label>
         <input id="fontSize" type="number" min="10" max="24" value="14">
         <label>줄간격</label>
         <input id="lineHeight" type="number" min="1" max="2.4" step="0.05" value="1.55">
         <label>로그 폭(px)</label>
-        <input id="logWidth" type="number" min="420" max="1400" step="20" value="1040">
+        <input id="logWidth" type="number" min="420" max="1400" step="20" value="760">
       </div>
     </details>
 
@@ -1223,12 +1339,12 @@ function exportHtml(){
   render();
   const title=$('#titleInput').value.trim()||state.title||'custom_log';
   const cls='preview '+$('#skinMode').value;
-  return '<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+esc(title)+'</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&display=swap" rel="stylesheet"><style>'+document.querySelector('style').textContent+'</style></head><body><main class="'+cls+'">'+cleanForExport()+'</main>'+bgmExportScript()+'</body></html>';
+  return '<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+esc(title)+'</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Orbit&display=swap" rel="stylesheet"><style>'+document.querySelector('style').textContent+'</style></head><body><main class="'+cls+'">'+cleanForExport()+'</main>'+bgmExportScript()+'</body></html>';
 }
 function exportTistoryHtml(){
   render();
   const cls='preview '+$('#skinMode').value;
-  return '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&display=swap" rel="stylesheet"><style>'+document.querySelector('style').textContent+'.tistory-ccfolia-backup{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;overflow:hidden!important;border-radius:0!important}.tistory-ccfolia-backup *{max-width:100%}</style><div class="tistory-ccfolia-backup '+cls+'">'+cleanForExport()+'</div>'+bgmExportScript();
+  return '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Orbit&display=swap" rel="stylesheet"><style>'+document.querySelector('style').textContent+'.tistory-ccfolia-backup{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;overflow:hidden!important;border-radius:0!important}.tistory-ccfolia-backup *{max-width:100%}</style><div class="tistory-ccfolia-backup '+cls+'">'+cleanForExport()+'</div>'+bgmExportScript();
 }
 function downloadHtml(){
   const blob=new Blob([exportHtml()],{type:'text/html'});
@@ -1944,6 +2060,200 @@ collectSettings = function(){
   data.values.avatarSize = $('#avatarSize')?.value || '48';
   return data;
 };
+
+
+/* =========================================================
+  Patch5: fonts, tab color rendering, handout, below-add menu
+========================================================= */
+
+function fontValue(mode){
+  if(mode==='gowun-dodum')return '"Gowun Dodum",sans-serif';
+  if(mode==='ibm')return '"IBM Plex Sans KR",sans-serif';
+  if(mode==='noto-serif')return '"Noto Serif KR",serif';
+  if(mode==='gowun-batang')return '"Gowun Batang",serif';
+  if(mode==='kcc-kimhwanki')return '"KCC-Kimhwanki","Gowun Batang",serif';
+  if(mode==='ongleip-yoonwoo')return '"OngleipYoonwoo","Gowun Dodum",sans-serif';
+  if(mode==='dunggeunmo')return '"DungGeunMo","IBM Plex Mono",monospace';
+  if(mode==='chosun-myungjo')return '"Chosunilbo_myungjo","Noto Serif KR",serif';
+  if(mode==='orbit')return '"Orbit","IBM Plex Sans KR",sans-serif';
+  return '-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","Arial","Noto Sans KR",sans-serif';
+}
+
+function tabColorOf(name){
+  return localStorage.getItem('tabColor_'+name) || tabColor(name || '메인');
+}
+
+function buildTabs(){
+  const names=[];
+  state.messages.forEach((m)=>{if(!names.includes(m.tab))names.push(m.tab)});
+  $('#tabList').innerHTML=names.length?names.map((n)=>
+    '<label class="chip outputTabLabel" style="--tab-color:'+esc(tabColorOf(n))+'"><input type="checkbox" class="outputTab" value="'+esc(n)+'"> '+esc(n)+'</label>'
+  ).join(''):'<div class="hint">탭 없음</div>';
+  $('#tabColorList').innerHTML=names.length?names.map((n)=>
+    '<div class="tab-color-row"><label class="chip outputTabLabel" style="--tab-color:'+esc(tabColorOf(n))+'">'+esc(n)+'</label><input type="color" class="tabColorInput" data-tab="'+esc(n)+'" value="'+esc(tabColorOf(n))+'"></div>'
+  ).join(''):'<div class="hint">탭 없음</div>';
+}
+
+function openAddBelowMenu(id){
+  openModal('<h3>아래에 추가</h3>'+
+    '<div class="add-below-menu">'+
+    '<button onclick="openChatModalAfter(\''+esc(id)+'\')">채팅 추가</button>'+
+    '<button onclick="openImageModalAfter(\''+esc(id)+'\')">이미지 추가</button>'+
+    '<button onclick="openBgmModalAfter(\''+esc(id)+'\')">BGM 추가</button>'+
+    '</div>'+
+    '<div class="row" style="margin-top:10px"><button class="ghost" onclick="closeModal()">취소</button></div>'
+  );
+}
+
+function openHandoutModal(id){
+  const m=state.messages.find(entry=>entry.id===id);
+  if(!m)return;
+  openModal('<h3>핸드아웃 설정</h3>'+
+    '<label>핸드아웃 표시 방식</label>'+
+    '<select id="modalHandoutStyle">'+
+    '<option value="">기본 대사</option>'+
+    '<option value="basic">기본 박스</option>'+
+    '<option value="memo">메모지 느낌</option>'+
+    '<option value="paper">서류 느낌</option>'+
+    '</select>'+
+    '<div class="row" style="margin-top:10px">'+
+    '<button onclick="saveHandoutModal(\''+esc(id)+'\')">저장</button>'+
+    '<button class="ghost" onclick="closeModal()">취소</button>'+
+    '</div>'
+  );
+  $('#modalHandoutStyle').value=m.handoutStyle||'';
+}
+
+function saveHandoutModal(id){
+  const m=state.messages.find(entry=>entry.id===id);
+  if(!m)return;
+  m.handoutStyle=$('#modalHandoutStyle').value;
+  closeModal();
+  render();
+}
+
+function actionToolsForMessage(message){
+  return actionTools(message.id,
+    '<button class="ghost small" onclick="toggleEdit(\''+message.id+'\')">✎ 수정</button>'+
+    '<button class="ghost small" onclick="openHandoutModal(\''+message.id+'\')">핸드아웃으로 설정</button>'+
+    '<button class="ghost small" onclick="openAddBelowMenu(\''+message.id+'\')">아래에 추가</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',-1)">↑ 위로</button>'+
+    '<button class="ghost small" onclick="moveMessage(\''+message.id+'\',1)">↓ 아래로</button>'+
+    '<button class="danger small" onclick="deleteItem(\''+message.id+'\')">삭제</button>'
+  );
+}
+
+function actionToolsForBlock(block){
+  return actionTools(block.id,
+    '<button class="ghost small" onclick="editBlock(\''+block.id+'\')">✎ 수정</button>'+
+    '<button class="ghost small" onclick="openAddBelowMenu(\''+block.id+'\')">아래에 추가</button>'+
+    '<button class="ghost small" onclick="moveBlock(\''+block.id+'\',-1)">↑ 위로</button>'+
+    '<button class="ghost small" onclick="moveBlock(\''+block.id+'\',1)">↓ 아래로</button>'+
+    '<button class="danger small" onclick="deleteItem(\''+block.id+'\')">삭제</button>'
+  );
+}
+
+function render(){
+  const preview=$('#preview');
+  preview.className='preview '+$('#skinMode').value;
+  applyVisualSettings();
+  const set=selectedSystemCharacters();
+  const items=groupItems(allItems(),set);
+  $('#status').textContent=$('#titleInput').value.trim()||state.title||'custom log';
+  $('#count').textContent=items.length+' items';
+  if(!items.length){
+    preview.innerHTML='<div class="empty">'+(selectedTabs().length?'선택한 탭에 출력할 메시지가 없습니다.':'왼쪽의 출력할 탭을 체크하면 미리보기가 표시됩니다.')+'</div>';
+    return;
+  }
+  preview.innerHTML=items.map((item)=>{
+    if(item.kind==='image')return renderImageBlock(item);
+    if(item.kind==='bgm')return renderBgmBlock(item);
+    return renderMessage(item,set);
+  }).join('');
+  attachBgm();
+  setupDragReorder();
+}
+
+function renderMessage(message,set){
+  if(message.handoutStyle){
+    return renderHandoutMessage(message,set);
+  }
+  const c=findCharacterForMessage(message)||{};
+  const system=isSystemMessage(message,set);
+  const dice=$('#diceSeparate').checked&&isDiceText(message.text);
+  const inlineDice=!dice&&isDiceText(message.text);
+  const icon=getDisplayIcon(message,c);
+  const showAvatar=$('#showAvatar').checked&&icon&&!system&&!dice;
+
+  const avatarX=Number(message.avatarX||c.x||50),avatarY=Number(message.avatarY||c.y||50),avatarScale=Number(message.avatarScale||c.scale||100)/100;
+  const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="object-position:'+avatarX+'% '+avatarY+'%;transform:scale('+avatarScale+')"></div>':'<div></div>';
+  const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
+  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
+  const tools=actionToolsForMessage(message);
+  const editor=renderMessageEditor(message,c,icon);
+  const diceMode=$('#diceColorMode').value;
+  const diceClass=dice?(diceMode==='gray-character-result'?'dice-gray':'dice-'+diceMode):'';
+  const sysClass=system?'system-'+$('#systemStyleMode').value:'';
+  const diceColor='--dice-color:'+esc(message.color||c.color||'rgba(255,255,255,.64);')+';--tab-color:'+esc(tabColorOf(message.tab));
+  const textHtml=dice
+    ? enhanceDice(message.text,displayName)
+    : (system ? systemMeta+inlineFormat(message.text) : (inlineDice ? enhanceDice(message.text,'') : inlineFormat(message.text)));
+  return '<article class="cc-row tab-colored '+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="true">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
+}
+
+function renderHandoutMessage(message,set){
+  const c=findCharacterForMessage(message)||{};
+  const label=(message.handoutStyle==='memo')?'MEMO':(message.handoutStyle==='paper'?'HANDOUT':'HANDOUT');
+  const style='--dice-color:'+esc(message.color||c.color||'rgba(255,255,255,.64)')+';--tab-color:'+esc(tabColorOf(message.tab));
+  return '<article class="cc-row handout-row tab-colored" style="'+style+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="true">'+
+    '<div class="handout-card handout-'+esc(message.handoutStyle||'basic')+'">'+
+    '<span class="handout-label">'+label+'</span>'+
+    '<div>'+inlineFormat(message.text)+'</div>'+
+    actionToolsForMessage(message)+
+    renderMessageEditor(message,c,getDisplayIcon(message,c))+
+    '</div></article>';
+}
+
+function renderImageBlock(block){
+  return '<div class="custom-block tab-colored" style="--tab-color:'+esc(tabColorOf(block.tab||selectedTabs()[0]||'메인'))+'" data-id="'+esc(block.id)+'" data-kind="block" draggable="true"><img class="insert-image" src="'+esc(block.url)+'" style="--img-width:'+esc(block.width||70)+'%;--img-height:'+(block.height?esc(block.height)+'px':'auto')+';--img-fit:'+(block.height?'cover':'contain')+';--img-x:'+esc(block.objectX||50)+'%;--img-y:'+esc(block.objectY||50)+'%;transform:scale('+(Number(block.scale||100)/100)+')"><div class="caption">'+esc(block.caption||'')+'</div>'+actionToolsForBlock(block)+'</div>';
+}
+
+function renderBgmBlock(block){
+  return '<div class="custom-block tab-colored" style="--tab-color:'+esc(tabColorOf(block.tab||selectedTabs()[0]||'메인'))+'" data-id="'+esc(block.id)+'" data-kind="block" draggable="true"><div class="bgm-area"><button class="bgmButton" data-audio="'+esc(block.url)+'">♪ '+esc(block.label||bgmTitle(block.url))+'</button></div>'+actionToolsForBlock(block)+'</div>';
+}
+
+/* Save inserted items with tab for tab colors */
+const oldInsertAtEndPatch5 = insertAtEnd;
+insertAtEnd = function(item){
+  if(!item.tab)item.tab=selectedTabs()[0]||'메인';
+  oldInsertAtEndPatch5(item);
+};
+const oldInsertAfterIdPatch5 = insertAfterId;
+insertAfterId = function(id,item){
+  if(!item.tab){
+    const base=allItems().find(e=>e.id===id);
+    item.tab=(base&&base.tab)||selectedTabs()[0]||'메인';
+  }
+  oldInsertAfterIdPatch5(id,item);
+};
+
+/* Keep tab color UI live */
+document.addEventListener('DOMContentLoaded',()=>{
+  const tabColorList=$('#tabColorList');
+  if(tabColorList){
+    tabColorList.addEventListener('input',(event)=>{
+      if(!event.target.classList.contains('tabColorInput'))return;
+      localStorage.setItem('tabColor_'+event.target.dataset.tab,event.target.value);
+      buildTabs();
+      render();
+    });
+  }
+});
+
+window.openHandoutModal=openHandoutModal;
+window.saveHandoutModal=saveHandoutModal;
+window.openAddBelowMenu=openAddBelowMenu;
 
 </script>
 </body>
