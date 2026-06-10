@@ -827,6 +827,39 @@ button{
   display:block !important;
 }
 
+
+/* =========================================================
+  Patch12: compact checkbox/select chips
+========================================================= */
+.chip {
+  display:inline-flex !important;
+  width:auto !important;
+  max-width:100% !important;
+  flex:0 1 auto !important;
+  gap:5px !important;
+  padding:5px 8px !important;
+  line-height:1.25 !important;
+}
+.chip input[type="checkbox"] {
+  width:auto !important;
+  min-width:13px !important;
+  flex:0 0 auto !important;
+  margin:0 !important;
+}
+.list {
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:flex-start !important;
+  gap:6px !important;
+}
+#tabList .chip,
+#systemList .chip {
+  white-space:normal !important;
+}
+.option-body .grid2 .chip {
+  min-width:0 !important;
+}
+
 </style>
 </head>
 
@@ -3406,6 +3439,116 @@ render = function(){
   if(window.hardFixLayout) window.hardFixLayout();
   oldRenderPatch11();
   if(window.hardFixLayout) window.hardFixLayout();
+};
+
+
+/* =========================================================
+  Patch12: compact chips + per-message standing detection
+========================================================= */
+
+/* More compact tab/system lists */
+function buildTabs(){
+  const names=[];
+  state.messages.forEach((m)=>{if(!names.includes(m.tab))names.push(m.tab)});
+  $('#tabList').innerHTML=names.length?names.map((n)=>
+    '<label class="chip outputTabLabel"><input type="checkbox" class="outputTab" value="'+esc(n)+'"> <span>'+esc(n)+'</span></label>'
+  ).join(''):'<div class="hint">탭 없음</div>';
+  const tcl=$('#tabColorList');
+  if(tcl)tcl.innerHTML='';
+}
+
+function openSystemModal(){
+  const list=uniqueCharacters();
+  openModal('<h3>시스템 캐릭터 선택</h3>'+
+    '<div class="list">'+
+    '<label class="chip"><input type="checkbox" class="modalSystemChar" value="__blank_name__" '+(systemCharacters.has('__blank_name__')?'checked':'')+'> <span>이름 없는 줄 전체</span></label>'+
+    list.map((c)=>'<label class="chip"><input type="checkbox" class="modalSystemChar" value="'+esc(c.id)+'" '+(systemCharacters.has(c.id)?'checked':'')+'> <span>'+esc(c.name)+'</span></label>').join('')+
+    '</div>'+
+    '<div class="row" style="margin-top:10px"><button onclick="saveSystemModal()">저장</button><button class="ghost" onclick="closeModal()">취소</button></div>'
+  );
+}
+
+/* Room message loading: try to fetch messages from room and extract standing/cutin/status info */
+async function tryFetchRoomMessagesForStanding(roomId){
+  const candidates=['messages','roomMessages','logs'];
+  for(const collection of candidates){
+    try{
+      const docs=await fetchCollection(roomId,collection,500);
+      if(docs && docs.length){
+        return docs.map((doc,index)=>{
+          const fields=doc.fields?fsFields(doc.fields):doc;
+          const fl=flat(fields);
+          return {
+            raw:fields,
+            flat:fl,
+            index,
+            text:first(fl,['text','message','body','content','data.text','data.message','data.body']) || '',
+            name:first(fl,['name','characterName','speaker','data.name','data.characterName','character.name']) || '',
+            characterId:first(fl,['characterId','character.id','data.characterId','data.character.id','owner','ownerId']) || '',
+            standingName:first(fl,['standingName','standName','statusName','faceName','face','state','data.standingName','data.statusName','data.faceName','data.face','data.state']) || '',
+            standingUrl:first(fl,['standingUrl','standUrl','imageUrl','faceUrl','data.standingUrl','data.imageUrl','data.faceUrl']) || '',
+            iconUrl:first(fl,['iconUrl','data.iconUrl']) || ''
+          };
+        });
+      }
+    }catch(e){}
+  }
+  return [];
+}
+
+function normalizeTextKey(text){
+  return String(text||'').replace(/\s+/g,' ').trim().slice(0,160);
+}
+
+function applyStandingFromRoomMessages(roomMessages){
+  if(!roomMessages || !roomMessages.length)return;
+  const byText=new Map();
+  roomMessages.forEach(r=>{
+    const key=normalizeTextKey(r.text);
+    if(key && !byText.has(key))byText.set(key,r);
+  });
+
+  state.messages.forEach((m)=>{
+    const r=byText.get(normalizeTextKey(m.text));
+    if(!r)return;
+
+    const c=findCharacterForMessage(m) || getCharacter(r.characterId) || getCharacter(r.name);
+    if(!c)return;
+
+    let idx=-1;
+    if(r.standingName && c.standings){
+      idx=c.standings.findIndex(s=>String(standingLabel(s,0)).trim()===String(r.standingName).trim());
+    }
+    if(idx<0 && r.standingUrl && c.standings){
+      idx=c.standings.findIndex(s=>s.url===r.standingUrl);
+    }
+    if(idx<0 && r.iconUrl && c.standings){
+      idx=c.standings.findIndex(s=>s.url===r.iconUrl);
+    }
+    if(idx>=0)m.standingIndex=String(idx);
+  });
+}
+
+/* Override room load to also inspect message standing usage */
+const oldLoadCharactersFromRoomPatch12 = loadCharactersFromRoom;
+loadCharactersFromRoom = async function(){
+  const roomId=roomIdFrom($('#roomInput').value);
+  const btn=$('#loadCharactersBtn');
+  const progress=$('#progress');
+  if(btn){btn.disabled=true;btn.textContent='불러오는 중...';}
+  if(progress){progress.innerHTML='';progress.classList.remove('hidden');}
+  try{
+    await oldLoadCharactersFromRoomPatch12();
+    const roomMessages=await tryFetchRoomMessagesForStanding(roomId);
+    applyStandingFromRoomMessages(roomMessages);
+    buildCharacterList();
+    render();
+    if(progress)progress.innerHTML='<div>완료</div>';
+  }catch(e){
+    if(progress)progress.innerHTML='<div>불러오기 실패: '+esc(e.message)+'</div>';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='캐릭터/인장/스탠딩 불러오기';}
+  }
 };
 
 </script>
