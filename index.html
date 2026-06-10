@@ -1132,6 +1132,72 @@ button{
   flex:0 0 auto!important;
 }
 
+
+/* =========================================================
+  FINAL REVIEW PATCH
+  - 대사 색 수정 복구
+  - 묶음 조건 보정
+  - 캐릭터 간격 설정
+  - 묶음 내부 편집 가독성
+========================================================= */
+:root{
+  --character-gap:7px;
+}
+
+.cc-row{
+  margin-bottom:var(--character-gap) !important;
+}
+
+.cc-row.grouped-message{
+  margin-bottom:var(--character-gap) !important;
+}
+
+.cc-row.grouped-message .cc-text{
+  color:var(--cc-text);
+}
+
+.group-edit-row{
+  grid-template-columns:30px minmax(0,1fr) 46px 44px auto !important;
+}
+
+.group-edit-row input[type="color"]{
+  width:44px !important;
+  min-width:44px !important;
+  padding:2px !important;
+}
+
+.group-edit-row input.group-color-code{
+  width:100% !important;
+  min-width:0 !important;
+  font-family:monospace !important;
+  font-size:12px !important;
+}
+
+.group-edit-row .small{
+  white-space:nowrap;
+}
+
+.inline-editor .color-code-row{
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr);
+  gap:6px;
+}
+
+.inline-editor input[type="color"]{
+  width:44px !important;
+  min-width:44px !important;
+  padding:2px !important;
+}
+
+@media(max-width:900px){
+  .group-edit-row{
+    grid-template-columns:24px minmax(0,1fr) 42px !important;
+  }
+  .group-edit-row input.group-color-code{
+    grid-column:2 / span 2;
+  }
+}
+
 </style>
 </head>
 
@@ -1222,6 +1288,8 @@ button{
         <input id="fontSize" type="number" min="10" max="24" value="14">
         <label>줄간격</label>
         <input id="lineHeight" type="number" min="1" max="2.4" step="0.05" value="1.55">
+        <label>캐릭터 간격(px)</label>
+        <input id="characterGap" type="number" min="0" max="40" step="1" value="7">
         <label>로그 폭(px)</label>
         <input id="logWidth" type="number" min="420" max="1400" step="20" value="760">
       </div>
@@ -4684,6 +4752,259 @@ window.saveGroupEditPatch=saveGroupEditPatch;
 window.deleteOneFromGroupPatch=deleteOneFromGroupPatch;
 window.moveGroupedPatchEncoded=moveGroupedPatchEncoded;
 window.deleteGroupedPatchEncoded=deleteGroupedPatchEncoded;
+
+
+/* =========================================================
+  FINAL REVIEW PATCH JS
+  - 대사별 색상 수정 복구
+  - 묶음 편집에서도 색상 수정 가능
+  - 같은 캐릭터 묶임 안정화
+  - 캐릭터 간격 설정
+========================================================= */
+
+function normalizeGroupIconPatch(icon){
+  return String(icon || '').split('?')[0].trim();
+}
+
+function normalizeGroupNamePatch(v){
+  return String(v || '').trim();
+}
+
+/* 묶기 조건 보정:
+   기존엔 인장 URL query나 standingIndex 차이 때문에 필요 이상으로 갈라질 수 있어서
+   같은 캐릭터/같은 탭/같은 표시명/같은 색/같은 실제 이미지면 묶음.
+*/
+function messageGroupKeyForPatch(message,set){
+  if(!message || message.kind !== 'message') return '';
+  if(message.deleted) return '';
+  if(message.handoutStyle) return '';
+  if(isSystemMessage(message,set)) return '';
+  if($('#diceSeparate')?.checked && isDiceText(message.text)) return '';
+  if(isQuietTabName(message.tab)) return '';
+
+  const c = findCharacterForMessage(message) || {};
+  const icon = normalizeGroupIconPatch(getDisplayIcon(message,c) || message.icon || activeIcon(c) || '');
+  const name = normalizeGroupNamePatch(message.name || c.name || '');
+  const color = String(message.color || c.color || '').trim();
+  const tab = String(message.tab || '').trim();
+  const charKey = String(message.characterId || c.id || name || '').trim();
+
+  return [tab, charKey, name, color, icon].join('||');
+}
+
+/* 대사 색상 표시: message.textColor 우선, 없으면 기본 글자색 */
+function textColorStylePatch(message){
+  return message && message.textColor ? ' style="color:'+esc(message.textColor)+'"' : '';
+}
+
+/* 일반 단일 메시지 에디터에 대사색 복구 */
+function renderMessageEditor(m,c,icon){
+  const textColor = m.textColor || '#eeeeee';
+  return '<div class="inline-editor hidden" id="editor_'+m.id+'">'+
+    '<label>기존 캐릭터 선택</label>'+
+    '<select onchange="applyCharacterToMessage(\''+m.id+'\',this.value)"><option value="">직접 입력 유지</option>'+characterOptionsHtml(m.characterId||m.name)+'</select>'+
+    '<label>이름</label><input id="editName_'+m.id+'" value="'+esc(m.name||c.name||'')+'">'+
+    '<label>이름색</label><input id="editColor_'+m.id+'" type="color" value="'+esc(m.color||c.color||'#f2f2f2')+'">'+
+    '<label>대사색</label><div class="color-code-row"><input id="editTextColor_'+m.id+'" type="color" value="'+esc(textColor)+'"><input id="editTextColorCode_'+m.id+'" type="text" value="'+esc(textColor)+'"></div>'+
+    '<label>대사 일부 색상 적용</label>'+
+    '<div class="inline-color-tools"><input type="color" id="color_'+m.id+'" value="#ff7777"><button class="ghost small" type="button" onclick="wrapTextColorNoClose(\''+m.id+'\')">선택 문장에 색상</button></div>'+
+    '<label>인장 URL</label><input id="editIcon_'+m.id+'" value="'+esc(icon||'')+'">'+
+    '<label>스탠딩 선택 / 인장 교체</label>'+
+    '<select id="editStanding_'+m.id+'"><option value="">사용 안 함</option>'+standingOptionsHtml(c,m.standingIndex)+'</select>'+
+    '<label>대사</label><textarea id="text_'+m.id+'" oninput="updateTextPreview(\''+m.id+'\')">'+esc(m.text)+'</textarea>'+
+    '<label>미리보기</label><div class="inline-preview" id="preview_'+m.id+'" style="color:'+esc(textColor)+'">'+inlineFormat(m.text)+'</div>'+
+    '<div class="save-row"><button type="button" onclick="saveInlineEditor(\''+m.id+'\')">수정 적용</button><button class="ghost" type="button" onclick="toggleEdit(\''+m.id+'\')">닫기</button></div>'+
+    '</div>';
+}
+
+function saveInlineEditor(id){
+  const m=state.messages.find(entry=>entry.id===id);
+  if(!m)return;
+  m.name=$('#editName_'+id)?.value ?? m.name;
+  m.color=$('#editColor_'+id)?.value ?? m.color;
+  m.textColor=$('#editTextColorCode_'+id)?.value || $('#editTextColor_'+id)?.value || m.textColor || '';
+  m.icon=$('#editIcon_'+id)?.value ?? m.icon;
+  m.standingIndex=$('#editStanding_'+id)?.value ?? m.standingIndex;
+  m.text=$('#text_'+id)?.value ?? m.text;
+  render();
+}
+
+function syncInlineTextColorPatch(id){
+  const color=$('#editTextColor_'+id);
+  const code=$('#editTextColorCode_'+id);
+  const preview=$('#preview_'+id);
+  if(!color||!code)return;
+  color.addEventListener('input',()=>{code.value=color.value;if(preview)preview.style.color=color.value;});
+  code.addEventListener('input',()=>{if(/^#[0-9a-fA-F]{6}$/.test(code.value)){color.value=code.value;if(preview)preview.style.color=code.value;}});
+}
+
+const __oldToggleEditColorPatch = toggleEdit;
+toggleEdit = function(id){
+  __oldToggleEditColorPatch(id);
+  syncInlineTextColorPatch(id);
+};
+
+/* 묶음 렌더: 각 대사 색상 반영 */
+function renderGroupedMessagePatch(group,set){
+  const messages = group.groupedMessages || [group];
+  const first = messages[0];
+  const c = findCharacterForMessage(first) || {};
+  const icon = getDisplayIcon(first,c);
+  const showAvatar = $('#showAvatar').checked && icon;
+  const avatar = showAvatar
+    ? '<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(first,c)+'"></div>'
+    : '<div></div>';
+
+  const meta = renderMeta(first.created);
+  const displayName = first.name || c.name || '';
+  const nameLine =
+    '<div class="cc-name-line">' +
+      '<span class="cc-name" style="color:'+esc(first.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>' +
+      (meta ? '<span class="cc-meta">'+esc(meta)+'</span>' : '') +
+    '</div>';
+
+  const textHtml = messages.map((m)=>{
+    return '<p class="cc-text" data-sub-id="'+esc(m.id)+'"'+textColorStylePatch(m)+'>'+inlineFormat(m.text)+'</p>';
+  }).join('');
+
+  const tools = actionToolsForGroupedPatch(first.id, messages);
+  const groupEditor = groupEditorHtmlPatch(first.id,messages);
+
+  return '<article class="cc-row grouped-message" style="--dice-color:'+esc(first.color||c.color||'rgba(255,255,255,.64)')+'" data-id="'+esc(first.id)+'" data-kind="message" draggable="false">' +
+    avatar +
+    '<div class="cc-body">' +
+      nameLine +
+      textHtml +
+      tools +
+      groupEditor +
+    '</div>' +
+  '</article>';
+}
+
+/* 묶음 편집: 대사별 텍스트 + 대사색 */
+function groupEditorHtmlPatch(baseId,messages){
+  const rows = messages.map((m,i)=>{
+    const color = m.textColor || '#eeeeee';
+    return '<div class="group-edit-row">'+
+      '<div class="group-edit-index">'+(i+1)+'</div>'+
+      '<textarea data-message-id="'+esc(m.id)+'">'+esc(m.text||'')+'</textarea>'+
+      '<input type="color" data-color-id="'+esc(m.id)+'" value="'+esc(color)+'">'+
+      '<input class="group-color-code" type="text" data-color-code-id="'+esc(m.id)+'" value="'+esc(color)+'">'+
+      '<button class="danger small" onclick="deleteOneFromGroupPatch(\''+esc(m.id)+'\')">삭제</button>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="group-editor hidden" id="group_editor_'+esc(baseId)+'">'+
+    rows+
+    '<div class="row">'+
+      '<button onclick="saveGroupEditPatch(\''+esc(baseId)+'\')">묶음 수정 저장</button>'+
+      '<button class="ghost" onclick="toggleGroupEditPatch(\''+esc(baseId)+'\')">닫기</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function toggleGroupEditPatch(baseId){
+  const el = document.getElementById('group_editor_'+baseId);
+  if(!el)return;
+  el.classList.toggle('hidden');
+  if(!el.classList.contains('hidden')) syncGroupColorInputsPatch(el);
+}
+
+function syncGroupColorInputsPatch(root){
+  root.querySelectorAll('input[type="color"][data-color-id]').forEach(color=>{
+    const id=color.dataset.colorId;
+    const code=root.querySelector('input[data-color-code-id="'+CSS.escape(id)+'"]');
+    if(!code)return;
+    color.oninput=()=>{code.value=color.value;};
+    code.oninput=()=>{if(/^#[0-9a-fA-F]{6}$/.test(code.value))color.value=code.value;};
+  });
+}
+
+function saveGroupEditPatch(baseId){
+  const editor = document.getElementById('group_editor_'+baseId);
+  if(!editor)return;
+
+  editor.querySelectorAll('textarea[data-message-id]').forEach((textarea)=>{
+    const id = textarea.dataset.messageId;
+    const m = state.messages.find(entry=>entry.id===id);
+    if(m){
+      m.text = textarea.value;
+      const code = editor.querySelector('input[data-color-code-id="'+CSS.escape(id)+'"]');
+      const color = editor.querySelector('input[data-color-id="'+CSS.escape(id)+'"]');
+      m.textColor = code?.value || color?.value || m.textColor || '';
+    }
+  });
+
+  render();
+}
+
+/* 단일 메시지 출력에도 대사색 적용 */
+const __oldRenderMessageTextColorPatch = renderMessage;
+renderMessage = function(message,set){
+  let output = __oldRenderMessageTextColorPatch(message,set);
+  if(message && message.textColor){
+    output = output.replace('<p class="cc-text">', '<p class="cc-text" style="color:'+esc(message.textColor)+'">');
+    output = output.replace('<p class="cc-text multi-line-text">', '<p class="cc-text multi-line-text" style="color:'+esc(message.textColor)+'">');
+  }
+  return output;
+};
+
+/* 캐릭터 간격 설정 */
+const __oldApplyVisualSettingsGapPatch = applyVisualSettings;
+applyVisualSettings = function(){
+  __oldApplyVisualSettingsGapPatch();
+  const gap = Number($('#characterGap')?.value || 7);
+  document.documentElement.style.setProperty('--character-gap', gap + 'px');
+};
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const gap=$('#characterGap');
+  if(gap){
+    gap.addEventListener('input',render);
+    gap.addEventListener('change',render);
+  }
+});
+
+/* 렌더 재정의: 묶임 안정판 유지 */
+render = function(){
+  const preview = $('#preview');
+  preview.className = 'preview ' + $('#skinMode').value;
+  applyVisualSettings();
+
+  const set = selectedSystemCharacters();
+  const items = groupedItemsForPatch(allItems(),set);
+
+  $('#status').textContent = $('#titleInput').value.trim() || state.title || 'custom log';
+  $('#count').textContent = items.length + ' items';
+
+  if(!items.length){
+    preview.innerHTML =
+      '<div class="empty">' +
+      (selectedTabs().length ? '선택한 탭에 출력할 메시지가 없습니다.' : '왼쪽의 출력할 탭을 체크하면 미리보기가 표시됩니다.') +
+      '</div>';
+    return;
+  }
+
+  preview.innerHTML = items.map((item)=>{
+    if(item.kind === 'image') return renderImageBlock(item);
+    if(item.kind === 'bgm') return renderBgmBlock(item);
+    if(item.groupedMessages) return renderGroupedMessagePatch(item,set);
+    return renderMessage(item,set);
+  }).join('');
+
+  attachBgm();
+
+  if(typeof setupLongPressMoveFinal === 'function'){
+    setupLongPressMoveFinal();
+  }else if(typeof setupLongPressMove === 'function'){
+    setupLongPressMove();
+  }else if(typeof setupDragReorder === 'function'){
+    setupDragReorder();
+  }
+};
+
+window.toggleGroupEditPatch=toggleGroupEditPatch;
+window.saveGroupEditPatch=saveGroupEditPatch;
 
 </script>
 </body>
