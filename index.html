@@ -1094,6 +1094,44 @@ button{
   top:0;
 }
 
+
+/* =========================================================
+  GROUP EDIT / GROUP MOVE PATCH
+========================================================= */
+.group-editor{
+  display:grid;
+  gap:8px;
+  margin-top:8px;
+  padding:9px;
+  border:1px solid rgba(0,0,0,.16);
+  border-radius:8px;
+  background:rgba(255,255,255,.96);
+  color:#222;
+}
+.group-editor.hidden{display:none!important}
+.group-edit-row{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) auto;
+  gap:6px;
+  align-items:start;
+}
+.group-edit-row textarea{
+  min-height:44px;
+  padding:6px;
+  border:1px solid rgba(0,0,0,.2);
+  border-radius:6px;
+  font-size:12px;
+}
+.group-edit-index{
+  color:#777;
+  font-size:12px;
+  font-weight:800;
+  padding-top:7px;
+}
+.group-editor .row button{
+  flex:0 0 auto!important;
+}
+
 </style>
 </head>
 
@@ -4450,6 +4488,202 @@ render = function(){
     setupDragReorder();
   }
 };
+
+
+/* =========================================================
+  GROUP EDIT / GROUP MOVE PATCH
+  - 묶음 단위 수정 가능
+  - 묶음 이동 후에도 내부 순서/시간 유지
+  - 이동 후 묶음 풀림 방지
+========================================================= */
+
+function groupMessagesByIdsPatch(ids){
+  return ids.map(id=>state.messages.find(m=>m.id===id)).filter(Boolean);
+}
+
+function toggleGroupEditPatch(baseId){
+  const el = document.getElementById('group_editor_'+baseId);
+  if(!el)return;
+  el.classList.toggle('hidden');
+}
+
+function saveGroupEditPatch(baseId){
+  const editor = document.getElementById('group_editor_'+baseId);
+  if(!editor)return;
+
+  editor.querySelectorAll('textarea[data-message-id]').forEach((textarea)=>{
+    const id = textarea.dataset.messageId;
+    const m = state.messages.find(entry=>entry.id===id);
+    if(m)m.text = textarea.value;
+  });
+
+  render();
+}
+
+function deleteOneFromGroupPatch(id){
+  const m = state.messages.find(entry=>entry.id===id);
+  if(m)m.deleted = true;
+  render();
+}
+
+function groupEditorHtmlPatch(baseId,messages){
+  const rows = messages.map((m,i)=>
+    '<div class="group-edit-row">'+
+      '<div class="group-edit-index">'+(i+1)+'</div>'+
+      '<textarea data-message-id="'+esc(m.id)+'">'+esc(m.text||'')+'</textarea>'+
+      '<button class="danger small" onclick="deleteOneFromGroupPatch(\''+esc(m.id)+'\')">삭제</button>'+
+    '</div>'
+  ).join('');
+
+  return '<div class="group-editor hidden" id="group_editor_'+esc(baseId)+'">'+
+    rows+
+    '<div class="row">'+
+      '<button onclick="saveGroupEditPatch(\''+esc(baseId)+'\')">묶음 수정 저장</button>'+
+      '<button class="ghost" onclick="toggleGroupEditPatch(\''+esc(baseId)+'\')">닫기</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function actionToolsForGroupedPatch(baseId,messages){
+  const ids = messages.map(m=>m.id);
+  const encoded = encodeURIComponent(JSON.stringify(ids));
+
+  const buttons = [
+    '<button class="ghost small" onclick="toggleGroupEditPatch(\''+baseId+'\')">묶음수정</button>',
+    '<button class="ghost small" onclick="openAddBelowMenu(\''+baseId+'\')">추가</button>',
+    '<button class="ghost small" onclick="moveGroupedPatchEncoded(\''+encoded+'\',-1)">↑</button>',
+    '<button class="ghost small" onclick="moveGroupedPatchEncoded(\''+encoded+'\',1)">↓</button>',
+    '<button class="danger small" onclick="deleteGroupedPatchEncoded(\''+encoded+'\')">삭제</button>'
+  ];
+  return actionTools(baseId, buttons.join(''));
+}
+
+function parseIdsPatch(encoded){
+  try{return JSON.parse(decodeURIComponent(encoded));}
+  catch(e){return [];}
+}
+
+function deleteGroupedPatchEncoded(encoded){
+  deleteGroupedPatch(parseIdsPatch(encoded));
+}
+
+function moveGroupedPatchEncoded(encoded,dir){
+  moveGroupedPatchStable(parseIdsPatch(encoded),dir);
+}
+
+function deleteGroupedPatch(ids){
+  ids.forEach(id=>{
+    const m = state.messages.find(entry=>entry.id===id);
+    if(m)m.deleted = true;
+  });
+  render();
+}
+
+/* 현재 화면의 묶음 단위 배열을 기준으로 이동해서, 이동 후에도 내부 시간이 연속되게 만든다 */
+function getVisibleGroupsPatch(){
+  const set = selectedSystemCharacters();
+  return groupedItemsForPatch(allItems(),set);
+}
+
+function idsOfVisibleItemPatch(item){
+  if(item.groupedMessages)return item.groupedMessages.map(m=>m.id);
+  return [item.id];
+}
+
+function moveGroupedPatchStable(ids,dir){
+  if(!ids || !ids.length)return;
+
+  const visible = getVisibleGroupsPatch();
+  const index = visible.findIndex(item=>{
+    const itemIds = idsOfVisibleItemPatch(item);
+    return itemIds[0] === ids[0];
+  });
+  if(index < 0)return;
+
+  const targetIndex = index + dir;
+  if(targetIndex < 0 || targetIndex >= visible.length)return;
+
+  const moving = visible[index];
+  const target = visible[targetIndex];
+
+  const movingIds = idsOfVisibleItemPatch(moving);
+  const targetIds = idsOfVisibleItemPatch(target);
+
+  const movingMessages = groupMessagesByIdsPatch(movingIds);
+  const targetMessages = groupMessagesByIdsPatch(targetIds);
+
+  const movingBlocks = movingIds.map(id=>state.blocks.find(b=>b.id===id)).filter(Boolean);
+  const targetBlocks = targetIds.map(id=>state.blocks.find(b=>b.id===id)).filter(Boolean);
+
+  const movingEntries = [...movingMessages, ...movingBlocks];
+  const targetEntries = [...targetMessages, ...targetBlocks];
+
+  if(!movingEntries.length || !targetEntries.length)return;
+
+  let anchorTime;
+  if(dir < 0){
+    anchorTime = Math.min(...targetEntries.map(e=>new Date(e.created||Date.now()).getTime()));
+    movingEntries.forEach((entry,i)=>{
+      entry.created = new Date(anchorTime - (movingEntries.length - i)).toISOString();
+    });
+  }else{
+    anchorTime = Math.max(...targetEntries.map(e=>new Date(e.created||Date.now()).getTime()));
+    movingEntries.forEach((entry,i)=>{
+      entry.created = new Date(anchorTime + i + 1).toISOString();
+    });
+  }
+
+  /* 그룹 내부 순서가 절대 안 꼬이게 1ms씩 정렬 */
+  movingMessages.forEach((m,i)=>{
+    const base = new Date(movingEntries[0].created).getTime();
+    m.created = new Date(base + i).toISOString();
+  });
+
+  render();
+}
+
+/* 묶음 렌더 재정의: 편집창 포함 */
+function renderGroupedMessagePatch(group,set){
+  const messages = group.groupedMessages || [group];
+  const first = messages[0];
+  const c = findCharacterForMessage(first) || {};
+  const icon = getDisplayIcon(first,c);
+  const showAvatar = $('#showAvatar').checked && icon;
+  const avatar = showAvatar
+    ? '<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(first,c)+'"></div>'
+    : '<div></div>';
+
+  const meta = renderMeta(first.created);
+  const displayName = first.name || c.name || '';
+  const nameLine =
+    '<div class="cc-name-line">' +
+      '<span class="cc-name" style="color:'+esc(first.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>' +
+      (meta ? '<span class="cc-meta">'+esc(meta)+'</span>' : '') +
+    '</div>';
+
+  const textHtml = messages.map((m)=>{
+    return '<p class="cc-text" data-sub-id="'+esc(m.id)+'">'+inlineFormat(m.text)+'</p>';
+  }).join('');
+
+  const tools = actionToolsForGroupedPatch(first.id, messages);
+  const groupEditor = groupEditorHtmlPatch(first.id,messages);
+
+  return '<article class="cc-row grouped-message" style="--dice-color:'+esc(first.color||c.color||'rgba(255,255,255,.64)')+'" data-id="'+esc(first.id)+'" data-kind="message" draggable="false">' +
+    avatar +
+    '<div class="cc-body">' +
+      nameLine +
+      textHtml +
+      tools +
+      groupEditor +
+    '</div>' +
+  '</article>';
+}
+
+window.toggleGroupEditPatch=toggleGroupEditPatch;
+window.saveGroupEditPatch=saveGroupEditPatch;
+window.deleteOneFromGroupPatch=deleteOneFromGroupPatch;
+window.moveGroupedPatchEncoded=moveGroupedPatchEncoded;
+window.deleteGroupedPatchEncoded=deleteGroupedPatchEncoded;
 
 </script>
 </body>
