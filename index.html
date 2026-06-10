@@ -860,6 +860,66 @@ button{
   min-width:0 !important;
 }
 
+
+/* =========================================================
+  Patch13: jabdam, dice cleanup, crop/object-fit fixes
+========================================================= */
+.hidden { display:none !important; }
+.cc-row.quiet-tab {
+  display:block !important;
+  opacity:.62 !important;
+  max-width:var(--log-width) !important;
+  margin:4px auto !important;
+  transform:none !important;
+}
+.cc-row.quiet-tab .cc-body{ padding-right:28px; }
+.cc-row.quiet-tab .cc-name-line{ display:none !important; }
+.cc-row.quiet-tab .cc-avatar{ display:none !important; }
+.cc-row.quiet-tab .cc-text{
+  font-size:calc(var(--log-font-size) * .88) !important;
+  line-height:1.45 !important;
+  color:rgba(255,255,255,.58) !important;
+  text-align:left !important;
+}
+.cc-row.quiet-tab .cc-text .jabdam-name{
+  color:var(--jabdam-color, rgba(255,255,255,.58)) !important;
+  font-weight:700;
+}
+.cc-row.quiet-tab.system .cc-text{ text-align:left !important; }
+.cc-text{ line-height:var(--log-line-height) !important; }
+.cc-text br{ line-height:var(--log-line-height) !important; }
+
+.cc-row.dice-log{
+  display:grid !important;
+  grid-template-columns:0 minmax(0,1fr) !important;
+  gap:0 !important;
+  text-align:left !important;
+  align-items:start;
+}
+.cc-row.dice-log .cc-avatar{ display:none !important; }
+.cc-row.dice-log .cc-name-line{ display:flex !important; }
+.cc-row.dice-log .cc-text{
+  display:inline-block;
+  text-align:left !important;
+}
+.dice-hit,.dice-result{ font-weight:900; }
+.dice-hit.character,.dice-result.character{
+  color:var(--dice-color,currentColor) !important;
+  font-weight:400;
+}
+.dice-hit.character-bold,.dice-result.character-bold{
+  color:var(--dice-color,currentColor) !important;
+  font-weight:900;
+}
+.dice-name.break{ display:none !important; }
+.dice-black .cc-text{ color:#111 !important; }
+.dice-custom .cc-text{ color:var(--dice-custom-color) !important; }
+
+.insert-image{ object-fit:contain !important; }
+.image-adjust-box img,#imageAdjustPreview{ object-fit:contain !important; }
+.crop-adjust-box img,#standingCropPreview,#standingLogPreviewImg,.cc-avatar img{ object-fit:cover; }
+.cc-row.system .cc-text{ font-style:normal !important; }
+
 </style>
 </head>
 
@@ -958,7 +1018,6 @@ button{
     <details class="option-group">
       <summary>주사위 스타일</summary>
       <div class="option-body">
-        <label class="chip"><input type="checkbox" id="diceStyle" checked> 주사위 결과 강조</label>
         <label class="chip"><input type="checkbox" id="diceSeparate"> 판정 로그 분리</label>
         <label>주사위 색상</label>
         <select id="diceColorMode">
@@ -967,21 +1026,22 @@ button{
           <option value="black">검정색</option>
           <option value="custom">사용자 지정색</option>
         </select>
-        <label>사용자 지정 주사위색</label>
-        <div class="color-code-row"><input id="diceCustomColor" type="color" value="#777777"><input id="diceCustomColorCode" type="text" value="#777777"></div>
+        <div id="diceCustomColorWrap" class="hidden"><label>사용자 지정 주사위색</label>
+        <div class="color-code-row"><input id="diceCustomColor" type="color" value="#777777"><input id="diceCustomColorCode" type="text" value="#777777"></div></div>
         <label class="chip"><input type="checkbox" id="diceBackground" checked> 주사위 배경 표시</label>
-        <label>결과값 강조</label>
+        <label>강조</label>
         <select id="diceResultMode">
           <option value="bold-only">볼드</option>
           <option value="character">캐릭터색</option>
           <option value="character-bold">캐릭터색 볼드</option>
           <option value="none">강조 없음</option>
         </select>
-        <label>주사위 캐릭터 이름</label>
+        <div id="diceNameModeWrap"><label>주사위 캐릭터 이름</label>
         <select id="diceNameMode">
           <option value="show">표시</option>
           <option value="hide">숨김</option>
         </select>
+        </div>
         <label>주사위 폰트 크기</label>
         <input id="diceFontSize" type="number" min="10" max="24" value="13">
       </div>
@@ -1016,8 +1076,6 @@ button{
         <select id="systemTextStyle">
           <option value="normal">기본</option>
           <option value="bold">볼드</option>
-          <option value="italic">기울임</option>
-          <option value="bolditalic">볼드+기울임</option>
         </select>
         <label>시스템 폰트 크기</label>
         <input id="systemFontSize" type="number" min="10" max="24" value="13">
@@ -3550,6 +3608,159 @@ loadCharactersFromRoom = async function(){
     if(btn){btn.disabled=false;btn.textContent='캐릭터/인장/스탠딩 불러오기';}
   }
 };
+
+
+/* =========================================================
+  Patch13: jabdam formatting, dice cleanup, crop fixes
+========================================================= */
+function updateDiceConditionalUI(){
+  const customWrap=$('#diceCustomColorWrap');
+  if(customWrap) customWrap.classList.toggle('hidden', $('#diceColorMode')?.value !== 'custom');
+  const nameWrap=$('#diceNameModeWrap');
+  if(nameWrap) nameWrap.classList.toggle('hidden', !$('#diceSeparate')?.checked);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  ['diceColorMode','diceSeparate'].forEach(id=>{
+    const el=$('#'+id);
+    if(el){el.addEventListener('input',updateDiceConditionalUI);el.addEventListener('change',updateDiceConditionalUI);}
+  });
+  updateDiceConditionalUI();
+});
+
+function applyVisualSettings(){
+  document.documentElement.style.setProperty('--cc-bg',$('#bgColor').value||'#303136');
+  document.documentElement.style.setProperty('--log-font',fontValue($('#fontMode').value));
+  document.documentElement.style.setProperty('--log-font-size',(Number($('#fontSize').value)||14)+'px');
+  document.documentElement.style.setProperty('--log-line-height',(Number($('#lineHeight')?.value)||1.55));
+  document.documentElement.style.setProperty('--log-width',(Number($('#logWidth')?.value)||760)+'px');
+  document.documentElement.style.setProperty('--avatar-size',(Number($('#avatarSize')?.value)||48)+'px');
+  document.documentElement.style.setProperty('--dice-font-size',(Number($('#diceFontSize').value)||13)+'px');
+  document.documentElement.style.setProperty('--system-font-size',(Number($('#systemFontSize').value)||13)+'px');
+  const sys=$('#systemTextStyle')?.value || 'normal';
+  document.documentElement.style.setProperty('--system-weight',sys.includes('bold')?'900':'400');
+  document.documentElement.style.setProperty('--system-style','normal');
+  const sysFont=$('#systemFontMode')?.value||'inherit';
+  document.documentElement.style.setProperty('--system-font-family',sysFont==='inherit'?'var(--log-font)':fontValue(sysFont));
+  document.documentElement.style.setProperty('--system-color',$('#systemColorCode')?.value||$('#systemColor')?.value||'rgba(255,255,255,.68)');
+  document.documentElement.style.setProperty('--dice-custom-color',$('#diceCustomColorCode')?.value||$('#diceCustomColor')?.value||'#777777');
+  updateDiceConditionalUI();
+}
+
+function isJabdam(message){ return isQuietTabName(message.tab); }
+function isSystemMessage(message,set){
+  if(isJabdam(message)) return false;
+  return set.has(message.characterId)||set.has(message.name)||set.has('__blank_name__')&&(!message.name);
+}
+function renderJabdamText(message,c){
+  const name=message.name || '이름 없음';
+  const color=message.color||c.color||'rgba(255,255,255,.58)';
+  return '<span class="jabdam-name" style="--jabdam-color:'+esc(color)+'">'+esc(name)+':</span> '+inlineFormat(message.text);
+}
+
+function groupItems(items,set){
+  if(!$('#mergeSameChar').checked)return items;
+  let lastKey='';
+  return items.map((item)=>{
+    const copy={...item};
+    if(item.kind==='message' && $('#diceSeparate').checked && isDiceText(item.text)){
+      copy.compact=false;
+      lastKey='';
+      return copy;
+    }
+    if(item.kind==='message'&&!isSystemMessage(item,set)){
+      const key=(item.characterId||item.name)+'|'+item.tab;
+      copy.compact=key===lastKey;
+      lastKey=key;
+    }else{
+      lastKey='';
+    }
+    return copy;
+  });
+}
+
+function diceEmphasisClass(){
+  const mode=$('#diceResultMode')?.value || 'bold-only';
+  if(mode==='character') return 'character';
+  if(mode==='character-bold') return 'character-bold';
+  if(mode==='none') return 'none';
+  return 'bold-only';
+}
+function wrapDiceHit(text){
+  const cls='dice-hit '+diceEmphasisClass();
+  return '<span class="'+cls+'">'+text+'</span>';
+}
+function enhanceDice(text,characterName){
+  let html=inlineFormat(String(text||''));
+  html=html.replace(/(cc[b]?&lt;=?\s*\d+\s*[^＞>\n(]*)/gi,(m)=>wrapDiceHit(m));
+  html=html.replace(/(cc[b]?=+\s*\d+\s*[^＞>\n(]*)/gi,(m)=>wrapDiceHit(m));
+  html=html.replace(/(대단한\s*성공|극단적\s*성공|어려운\s*성공|보통\s*성공|대성공|성공|실패|대실패|펌블)/g,(m)=>'<span class="dice-result '+diceEmphasisClass()+'">'+m+'</span>');
+  const namePart=characterName && $('#diceNameMode')?.value !== 'hide'
+    ? '<span class="dice-name break">'+wrapDiceHit(esc(characterName))+'</span>'
+    : '';
+  return namePart+html;
+}
+
+function renderMessage(message,set){
+  if(message.handoutStyle){ return renderHandoutMessage(message,set); }
+  const c=findCharacterForMessage(message)||{};
+  const system=isSystemMessage(message,set);
+  const dice=$('#diceSeparate').checked&&isDiceText(message.text);
+  const inlineDice=!dice&&isDiceText(message.text);
+  const icon=getDisplayIcon(message,c);
+  const quiet=isQuietTabName(message.tab);
+  const showAvatar=$('#showAvatar').checked&&icon&&!system&&!dice&&!quiet;
+  const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(message,c)+'"></div>':'<div></div>';
+  const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system?'':(dice?'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>');
+  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
+  const tools=actionToolsForMessage(message);
+  const editor=renderMessageEditor(message,c,icon);
+  const diceMode=$('#diceColorMode')?.value || 'character';
+  const diceClass=dice ? 'dice-'+diceMode : '';
+  const bgClass=(dice && !$('#diceBackground')?.checked)?'no-dice-bg':'';
+  const sysClass=system?'system-'+$('#systemStyleMode').value:'';
+  const diceColor='--dice-color:'+esc(message.color||c.color||'rgba(255,255,255,.64)');
+  const textHtml=quiet
+    ? renderJabdamText(message,c)
+    : (dice ? enhanceDice(message.text,'') : (system ? systemMeta+inlineFormat(message.text) : (inlineDice ? enhanceDice(message.text,displayName) : inlineFormat(message.text))));
+  return '<article class="cc-row '+(quiet?'quiet-tab ':'')+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+bgClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="false">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
+}
+
+function openImageModal(_,blockId){
+  const block=blockId?state.blocks.find((entry)=>entry.id===blockId):null;
+  const url=block?block.url:'',x=block?block.objectX||50:50,y=block?block.objectY||50:50,scale=block?block.scale||100:100;
+  openModal('<h3>이미지 추가/수정</h3><label>이미지 URL</label><input id="modalImageUrl" value="'+esc(url)+'">'+
+    '<div class="crop-adjust-box" id="imageAdjustBox" style="width:100%;height:220px;--crop-x:'+x+'%;--crop-y:'+y+'%;--crop-scale:'+(Number(scale)/100)+'"><img id="imageAdjustPreview" src="'+esc(url)+'" style="object-fit:contain"></div>'+
+    '<p class="hint">이미지는 잘리지 않게 전체가 보이는 상태로 조정합니다.</p>'+
+    '<label>이미지 너비(%)</label><input id="modalImageWidth" type="number" value="'+esc(block?block.width||70:70)+'">'+
+    '<label>높이(px, 비우면 원본 비율)</label><input id="modalImageHeight" type="number" value="'+esc(block?block.height||'':'')+'">'+
+    '<div class="grid3"><div><label>위치 X</label><input id="modalImageX" type="number" value="'+esc(x)+'"></div><div><label>위치 Y</label><input id="modalImageY" type="number" value="'+esc(y)+'"></div><div><label>확대</label><input id="modalImageScale" type="number" value="'+esc(scale)+'"></div></div>'+
+    '<label>캡션</label><input id="modalImageCaption" value="'+esc(block?block.caption||'':'')+'">'+
+    '<div class="row" style="margin-top:10px"><button onclick="saveImageModal(\''+esc(blockId||'')+'\')">저장</button><button class="ghost" onclick="closeModal()">취소</button></div>'
+  );
+  ['modalImageX','modalImageY','modalImageScale','modalImageUrl'].forEach(id=>$('#'+id).addEventListener('input',()=>{
+    $('#imageAdjustPreview').src=$('#modalImageUrl').value;
+    const x=$('#modalImageX').value||50,y=$('#modalImageY').value||50,scale=Number($('#modalImageScale').value||100)/100;
+    $('#imageAdjustBox').style.setProperty('--crop-x',x+'%');
+    $('#imageAdjustBox').style.setProperty('--crop-y',y+'%');
+    $('#imageAdjustBox').style.setProperty('--crop-scale',scale);
+    $('#imageAdjustPreview').style.objectPosition=x+'% '+y+'%';
+    $('#imageAdjustPreview').style.transform='scale('+scale+')';
+  }));
+}
+
+function pickStandings(urls,iconUrl){
+  const seen=new Set(),standings=[];
+  urls.forEach((item)=>{
+    if(!item.url||item.url===iconUrl||seen.has(item.url))return;
+    const key=String(item.path||'');
+    const likely=/stand|standing|立ち|立絵|tachie|cutin|image|images|picture|token|faces|faceImages|status|portrait|差分|表情|ステータス/i.test(key)&&!/thumbnail|thumb/i.test(key);
+    if(!likely)return;
+    seen.add(item.url);
+    standings.push({name:item.name||key.split('.').slice(-2).join(' ')||('스탠딩 '+(standings.length+1)),url:item.url,width:'',height:'',x:'50',y:'50',scale:'100'});
+  });
+  return standings;
+}
 
 </script>
 </body>
