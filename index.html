@@ -109,7 +109,16 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
 .cc-row.dice-log.dice-character .cc-text{color:var(--dice-color,rgba(255,255,255,.64))!important}
 .cc-row.dice-log.dice-simple .cc-text{background:transparent;color:var(--cc-text)!important}
 .cc-row.dice-log .cc-avatar,.cc-row.dice-log .cc-name-line{display:none}
-.dice-name{font-weight:900;margin-right:6px;opacity:.95}
+.dice-name{
+  display:block;
+  margin-bottom:4px;
+
+  font-size:12px;
+  font-weight:700;
+
+  color:var(--dice-color,currentColor);
+  opacity:.95;
+}
 .dice-name.hide{display:none}
 .dice-result{border-radius:3px}
 .dice-result.bold-bg{font-weight:900;background:rgba(255,255,255,.12);padding:0 3px}
@@ -2696,9 +2705,9 @@ function enhanceDice(text, characterName){
       '<span class="dice-result ' + resultClass + '">$1</span>'
     );
   }
-  const namePart = characterName
-    ? '<span class="dice-name '+($('#diceNameMode').value==='hide'?'hide':'')+'">'+esc(characterName)+'</span>'
-    : '';
+const namePart = characterName
+  ? '<span class="dice-name '+($('#diceNameMode').value==='hide'?'hide':'')+'">['+esc(characterName)+']</span><br>'
+  : '';
   return namePart + html;
 }
 
