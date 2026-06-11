@@ -5332,62 +5332,61 @@ function renderGroupedMessagePatch(group,set){
   return '<article class="cc-row grouped-message" style="--dice-color:'+esc(first.color||c.color||'rgba(255,255,255,.64)')+'" data-id="'+esc(first.id)+'" data-kind="message" draggable="false">'+
     avatar+'<div class="cc-body">'+nameLine+textHtml+tools+groupEditor+'</div></article>';
 }
-// --- 여기서부터 복사해서 const __oldRenderMessageFontPatch 바로 위에 넣으세요 ---
-// [분리된 말풍선 전용] 주사위 판정로그 분리 시 첫 줄에 이름 강제 삽입 패치
-if (typeof enhanceDice === 'function') {
-  const __originalEnhanceForSeparatedBubble = enhanceDice;
-  enhanceDice = function(text, characterName) {
-    // 1. 원래의 주사위 판정 텍스트를 가져옵니다.
-    let diceHtml = __originalEnhanceForSeparatedBubble(text, characterName);
-    
-    // 2. 주사위 이름 표시 옵션 확인
-    const diceNameMode = document.getElementById('diceNameMode')?.value || 'show';
-    if (diceNameMode !== 'show') return diceHtml;
-
-    // 3. 판정로그가 분리되어 이름(characterName)이 누락되었다면 원본에서 강제로 역추적합니다.
-    let finalName = characterName;
-    if (!finalName) {
-      // 가장 최근에 그려진 대화 행(cc-row)에서 이름 데이터를 낚아챕니다.
-      const rows = document.querySelectorAll('.cc-row');
-      if (rows.length > 0) {
-        const lastRow = rows[rows.length - 1];
-        finalName = lastRow.querySelector('.cc-name')?.textContent || '';
-      }
-    }
-
-    // 4. 이름이 확인되었다면 분리된 주사위 텍스트 맨 첫 줄에 글자로 얹어줍니다.
-    if (finalName) {
-      finalName = finalName.trim();
-      
-      // 이름이 중복으로 들어가는 것을 방지하는 안전장치
-      if (!diceHtml.includes('[' + finalName + ']')) {
-        // 이미지로 보내주신 텍스트 맨 첫 줄에 [이름]을 넣고 줄바꿈(<br>) 처리를 합니다.
-        // 글자 색상은 주사위 기본 글씨색과 맞춰줍니다.
-        const nameText = '<span class="dice-bubble-name" style="display: block; font-weight: bold; margin-bottom: 6px; color: #ffffff; opacity: 0.9;">[' + finalName + ']</span>';
-        
-        diceHtml = nameText + diceHtml;
-      }
-    }
-    
-    return diceHtml;
-  };
-}
-// --- 여기까지 복사하세요 ---
-const __oldRenderMessageFontPatch=renderMessage;
-renderMessage=function(message,set){
-  let output=__oldRenderMessageFontPatch(message,set);
-  const styles=[];
-  if(message?.textColor)styles.push('color:'+esc(message.textColor));
-  if(message?.fontMode){
-    styles.push('--message-font-family:'+esc(cssFontVarPatch(message.fontMode)));
+  // --- 여기서부터 복사해서 지운 자리에 그대로 붙여넣으세요 ---
+const __oldRenderMessageFontPatch = renderMessage;
+renderMessage = function(message, set) {
+  let output = __oldRenderMessageFontPatch(message, set);
+  
+  // 1. 기존 폰트 및 글자 색상 패치 기능 (원래 있던 기능 그대로 유지)
+  const styles = [];
+  if (message?.textColor) styles.push('color:' + esc(message.textColor));
+  if (message?.fontMode) {
+    styles.push('--message-font-family:' + esc(cssFontVarPatch(message.fontMode)));
     styles.push('font-family:var(--message-font-family)');
   }
-  if(styles.length){
-    output=output.replace('<p class="cc-text">','<p class="cc-text" style="'+styles.join(';')+'">');
-    output=output.replace('<p class="cc-text multi-line-text">','<p class="cc-text multi-line-text" style="'+styles.join(';')+'">');
+  if (styles.length) {
+    output = output.replace('class="cc-text"', 'class="cc-text" style="' + styles.join(';') + '"');
+    output = output.replace('class="cc-name"', 'class="cc-name" style="' + styles.join(';') + '"');
+    output = output.replace('class="cc-system"', 'class="cc-system" style="' + styles.join(';') + '"');
   }
+
+  // 2. [주사위 판정로그 분리] 시 말풍선 안에 이름 강제 주입 기능
+  try {
+    const diceNameMode = document.getElementById('diceNameMode')?.value || 'show';
+    // 이름 표시가 켜져 있고, 주사위 분리로 인해 이름(cc-name) 영역이 없는 말풍선일 때만 작동
+    if (diceNameMode === 'show' && output.includes('class="cc-text"') && !output.includes('class="cc-name"')) {
+      
+      // 화면에 이미 그려져 있는 가장 최근 대화 행에서 이름을 역추적합니다.
+      const rows = document.querySelectorAll('.cc-row');
+      let tracedName = '';
+      if (rows.length > 0) {
+        // 주사위 분리 말풍선 바로 직전의 행을 뒤집어서 진짜 이름을 찾습니다.
+        for (let i = rows.length - 1; i >= 0; i--) {
+          const nameEl = rows[i].querySelector('.cc-name');
+          if (nameEl && nameEl.textContent.trim()) {
+            tracedName = nameEl.textContent.trim();
+            break;
+          }
+        }
+      }
+      
+      // 이름을 성공적으로 찾았다면 말풍선 글자 맨 첫 줄에 강제로 꽂아넣습니다.
+      if (tracedName) {
+        const nameTag = '<span class="dice-bubble-name" style="display: block; font-weight: bold; margin-bottom: 5px; color: #ffffff; opacity: 0.9; font-size: 13px;">[' + tracedName + ']</span>';
+        
+        // <p class="cc-text" ... > 태그를 찾아서 그 바로 뒤(말풍선 내부 맨 첫 줄)에 이름을 삽입합니다.
+        const textTagMatch = output.match(/<p class="cc-text"[^>]*>/);
+        if (textTagMatch) {
+          const insertIdx = output.indexOf(textTagMatch[0]) + textTagMatch[0].length;
+          output = output.substring(0, insertIdx) + nameTag + output.substring(insertIdx);
+        }
+      }
+    }
+  } catch (e) { console.error("주사위 이름 패치 에러:", e); }
+
   return output;
 };
+// --- 여기까지 복사하세요 ---
 
 window.wrapGroupSelectedColorPatch=wrapGroupSelectedColorPatch;
 
