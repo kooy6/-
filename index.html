@@ -3088,7 +3088,7 @@ const oldRenderPatch6 = render;
 const __oldRenderMessageFinal = renderMessage;
 renderMessage = function(message, set) {
     // 1. 주사위 로그면 [이름] 강제 추가
-    if (message.kind === 'dice' && message.sender) {
+    if (message.type === 'dice' && message.sender) {
         message.text = "[" + message.sender + "] " + message.text;
     }
 
