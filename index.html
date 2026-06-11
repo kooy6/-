@@ -2010,7 +2010,8 @@ function renderMessage(message,set){
   const avatarX=Number(message.avatarX||c.x||50),avatarY=Number(message.avatarY||c.y||50),avatarScale=Number(message.avatarScale||c.scale||100)/100;
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="object-position:'+avatarX+'% '+avatarY+'%;transform:scale('+avatarScale+')"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
-   const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
+  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
   const standingHtml=standing&&!system&&!dice?renderStandingImage(standing,c):'';
   const tools=actionTools(message.id,'<button class="ghost small" onclick="toggleEdit(\''+message.id+'\')">✎ 수정</button><button class="ghost small" onclick="moveMessage(\''+message.id+'\',-1)">↑ 위로</button><button class="ghost small" onclick="moveMessage(\''+message.id+'\',1)">↓ 아래로</button><button class="danger small" onclick="deleteItem(\''+message.id+'\')">삭제</button>');
   const editor=renderMessageEditor(message,c,icon);
@@ -2406,6 +2407,7 @@ function renderMessage(message,set){
   const avatarX=Number(message.avatarX||c.x||50),avatarY=Number(message.avatarY||c.y||50),avatarScale=Number(message.avatarScale||c.scale||100)/100;
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="object-position:'+avatarX+'% '+avatarY+'%;transform:scale('+avatarScale+')"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
   const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
   const tools=actionTools(message.id,
     '<button class="ghost small" onclick="toggleEdit(\''+message.id+'\')">✎ 수정</button>'+
@@ -2687,6 +2689,7 @@ function renderMessage(message,set){
   const avatarX=Number(message.avatarX||c.x||50),avatarY=Number(message.avatarY||c.y||50),avatarScale=Number(message.avatarScale||c.scale||100)/100;
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="object-position:'+avatarX+'% '+avatarY+'%;transform:scale('+avatarScale+')"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
   const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
   const tools=actionTools(message.id,
     '<button class="ghost small" onclick="toggleEdit(\''+message.id+'\')">✎ 수정</button>'+
@@ -3006,6 +3009,7 @@ function renderMessage(message,set){
   const avatarX=Number(message.avatarX||c.x||50),avatarY=Number(message.avatarY||c.y||50),avatarScale=Number(message.avatarScale||c.scale||100)/100;
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="object-position:'+avatarX+'% '+avatarY+'%;transform:scale('+avatarScale+')"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
   const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
   const tools=actionToolsForMessage(message);
   const editor=renderMessageEditor(message,c,icon);
@@ -3245,6 +3249,7 @@ function renderMessage(message,set){
   const avatarX=Number(message.avatarX||c.x||50),avatarY=Number(message.avatarY||c.y||50),avatarScale=Number(message.avatarScale||c.scale||100)/100;
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="object-position:'+avatarX+'% '+avatarY+'%;transform:scale('+avatarScale+')"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
   const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
   const tools=actionToolsForMessage(message);
   const editor=renderMessageEditor(message,c,icon);
@@ -3571,6 +3576,7 @@ function renderMessage(message,set){
   const avatarStyle=renderMessageAvatarStyle(message,c);
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+avatarStyle+'"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
+  const nameLine=system||dice?'':'<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
   const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
   const tools=actionToolsForMessage(message);
   const editor=renderMessageEditor(message,c,icon);
@@ -3662,6 +3668,11 @@ function renderMessage(message,set){
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(message,c)+'"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
 const hideDiceName = dice && $('#diceNameMode')?.value === 'hide';
+
+const nameLine =
+  system || hideDiceName || dice
+    ? ''
+    : '<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
   const tools=actionToolsForMessage(message);
   const editor=renderMessageEditor(message,c,icon);
   const diceMode=$('#diceColorMode').value;
@@ -4030,6 +4041,11 @@ function renderMessage(message,set){
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(message,c)+'"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
 const hideDiceName = dice && $('#diceNameMode')?.value === 'hide';
+
+const nameLine =
+  (system || dice || hideDiceName)
+    ? ''
+    : '<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';  const systemMeta=system&&meta?'<span class="cc-meta">'+esc(meta)+'</span> ':'';
   const tools=actionToolsForMessage(message);
   const editor=renderMessageEditor(message,c,icon);
   const diceMode=$('#diceColorMode')?.value || 'character';
@@ -4041,8 +4057,7 @@ const textHtml = quiet
   ? renderJabdamText(message,c)
   : (
       isDiceText(message.text)
-        ? isDiceText(message.text)
-  ? enhanceDice(message.text, displayName)
+        ? enhanceDice(message.text, dice ? '' : displayName)
         : (system ? systemMeta + inlineFormat(message.text) : inlineFormat(message.text))
     );  return '<article class="cc-row '+(quiet?'quiet-tab ':'')+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+bgClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="false">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
 }
@@ -5267,11 +5282,6 @@ function renderGroupedMessagePatch(group,set){
     ? '<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(first,c)+'"></div>'
     : '<div></div>';
   const meta=renderMeta(first.created);
-  const hideDiceName = dice && $('#diceNameMode')?.value === 'hide';
-const nameLine =
-  (system || dice || hideDiceName)
-    ? ''
-    : '<div class="cc-name-line"><span class="cc-name" style="color:'+esc(message.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
   const displayName=first.name || c.name || '';
   const nameLine='<div class="cc-name-line"><span class="cc-name" style="color:'+esc(first.color||c.color||'#f2f2f2')+'">'+esc(displayName)+'</span>'+(meta?'<span class="cc-meta">'+esc(meta)+'</span>':'')+'</div>';
   const textHtml=messages.map((m)=>{
