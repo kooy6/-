@@ -938,14 +938,12 @@ button{
 <body>
 
 <script>
-// 내부 메인 프로그램 코드가 시작되는 부분입니다 (기존 구조 완벽 유지)
 function esc(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 function renderGroupedMessagePatch(messages, c) {
   if(!messages||!messages.length) return '';
   const first=messages[0];
   const avatarMode=document.getElementById('avatarMode')?.value||'show';
-  const diceNameMode=document.getElementById('diceNameMode')?.value||'show';
   
   let avatar='';
   if(avatarMode==='show'){
@@ -972,61 +970,80 @@ function renderGroupedMessagePatch(messages, c) {
     avatar+'<div class="cc-body">'+nameLine+textHtml+tools+groupEditor+'</div></article>';
 }
 
-// [핵심 최종 패치] renderMessage 함수를 안정적으로 확장하여 이름 강제 주입
-const __oldRenderMessageFontPatch=renderMessage;
-renderMessage=function(message,set){
-  let output=__oldRenderMessageFontPatch(message,set);
-  
-  // 1. 기존의 폰트 및 스타일링 복구 패치 작동
-  const styles=[];
-  if(message?.textColor)styles.push('color:'+esc(message.textColor));
-  if(message?.fontMode){
-    styles.push('--message-font-family:'+esc(cssFontVarPatch(message.fontMode)));
-    styles.push('font-family:var(--message-font-family)');
-  }
-  if(styles.length){
-    output=output.replace('class="cc-text"','class="cc-text" style="'+styles.join(';')+'"');
-    output=output.replace('class="cc-name"','class="cc-name" style="'+styles.join(';')+'"');
-    output=output.replace('class="cc-system"','class="cc-system" style="'+styles.join(';')+'"');
-  }
+// [핵심 엔진 리빌드 및 버그 전면 수정 완료]
+if (typeof renderMessage === 'function') {
+  const __oldRenderMessageFontPatch = renderMessage;
+  renderMessage = function(message, set) {
+    let output = __oldRenderMessageFontPatch(message, set);
+    
+    // 1. [옵션 연동성 개선] 주사위 로그 분리 여부와 상관없이 무조건 폰트, 색상, 강조 옵션이 동기화되도록 수정
+    const styles = [];
+    if (message?.textColor) styles.push('color:' + esc(message.textColor));
+    if (message?.fontMode) {
+      styles.push('--message-font-family:' + esc(cssFontVarPatch(message.fontMode)));
+      styles.push('font-family:var(--message-font-family)');
+    }
+    if (styles.length) {
+      output = output.replace('class="cc-text"', 'class="cc-text" style="' + styles.join(';') + '"');
+      output = output.replace('class="cc-name"', 'class="cc-name" style="' + styles.join(';') + '"');
+      output = output.replace('class="cc-system"', 'class="cc-system" style="' + styles.join(';') + '"');
+    }
 
-  // 2. [주사위 분리창 이름 박기] 꼬임 차단 역추적 엔진 실시간 작동
-  try {
-    const diceNameMode = document.getElementById('diceNameMode')?.value || 'show';
-    // 옵션이 켜져 있고, 주사위 전용창이라 원래의 이름 상자(cc-name)가 누락되었을 때만 강제 진입
-    if (diceNameMode === 'show' && output.includes('class="cc-text"') && !output.includes('class="cc-name"')) {
-      
-      // 이미 렌더링된 화면 목록을 거꾸로 뒤집어 직전 대화의 진짜 이름을 정확하게 가로챕니다.
-      const rows = document.querySelectorAll('.cc-row');
-      let tracedName = '';
-      if (rows.length > 0) {
-        for (let i = rows.length - 1; i >= 0; i--) {
-          const nameEl = rows[i].querySelector('.cc-name');
-          if (nameEl && nameEl.textContent.trim()) {
-            tracedName = nameEl.textContent.trim();
-            break;
+    // 2. [강조 제어 권한 복구] 강조 안 하기 옵션을 켰을 때 cc<=80 관찰력 등 주사위 문구가 멋대로 굵어지는 현상 차단
+    const diceBoldMode = document.getElementById('diceBoldMode')?.value || 'bold'; 
+    if (diceBoldMode === 'none') {
+      // 강제 굵은 글씨 스타일(dice-hit, bold-bg, bold-only 등)이 있으면 일반 가독성 모드로 치환
+      output = output.replace(/class="([^"]*)\b(dice-hit|bold-bg|bold-only)\b([^"]*)"/g, 'class="$1none$3"');
+      output = output.replace(/font-weight:\s*900/g, 'font-weight:400');
+    }
+
+    // 3. [이름 추적 엔진 완전 자동화] 기존 고정값(츠루기 켄지) 파괴하고 데이터에 기반한 진짜 캐릭터 이름 추출
+    try {
+      const diceNameMode = document.getElementById('diceNameMode')?.value || 'show';
+      if (diceNameMode === 'show' && output.includes('class="cc-text"') && !output.includes('class="cc-name"')) {
+        
+        let realCharName = '';
+        
+        // 데이터 오브젝트나 상위 설정 셋에서 이름을 역추적
+        if (message?.name) {
+          realCharName = message.name;
+        } else if (set && Array.isArray(set)) {
+          // 동일 그룹 타임라인 매칭 추적
+          const matchMsg = set.find(m => m && m.id === message.id);
+          if (matchMsg && matchMsg.name) realCharName = matchMsg.name;
+        }
+        
+        // 그래도 비어있다면 브라우저 렌더링 노드 히스토리에서 가장 최신의 캐릭터 이름을 안전하게 낚아챔
+        if (!realCharName) {
+          const rows = document.querySelectorAll('.cc-row');
+          if (rows.length > 0) {
+            for (let i = rows.length - 1; i >= 0; i--) {
+              const nameEl = rows[i].querySelector('.cc-name');
+              if (nameEl && nameEl.textContent.trim()) {
+                realCharName = nameEl.textContent.trim();
+                break;
+              }
+            }
+          }
+        }
+        
+        // 최종 획득한 진짜 이름으로 말풍선 상단 패치 가동
+        if (realCharName) {
+          const nameTag = '<span class="dice-bubble-name" style="display: block; font-weight: bold; margin-bottom: 6px; color: #ffffff; opacity: 0.9; font-size: 13px;">[' + esc(realCharName) + ']</span>';
+          const textTagMatch = output.match(/<p class="cc-text"[^>]*>/);
+          if (textTagMatch) {
+            const insertIdx = output.indexOf(textTagMatch[0]) + textTagMatch[0].length;
+            output = output.substring(0, insertIdx) + nameTag + output.substring(insertIdx);
           }
         }
       }
-      
-      // 이름 데이터를 가로채는 데 성공했다면 예쁜 회색 상자 레이아웃 형식에 맞춰 첫 줄에 주입
-      if (tracedName) {
-        const nameTag = '<span class="dice-bubble-name" style="display: block; font-weight: bold; margin-bottom: 6px; color: #ffffff; opacity: 0.9; font-size: 13px;">[' + tracedName + ']</span>';
-        
-        // 말풍선 내용이 들어있는 p 태그의 시작 부분을 찾아서 내부의 첫 줄 자리에 욱여넣습니다.
-        const textTagMatch = output.match(/<p class="cc-text"[^>]*>/);
-        if (textTagMatch) {
-          const insertIdx = output.indexOf(textTagMatch[0]) + textTagMatch[0].length;
-          output = output.substring(0, insertIdx) + nameTag + output.substring(insertIdx);
-        }
-      }
+    } catch (e) {
+      console.error("주사위 캐릭터 이름 복구 엔진 예외 처리:", e);
     }
-  } catch (e) { 
-    console.error("주사위 로그 분리 이름 매칭 엔진 예외 처리:", e); 
-  }
 
-  return output;
-};
+    return output;
+  };
+}
 </script>
 </body>
 </html>
