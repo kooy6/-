@@ -4057,10 +4057,9 @@ const textHtml = quiet
   ? renderJabdamText(message,c)
   : (
       isDiceText(message.text)
-        ? enhanceDice(message.text, dice ? '' : displayName)
+        ? enhanceDice(message.text, displayName)
         : (system ? systemMeta + inlineFormat(message.text) : inlineFormat(message.text))
-    );  return '<article class="cc-row '+(quiet?'quiet-tab ':'')+(message.compact?'compact ':'')+(system?'system ':'')+(dice?'dice-log ':'')+diceClass+' '+bgClass+' '+sysClass+' '+(showAvatar?'':'no-avatar')+'" style="'+diceColor+'" data-id="'+esc(message.id)+'" data-kind="message" draggable="false">'+(system||dice?'':avatar)+'<div class="cc-body">'+nameLine+'<p class="cc-text">'+textHtml+'</p>'+tools+editor+'</div></article>';
-}
+    );
 
 function openImageModal(_,blockId){
   const block=blockId?state.blocks.find((entry)=>entry.id===blockId):null;
