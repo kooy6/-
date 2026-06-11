@@ -1301,38 +1301,37 @@ button{
   text-align:left !important;
   white-space:pre-wrap !important;
 }
-.dice-wrapper {
+
+.cc-dice.is-separated-dice {
   position: relative !important;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  overflow: visible !important;
+  overflow: visible !important; /* 이름 상자가 삐져나와도 잘리지 않게 함 */
 }
 
-/* [이름] 상자가 무조건 맨 위에 보이도록 절대 좌표와 z-index 강제 부여 */
-.dice-character-name {
+/* 주사위 판정 상자 오른쪽 위에 완벽하게 안착하는 [이름] 스타일 */
+.dice-box-name {
   position: absolute !important;
-  top: -16px !important;       /* 주사위 숫자 상자 위로 올림 */
-  right: -5px !important;       /* 오른쪽 정렬 */
+  top: -10px !important;       /* 주사위 상자 실선 윗부분 경계선 */
+  right: 4px !important;       /* 우측 상단 정렬 */
   
-  font-size: 10px !important;
-  font-family: sans-serif !important;
+  font-size: 10px !important;  /* 귀여운 미니 사이즈 */
+  font-family: var(--message-font-family), sans-serif !important;
   font-weight: bold !important;
   line-height: 1 !important;
   
-  padding: 2px 5px !important;
-  border-radius: 4px !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
   
-  background: rgba(30, 31, 36, 0.9) !important; /* 어두운 배경 고정 */
-  color: #ffffff !important;                     /* 흰색 글자 고정 */
+  /* 코코포리아 판정 상자 톤앤매너에 맞춘 반투명 배경색 */
+  background: #303136 !important; 
+  color: rgba(255, 255, 255, 0.8) !important;   
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   
   white-space: nowrap !important;
   pointer-events: none !important;
-  z-index: 9999 !important; /* 다른 요소에 묻히지 않도록 최상단 배치 */
+  z-index: 50 !important;
 }
 
-/* 주사위가 들어가는 모든 부모 컴포넌트의 가림막 해제 */
+/* 로그 행 전체 래퍼 가림막 해제 */
 .cc-row, .cc-body, .cc-text, .grouped-message {
   overflow: visible !important;
 }
@@ -5336,36 +5335,37 @@ function renderGroupedMessagePatch(group,set){
   return '<article class="cc-row grouped-message" style="--dice-color:'+esc(first.color||c.color||'rgba(255,255,255,.64)')+'" data-id="'+esc(first.id)+'" data-kind="message" draggable="false">'+
     avatar+'<div class="cc-body">'+nameLine+textHtml+tools+groupEditor+'</div></article>';
 }
-// --- 여기서부터 복사해서 const __oldRenderMessageFontPatch 위에 넣으세요 ---
-// 주사위 이름 표시 패치 (모든 조건 완벽 대응 버전)
-const __oldEnhanceDiceForName = enhanceDice;
+// --- 여기서부터 복사해서 const __oldRenderMessageFontPatch 바로 위에 넣으세요 ---
+// [판정로그 분리형] 주사위 상자 내부 이름 강제 주입 패치
+const __oldEnhanceDiceForSeparated = enhanceDice;
 enhanceDice = function(text, characterName) {
-  // 1. 기존 주사위 HTML을 먼저 생성
-  let resultHtml = __oldEnhanceDiceForName(text, characterName);
+  // 원래의 주사위 상자 HTML을 가져옵니다.
+  let diceHtml = __oldEnhanceDiceForSeparated(text, characterName);
   
-  // 2. 화면 설정값 확인 (켜져있는지 체크)
+  // 주사위 이름 표시 옵션이 켜져있는지 확인 (#diceNameMode)
   const diceNameMode = document.getElementById('diceNameMode')?.value || 'show';
-  if (diceNameMode !== 'show') return resultHtml;
+  if (diceNameMode !== 'show') return diceHtml;
 
-  // 3. 만약 이름이 비어있다면, 현재 그려지고 있는 메인 캐릭터 이름을 강제로 찾아옵니다.
+  // 만약 판정로그 분리 모드라서 이름이 누락되었다면, 현재 렌더링 중인 그룹의 이름을 역추적합니다.
   let finalName = characterName;
   if (!finalName) {
-    // 코코포리아 백업 로그 구조에서 이름 태그를 역추적하거나 활성화된 대화 상대 이름을 탐색
-    const currentRows = document.querySelectorAll('.cc-row');
-    if (currentRows.length > 0) {
-      const lastRow = currentRows[currentRows.length - 1];
+    const rows = document.querySelectorAll('.cc-row');
+    if (rows.length > 0) {
+      const lastRow = rows[rows.length - 1];
       finalName = lastRow.querySelector('.cc-name')?.textContent || '';
     }
   }
 
-  // 4. 이름이 존재할 때만 우상단에 [이름] 상자를 결합
-  if (finalName) {
-    // 앞뒤 공백 제거
+  // 이름이 확인되었고, 원래 주사위 상자(cc-dice)가 잘 생성되었다면 상자 내부에 이름을 꽂아넣습니다.
+  if (finalName && diceHtml.includes('class="cc-dice"')) {
     finalName = finalName.trim();
-    return '<div class="dice-wrapper">' + resultHtml + '<span class="dice-character-name">[' + finalName + ']</span></div>';
+    // 원래 주사위 상자 시작 태그 뒤에 [이름] 구조를 삽입하고 wrapper 클래스를 추가합니다.
+    const nameBox = '<span class="dice-box-name">[' + finalName + ']</span>';
+    diceHtml = diceHtml.replace('class="cc-dice"', 'class="cc-dice is-separated-dice"');
+    diceHtml = diceHtml.replace('><div class="cc-dice-faces">', '>' + nameBox + '<div class="cc-dice-faces">');
   }
   
-  return resultHtml;
+  return diceHtml;
 };
 // --- 여기까지 복사하세요 ---
 const __oldRenderMessageFontPatch=renderMessage;
