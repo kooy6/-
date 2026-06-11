@@ -1301,6 +1301,40 @@ button{
   text-align:left !important;
   white-space:pre-wrap !important;
 }
+.dice-wrapper {
+  position: relative;
+  display: inline-block;
+  overflow: visible !important;
+}
+
+.dice-character-name {
+  position: absolute;
+  top: -10px;         /* 주사위 상자 윗부분 경계선에 걸치도록 */
+  right: 5px;         /* 우측 정렬 */
+  
+  font-size: 10px;    /* 너무 크지 않은 작은 글씨 */
+  font-family: var(--message-font-family), sans-serif;
+  font-weight: 500;
+  line-height: 1;
+  
+  padding: 1px 4px;
+  border-radius: 3px;
+  
+  /* 코코포리아 룸의 메타 데이터(시간, 시스템 로그)와 어울리는 은은한 스타일 */
+  background: rgba(48, 49, 54, 0.8); /* 코코포리아 기본 배경색 바탕 */
+  color: rgba(255, 255, 255, 0.7);   /* 너무 튀지 않는 은은한 흰색 */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* 주사위 상자가 들어가는 텍스트 행이 잘리지 않도록 강제 적용 */
+.cc-row, .cc-body, .cc-text {
+  overflow: visible !important;
+}
+/* --- 여기까지 복사하세요 --- */
 </style>
 </head>
 
@@ -5300,7 +5334,24 @@ function renderGroupedMessagePatch(group,set){
   return '<article class="cc-row grouped-message" style="--dice-color:'+esc(first.color||c.color||'rgba(255,255,255,.64)')+'" data-id="'+esc(first.id)+'" data-kind="message" draggable="false">'+
     avatar+'<div class="cc-body">'+nameLine+textHtml+tools+groupEditor+'</div></article>';
 }
-
+// --- 여기서부터 복사하세요 ---
+// 주사위 이름 표시 기능 패치
+const __oldEnhanceDiceForName = enhanceDice;
+enhanceDice = function(text, characterName) {
+  // 먼저 기존 기능으로 주사위 HTML을 만듭니다.
+  let resultHtml = __oldEnhanceDiceForName(text, characterName);
+  
+  // 화면의 주사위 이름 표시 옵션이 켜져있는지 확인합니다 (#diceNameMode)
+  const diceNameMode = document.getElementById('diceNameMode')?.value || 'show';
+  
+  // 옵션이 'show'(표시)이고 캐릭터 이름이 존재할 때만 이름을 붙여줍니다.
+  if (diceNameMode === 'show' && characterName) {
+    // 우상단 배치를 위해 dice-wrapper로 감싸고 이름 상자를 뒤에 붙여줍니다.
+    return '<div class="dice-wrapper">' + resultHtml + '<span class="dice-character-name">[' + characterName + ']</span></div>';
+  }
+  return resultHtml;
+};
+// --- 여기까지 복사하세요 ---
 const __oldRenderMessageFontPatch=renderMessage;
 renderMessage=function(message,set){
   let output=__oldRenderMessageFontPatch(message,set);
