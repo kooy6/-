@@ -4042,9 +4042,6 @@ function renderMessage(message,set){
   const showAvatar=$('#showAvatar').checked&&icon&&!system&&!dice&&!quiet;
   const avatar=showAvatar?'<div class="cc-avatar"><img src="'+esc(icon)+'" style="'+renderMessageAvatarStyle(message,c)+'"></div>':'<div></div>';
   const meta=renderMeta(message.created),displayName=message.name||c.name||'';
-  console.log('message.name=', message.name);
-console.log('c.name=', c.name);
-console.log('displayName=', displayName);
 const hideDiceName = dice && $('#diceNameMode')?.value === 'hide';
 
 const nameLine =
