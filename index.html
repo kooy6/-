@@ -4018,15 +4018,27 @@ function wrapDiceHit(text){
   const cls='dice-hit '+diceEmphasisClass();
   return '<span class="'+cls+'">'+text+'</span>';
 }
-function enhanceDice(text,characterName){
-  let html=inlineFormat(String(text||''));
-  html=html.replace(/(cc[b]?&lt;=?\s*\d+\s*[^＞>\n(]*)/gi,(m)=>wrapDiceHit(m));
-  html=html.replace(/(cc[b]?=+\s*\d+\s*[^＞>\n(]*)/gi,(m)=>wrapDiceHit(m));
-  html=html.replace(/(대단한\s*성공|극단적\s*성공|어려운\s*성공|보통\s*성공|대성공|성공|실패|대실패|펌블)/g,(m)=>'<span class="dice-result '+diceEmphasisClass()+'">'+m+'</span>');
-const namePart=characterName && $('#diceNameMode')?.value !== 'hide'
-  ? '<span class="dice-name break">['+esc(characterName)+']</span><br>'
-  : '';
-  return namePart+html;
+function enhanceDice(text, characterName) {
+  let html = inlineFormat(String(text || ''));
+  
+  // 1. 주사위 판정 결과 처리
+  html = html.replace(/(cc[b]?&lt;=?\s*\d+\s*[^＞>\n(]*)/gi, (m) => wrapDiceHit(m));
+  html = html.replace(/(cc[b]?=+\s*\d+\s*[^＞>\n(]*)/gi, (m) => wrapDiceHit(m));
+  
+  // 2. 결과 텍스트(성공/실패 등) 처리 - 강조 설정 연동
+  let emphasisClass = (typeof diceEmphasis !== 'undefined' && diceEmphasis === 'none') 
+                      ? 'no-bold' 
+                      : diceEmphasisClass();
+                      
+  html = html.replace(/(대단한\s*성공|극단적\s*성공|어려운\s*성공|보통\s*성공|대성공|성공|실패|대실패|펌블)/g, 
+         (m) => '<span class="dice-result ' + emphasisClass + '">' + m + '</span>');
+
+  // 3. 이름 처리
+  const namePart = characterName && $('#diceNameMode')?.value !== 'hide'
+    ? '<span class="dice-name break">[' + esc(characterName) + ']</span><br>'
+    : '';
+    
+  return namePart + html;
 }
 
 function renderMessage(message,set){
@@ -5323,31 +5335,7 @@ renderMessage=function(message,set){
 };
 
 window.wrapGroupSelectedColorPatch=wrapGroupSelectedColorPatch;
-/* === 최종 정리: 이름 표시 + 볼드 설정 연동 === */
 
-// 1. 이름 표시 패치
-const __originalEnhanceDice = enhanceDice;
-enhanceDice = function(text, characterName) {
-    let result = __originalEnhanceDice(text, characterName);
-    if (characterName) {
-        result = "<b>[" + characterName + "]</b> " + result;
-    }
-    return result;
-};
-
-// 2. 볼드 처리 패치 (설정값 none일 때만 볼드 제거)
-const __oldRenderMessageFinalPatch = renderMessage;
-renderMessage = function(message, set) {
-    let output = __oldRenderMessageFinalPatch(message, set);
-    
-    // 주사위 로그이면서 강조 설정이 'none'일 때 볼드 태그/스타일 제거
-    if ((message.kind === 'dice' || message.type === 'dice') && 
-        typeof diceEmphasis !== 'undefined' && diceEmphasis === 'none') {
-        output = output.replace(/<\/?b[^>]*>/g, '');
-        output = output.replace(/font-weight:\s*(bold|700|900)/gi, 'font-weight:400');
-    }
-    return output;
-};
 </script>
 </body>
 </html>
