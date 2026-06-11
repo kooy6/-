@@ -4020,13 +4020,21 @@ function wrapDiceHit(text){
 }
 function enhanceDice(text,characterName){
   let html=inlineFormat(String(text||''));
+
   html=html.replace(/(cc[b]?&lt;=?\s*\d+\s*[^＞>\n(]*)/gi,(m)=>wrapDiceHit(m));
   html=html.replace(/(cc[b]?=+\s*\d+\s*[^＞>\n(]*)/gi,(m)=>wrapDiceHit(m));
-  html=html.replace(/(대단한\s*성공|극단적\s*성공|어려운\s*성공|보통\s*성공|대성공|성공|실패|대실패|펌블)/g,(m)=>'<span class="dice-result '+diceEmphasisClass()+'">'+m+'</span>');
-const namePart=characterName && $('#diceNameMode')?.value !== 'hide'
-  ? '<span class="dice-name break">['+esc(characterName)+']</span><br>'
-  : '';
-  return namePart+html;
+
+  html=html.replace(
+    /(대단한\s*성공|극단적\s*성공|어려운\s*성공|보통\s*성공|대성공|성공|실패|대실패|펌블)/g,
+    (m)=>'<span class="dice-result '+diceEmphasisClass()+'">'+m+'</span>'
+  );
+
+  const namePart =
+    characterName && $('#diceNameMode')?.value !== 'hide'
+      ? '<span class="dice-name break">['+esc(characterName)+']</span><br>'
+      : '';
+
+  return namePart + html;
 }
 
 function renderMessage(message,set){
