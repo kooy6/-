@@ -5294,17 +5294,30 @@ function renderGroupedMessagePatch(group,set){
 }
 
 const __oldRenderMessageFontPatch=renderMessage;
-renderMessage=function(message,set){
-  let output=__oldRenderMessageFontPatch(message,set);
-  const styles=[];
-  if(message?.textColor)styles.push('color:'+esc(message.textColor));
+// 기존의 renderMessage=function(message,set){ ... } 부분을 아래 내용으로 싹 교체하세요
+renderMessage = function(message, set) {
+  // 1. 주사위 로그면 앞에 [이름] 강제 추가
+  if (message.type === 'dice' && message.sender) {
+    message.text = "[" + message.sender + "] " + message.text;
+  }
+
+  let output = __oldRenderMessageFontPatch(message, set);
+
+  // 2. 강조 해제(diceEmphasis가 'none')면 <b> 태그 제거
+  if (typeof diceEmphasis !== 'undefined' && diceEmphasis === 'none') {
+    output = output.replace(/<\/?b class="dice-hit">/g, ''); // 강조용 태그 삭제
+    output = output.replace(/<\/?b>/g, '');                // 굵게 만들기 태그 삭제
+  }
+
+  const styles = [];
+  if(message?.textColor) styles.push('color:'+esc(message.textColor));
   if(message?.fontMode){
     styles.push('--message-font-family:'+esc(cssFontVarPatch(message.fontMode)));
     styles.push('font-family:var(--message-font-family)');
   }
-  if(styles.length){
-    output=output.replace('<p class="cc-text">','<p class="cc-text" style="'+styles.join(';')+'">');
-    output=output.replace('<p class="cc-text multi-line-text">','<p class="cc-text multi-line-text" style="'+styles.join(';')+'">');
+  
+  if(styles.length > 0) {
+    return `<div style="${styles.join(';')}">${output}</div>`;
   }
   return output;
 };
