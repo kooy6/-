@@ -3,8 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CCFOLIA LOG EDIT</title>
+<title>CCFOLIA LOG BACKUP EDITOR COMPLETE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Orbit&display=swap" rel="stylesheet">
 <style>
+/* =========================================================
+  0. Base & Layout (명세 5, 11: 에디터 툴 및 패치 기반 구조)
+========================================================= */
 :root{
   --page:#ece6de;
   --panel:#fffdf8;
@@ -16,177 +22,211 @@
   --cc-text:#eeeeee;
   --cc-meta:rgba(255,255,255,.45);
   --cc-system:rgba(255,255,255,.68);
-  --log-font:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","Arial","Noto Sans KR",sans-serif;
+  --log-font:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
   --log-font-size:14px;
-  --dice-font-size:13px;
-  --system-font-size:13px;
-  --system-weight:400;
-  --system-style:normal;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
-body{background:linear-gradient(#fbf5ee,var(--page));color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+body{background:linear-gradient(#fbf5ee,var(--page));color:var(--ink);font-family:var(--log-font)}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
 .app{width:min(1540px,calc(100% - 20px));margin:0 auto;padding:16px 0 36px}
 header{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
-h1{margin:0;font-size:clamp(22px,3vw,34px)}
-.sub{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
-.version{font-size:12px;font-weight:800;color:#5e4d41;white-space:nowrap}
-
-/* Layout / controls */
-.mobile-menu-bar{display:none;margin:0 0 10px}
-.mobile-menu-bar button{width:100%;border-radius:12px;padding:11px 14px;font-size:14px}
+h1{margin:0;font-size:24px;color:#5e4d41}
+.sub{margin:5px 0 0;color:var(--muted);font-size:13px}
 .layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:12px;align-items:start}
 .panel{overflow:hidden;border:1px solid var(--line);border-radius:14px;background:rgba(255,253,248,.96);box-shadow:0 14px 34px rgba(65,45,25,.08)}
 .left-panel{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
-.section{padding:13px}
-.section+.section{border-top:1px solid var(--line)}
-details.option-group{border-top:1px solid var(--line)}
-details.option-group:first-child{border-top:0}
-details.option-group>summary{padding:13px;font-size:14px;font-weight:900;color:#5e4d41;cursor:pointer;list-style:none}
-details.option-group>summary::-webkit-details-marker{display:none}
-details.option-group>summary::before{content:"▶";display:inline-block;margin-right:7px;font-size:10px;transform:translateY(-1px)}
-details.option-group[open]>summary::before{content:"▼"}
+.option-group{border-top:1px solid var(--line)}
+.option-group:first-child{border-top:0}
+summary{padding:13px;font-size:14px;font-weight:900;color:#5e4d41;cursor:pointer}
 .option-body{padding:0 13px 13px}
-h2{margin:0 0 9px;color:#5e4d41;font-size:14px}
 label{display:block;margin:9px 0 5px;color:var(--muted);font-size:12px;font-weight:800}
-input,select,textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-size:13px}
-textarea{min-height:68px;resize:vertical}
+input,select,textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#fff}
+textarea{min-height:80px;resize:vertical}
 input[type=color]{height:36px;padding:3px}
-.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
-.row>*{flex:1}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
-.hint{margin:7px 0;color:var(--muted);font-size:12px;line-height:1.5}
-.hidden{display:none!important}
-button{display:inline-flex;justify-content:center;align-items:center;gap:5px;padding:8px 11px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:#fff;font-size:12px;font-weight:800}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:12px;font-weight:700}
+button{display:inline-flex;justify-content:center;align-items:center;padding:8px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:#fff;font-size:12px;font-weight:800}
 button.ghost{background:#fff;color:#5e4d41}
 button.danger{background:#9a3a34;border-color:#9a3a34}
-button.small{padding:4px 8px;font-size:11px}
-.chip{display:flex;gap:6px;align-items:center;padding:7px 8px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:12px;font-weight:700}
-.list{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px}
-.tab-color-row{display:grid;grid-template-columns:1fr 44px;gap:6px;align-items:center}
-.character-summary{display:grid;gap:6px;padding:9px;border:1px solid var(--line);border-radius:10px;background:#fffaf4}
+.list{display:flex;flex-wrap:wrap;gap:6px}
+.character-summary{padding:10px;border:1px solid var(--line);border-radius:10px;background:#fffaf4;margin-bottom:8px}
 
-/* Preview */
-.toolbar{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}
-.preview{min-height:760px;padding:18px 12px 40px;background:var(--cc-bg);color:var(--cc-text);font-family:var(--log-font)}
-.empty{display:grid;place-items:center;min-height:560px;color:rgba(255,255,255,.55);text-align:center}
+/* =========================================================
+  티스토리 변환 및 프리뷰 스타일 (명세 1, 4, 5, 6, 7, 9)
+========================================================= */
+.toolbar{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}
+.preview{padding:30px 20px;background:var(--cc-bg);color:var(--cc-text);min-height:600px}
+.empty{display:grid;place-items:center;min-height:400px;color:rgba(255,255,255,.4)}
 
-/* 주사위 및 공통 행 구조 강제 보정 */
-.cc-row{position:relative;display:grid;grid-template-columns:54px minmax(0,1fr);gap:8px;align-items:start;max-width:1040px;margin:0 auto 5px;text-align:left}
-.cc-row.system{display:block;max-width:1040px;margin:4px auto;text-align:center}
-
-/* ⚠️ 주사위 로그가 한 줄로 깨지지 않고 좌측 정렬 및 블록 스타일이 명확히 유지되도록 덮어쓰기 */
-.cc-row.dice-log{display:block !important; max-width:1040px !important; margin:4px auto !important; text-align:left !important;}
-.cc-row.dice-log .cc-body{display:block !important; padding-right:0 !important;}
-.cc-row.dice-log .cc-text{display:inline-block; padding:3px 8px; border-radius:4px; background:rgba(255,255,255,.035); font-size:var(--dice-font-size); text-align:left !important;}
-
-.cc-avatar{width:48px;height:48px;overflow:hidden;border-radius:3px}
-.cc-avatar img{display:block;width:100%;height:100%;object-fit:cover}
-.cc-body{position:relative;padding-right:30px}
-.cc-name-line{display:flex;gap:8px;align-items:baseline;margin:0 0 2px}
-.cc-name{font-size:13px;font-weight:700}
-.cc-meta{color:var(--cc-meta);font-size:11px}
-.cc-text{margin:0 !important;padding:0;color:var(--cc-text);font-size:var(--log-font-size);line-height:var(--log-line-height);white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;text-align:left}
-
-.cc-row.system .cc-text{font-size:var(--system-font-size);color:var(--cc-system);text-align:center}
-.cc-row.system.system-box .cc-text{display:inline-block;padding:6px 12px;border-radius:6px;background:rgba(255,255,255,.06)}
-
-/* ⚠️ 이름 분리 표기 스타일 */
-.dice-name{display:inline-block !important; margin-right:6px; font-size:13px; font-weight:700;}
-
-/* 판정 결과 강조 강제화 */
-.dice-hit{font-weight:900}
-.dice-result{border-radius:3px; font-weight:900;}
-.dice-result.bold-bg{background:rgba(255,255,255,.12);padding:0 3px}
-.dice-result.bold-only{background:transparent;padding:0}
-.dice-result.character{color:var(--dice-color,currentColor)!important; font-weight:400;}
-.dice-result.none{font-weight:400 !important; background:transparent; padding:0}
-
-/* 잡담 탭 반투명화 */
-.cc-row.quiet-tab{display:block !important; opacity:.62 !important; max-width:1040px !important; margin:4px auto !important;}
-.cc-row.quiet-tab .cc-name-line, .cc-row.quiet-tab .cc-avatar{display:none !important;}
-.cc-row.quiet-tab .cc-text{font-size:calc(var(--log-font-size) * .88) !important; color:rgba(255,255,255,.58) !important;}
-
-@media (min-width:901px){
-  .app{width:min(1540px,calc(100% - 20px))}
-  .layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:12px;align-items:start}
-  .left-panel{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;width:340px}
+/* 명세 1: .ccfolia_wrap 및 티스토리 본문 가로폭 확장 레이아웃 */
+.ccfolia_wrap {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  background-color: var(--cc-bg);
+  box-sizing: border-box;
+  padding: 40px 20px;
+  font-family: var(--log-font);
 }
+
+/* 명세 1: 메시지 단위 구조 (.gap.message-row) */
+.gap.message-row {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 12px;
+  margin: 0 auto 8px;
+  max-width: 800px;
+  text-align: left;
+}
+
+/* 명세 1 & 명세 4: 인장(캐릭터 이미지) 및 개별 여백 시스템 */
+.msg-avatar {
+  width: var(--avatar-w, 48px);
+  height: var(--avatar-h, 48px);
+  overflow: hidden;
+  border-radius: 4px;
+  margin-top: var(--avatar-mt, 0px);
+  margin-left: var(--avatar-ml, 0px);
+}
+.msg-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.msg_container { position: relative; }
+.msg-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+
+/* 명세 6: 모바일 반응형 폰트 및 간격 최적화 */
+.msg-text {
+  margin: 0;
+  font-size: var(--log-font-size);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 768px) {
+  .ccfolia_wrap { padding: 20px 10px !important; }
+  .gap.message-row { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+  .msg-avatar { width: 38px; height: 38px; }
+  .msg-text { font-size: 13px !important; }
+}
+
+/* 명세 2 & 명세 3: 시스템 로그 중앙 정렬 및 불필요 요소 제거 */
+.gap.message-row.system-center {
+  display: block !important;
+  text-align: center !important;
+  margin: 12px auto !important;
+  max-width: 800px;
+}
+.gap.message-row.system-center .msg-text {
+  display: inline-block;
+  text-align: center !important;
+  color: var(--cc-system);
+  font-size: 13px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+/* 명세 2: 잡담 반투명화 연출 */
+.gap.message-row.quiet-tab { opacity: 0.55; }
+.gap.message-row.quiet-tab .msg-text { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+/* 명세 9: 다이스 및 판정문 강조 스타일 정의 */
+.dice-hit { font-weight: 900; }
+.dice-result { font-weight: 900; border-radius: 3px; padding: 0 2px; }
+.dice-result.bold-bg { background: rgba(255,255,255,0.13); }
+.dice-result.bold-only { background: transparent; }
+.dice-result.character { color: var(--char-color, currentColor) !important; font-weight: 700; }
+.dice-result.none { font-weight: 400 !important; background: transparent !important; padding: 0; }
+.dice-name-block { display: inline-block; font-weight: 700; margin-right: 5px; }
+
+/* 명세 7: BGM 버튼 UI 정렬 및 연출 규칙 */
+.bgm-container { text-align: center; margin: 20px auto; }
+.bgmButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.bgmButton:hover { background: rgba(255, 255, 255, 0.15); }
+.bgmButton.playing { background: var(--accent); border-color: var(--accent); font-weight: bold; }
 </style>
 </head>
 <body>
+
 <div class="app">
   <header>
     <div>
-      <h1>CCFOLIA LOG EDIT</h1>
-      <p class="sub">코코포리아 텍스트 백업 변환기 (주사위 이름 및 볼드 완전 수정판)</p>
+      <h1>CCFOLIA LOG BACKUP EDITOR</h1>
+      <p class="sub">구조화 보완 적용본 (티스토리 확장 레이아웃 및 완벽 주사위 연동)</p>
     </div>
-    <div class="version">v1.2.1 (Patch 15)</div>
   </header>
 
   <div class="layout">
     <aside class="left-panel panel">
       <details class="option-group" open>
-        <summary>1. 데이터 입력</summary>
+        <summary>1. 데이터 복사 및 입력</summary>
         <div class="option-body">
-          <label>코코포리아 백업 텍스트</label>
-          <textarea id="rawLog" placeholder="[메인] 캐릭터: 내용... 형태의 텍스트를 통째로 붙여넣으세요" oninput="doTransform()"></textarea>
+          <label>코코포리아 텍스트 백업</label>
+          <textarea id="rawLog" placeholder="[메인] 캐릭터명: 내용 형태의 텍스트를 붙여넣어 주세요." oninput="doTransform()"></textarea>
           <div class="row" style="margin-top:8px">
-            <button type="button" class="danger small" onclick="clearRawLog()">비우기</button>
+            <button type="button" class="danger" onclick="clearLog()">초기화</button>
           </div>
         </div>
       </details>
 
       <details class="option-group" open>
-        <summary>2. 출력 필터 및 탭</summary>
+        <summary>2. 출력 필터 및 가공 옵션</summary>
         <div class="option-body">
-          <h2>출력할 탭 선택</h2>
+          <h2>출력 대상 탭 설정</h2>
           <div id="tabList" class="list"></div>
-          <h2 style="margin-top:12px">시스템/기타 메시지 필터</h2>
-          <div id="systemList" class="list"></div>
-        </div>
-      </details>
 
-      <details class="option-group" open>
-        <summary>3. 가독성 및 가공 옵션</summary>
-        <div class="option-body">
-          <div class="grid2">
-            <label class="chip"><input type="checkbox" id="opt-compact" onchange="doTransform()" checked>연속 대화 묶기</label>
-            <label class="chip"><input type="checkbox" id="opt-quiet-tab" onchange="doTransform()" checked>잡담 탭 반투명화</label>
-          </div>
-
-          <label>주사위 판정 이름 표시</label>
+          <label class="chip" style="margin-top:10px;"><input type="checkbox" id="opt-quiet" onchange="doTransform()" checked>잡담 탭 반투명화 적용</label>
+          
+          <label style="margin-top:12px;">주사위 판정 시 이름 표시</label>
           <select id="diceNameMode" onchange="doTransform()">
-            <option value="show">표시함</option>
+            <option value="show">표시함 [이름]</option>
             <option value="hide">표시 안 함</option>
           </select>
 
-          <label>주사위 결과 강조 스타일</label>
+          <label>주사위 결과 강조 형태 (명세 9)</label>
           <select id="diceEmphasis" onchange="doTransform()">
             <option value="bold-bg">배경 흐리게 + 볼드</option>
             <option value="bold-only">볼드만</option>
-            <option value="character">캐릭터 색상 적용</option>
-            <option value="none">강조 안 하기 (일반 텍스트)</option>
+            <option value="character">캐릭터 색상 입히기</option>
+            <option value="none">강조 해제 (일반 텍스트 상태 유지)</option>
           </select>
         </div>
       </details>
 
       <details class="option-group" open>
-        <summary>4. 캐릭터 관리 및 강조색</summary>
+        <summary>3. 캐릭터 설정 & 인장 조절 (명세 4, 12)</summary>
         <div class="option-body">
-          <div id="characterList" style="display:grid;gap:10px"></div>
+          <div id="characterList"></div>
         </div>
       </details>
 
       <details class="option-group" open>
-        <summary>5. 결과 내보내기</summary>
-        <div class="option-body">
-          <div class="row">
-            <button type="button" onclick="copyHTML()">HTML 복사하기</button>
-            <button type="button" class="ghost" onclick="downloadHTML()">파일로 저장</button>
+        <summary>4. 최종 결과 데이터 내보내기</summary>
+        <div class="option-body" style="padding-top:10px;">
+          <div class="grid2">
+            <button type="button" onclick="copyHTML()">HTML 복사</button>
+            <button type="button" class="ghost" onclick="downloadHTML()">파일 저장</button>
           </div>
         </div>
       </details>
@@ -194,11 +234,11 @@ button.small{padding:4px 8px;font-size:11px}
 
     <main class="viewer panel">
       <div class="toolbar">
-        <div>미리보기 화면</div>
-        <div id="logStats">총 0개의 행</div>
+        <div>티스토리 업로드용 미리보기 스크린</div>
+        <div id="logStats">총 0개 데이터 처리됨</div>
       </div>
       <div id="outputPreview" class="preview">
-        <div class="empty">좌측 입력창에 로그를 넣어주세요.</div>
+        <div class="empty">좌측 에디터 컨트롤에 원본 백업 로그를 붙여넣어 주세요.</div>
       </div>
     </main>
   </div>
@@ -211,63 +251,107 @@ const esc=t=>(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&g
 
 let G_parsedLogs = [];
 let G_tabs = new Set();
-let G_systems = new Set();
-let G_characters = {}; 
+let G_characters = {};
+let G_currentAudio = null; // 명세 7: 오디오 제어 싱글톤 인스턴스 변수
 
-function clearRawLog(){
-  $('#rawLog').value = '';
-  G_parsedLogs = [];
+function clearLog(){
+  $('#rawLog').value='';
+  G_parsedLogs=[];
   G_tabs.clear();
-  G_systems.clear();
-  G_characters = {};
-  renderFilters();
-  doTransform();
+  G_characters={};
+  stopBGM();
+  $('#tabList').innerHTML='';
+  $('#characterList').innerHTML='';
+  $('#outputPreview').innerHTML='<div class="empty">좌측 에디터 컨트롤에 원본 백업 로그를 붙여넣어 주세요.</div>';
+  $('#logStats').textContent='총 0개 데이터 처리됨';
 }
 
-// 주사위 조건식 볼드 제어 함수
+// 명세 7 & 명세 8: 단일 재생 및 오디오 변환 엔진 규칙
+function playBGM(btn, url) {
+  if (G_currentAudio) {
+    G_currentAudio.pause();
+    G_currentAudio = null;
+    $$('.bgmButton').forEach(b => b.classList.remove('playing'));
+  }
+  if (btn.dataset.playing === "true") {
+    btn.dataset.playing = "false";
+    return;
+  }
+  $$('.bgmButton').forEach(b => b.dataset.playing = "false");
+  
+  const audio = new Audio(url);
+  audio.loop = true;
+  audio.play().catch(e => console.log("오디오 재생 오류: ", e));
+  G_currentAudio = audio;
+  btn.classList.add('playing');
+  btn.dataset.playing = "true";
+}
+
+function stopBGM() {
+  if (G_currentAudio) {
+    G_currentAudio.pause();
+    G_currentAudio = null;
+  }
+}
+
+// 명세 8: 오디오 파일 이름 기반 정밀 정적 가공 처리 함수
+function getCleanBgmTitle(text) {
+  let title = text.replace(/^(🎵|♬|♪|BGM|bgm)\s*/i, '').trim();
+  if (title.includes('/') || title.includes('\\')) {
+    title = title.substring(title.lastIndexOf('/') + 1);
+  }
+  if (title.includes('.')) {
+    title = title.substring(0, title.lastIndexOf('.'));
+  }
+  return '♪ ' + (title || '트랙 제목 없음');
+}
+
+// 명세 9 & 명세 10: 판정 결과 주사위 필터 강화 엔진
 function wrapDiceHit(text) {
   const emphasis = $('#diceEmphasis')?.value || 'bold-bg';
   if (emphasis === 'none') return text; 
   return '<b class="dice-hit">' + text + '</b>';
 }
 
-// ⚠️ 핵심 원인 수정: 완전히 고정되었던 고유 변환 로직
-function enhanceDice(text, characterName){
+function enhanceDice(text, characterName) {
   let html = esc(text || '');
   const emphasis = $('#diceEmphasis')?.value || 'bold-bg';
   
-  // 1. cc<=80 등의 판정식 매칭 및 볼드 제어
+  // 1. 주사위 판정 조건식 매칭 가공 및 볼드 분기 처리
   if (emphasis !== 'none') {
     html = html.replace(/(cc[b]?&lt;=?\s*\d+\s*[^＞>\n(]*)/gi, (m) => wrapDiceHit(m));
     html = html.replace(/(cc[b]?=+\s*\d+\s*[^＞>\n(]*)/gi, (m) => wrapDiceHit(m));
   }
   
-  // 2. 성공 / 실패 결과 텍스트 강조 클래스 바인딩
+  // 2. 성공/실패 가독성 색상 바인딩
   html = html.replace(/(대단한\s*성공|극단적\s*성공|어려운\s*성공|보통\s*성공|대성공|성공|실패|대실패|펌블)/g, (m) => {
     return `<span class="dice-result ${emphasis}">${m}</span>`;
   });
 
-  // 3. 앞쪽에 [캐릭터이름]을 옵션에 맞춰 강제 결합
+  // 3. 앞쪽에 [캐릭터 이름] 주입 연동 보완
   const showName = $('#diceNameMode')?.value !== 'hide';
   if (showName && characterName) {
     const charColor = G_characters[characterName]?.color || '#806a58';
-    html = `<span class="dice-name" style="color:${charColor}">[${esc(characterName)}]</span> ` + html;
+    html = `<span class="dice-name-block" style="color:${charColor}">[${esc(characterName)}]</span> ` + html;
   }
   
   return html;
 }
 
+// 명세 10: 인라인 변환 엔진 기본 포맷팅
 function inlineFormat(t){
+  if(!t) return '';
   let html = esc(t);
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
   return html;
 }
 
+// 명세 1, 2, 3, 4, 6, 7, 9, 13 통합 빌더 루프
 function doTransform(){
   const raw = $('#rawLog').value;
   if(!raw.trim()){
-    $('#outputPreview').innerHTML = '<div class="empty">좌측 입력창에 로그를 넣어주세요.</div>';
-    $('#logStats').textContent = '총 0개의 행';
+    $('#outputPreview').innerHTML = '<div class="empty">좌측 에디터 컨트롤에 원본 백업 로그를 붙여넣어 주세요.</div>';
+    $('#logStats').textContent = '총 0개 데이터 처리됨';
     return;
   }
 
@@ -277,115 +361,118 @@ function doTransform(){
   }
 
   const enabledTabs = new Set(Array.from($$('#tabList input:checked')).map(i=>i.value));
-  const enabledSystems = new Set(Array.from($$('#systemList input:checked')).map(i=>i.value));
-  
-  const optCompact = $('#opt-compact').checked;
-  const optQuietTab = $('#opt-quiet-tab').checked;
+  const optQuiet = $('#opt-quiet').checked;
 
-  let htmlResult = '';
+  let finalHtml = '';
   let activeLogs = [];
+  let bgmButtonsHtml = '';
 
+  // 1차 분기 루프 파싱
   G_parsedLogs.forEach(row => {
-    if(row.type === 'chat'){
-      if(enabledTabs.has(row.tab)) activeLogs.push(row);
-    } else {
-      if(enabledSystems.has(row.type)) activeLogs.push(row);
+    if (row.type === 'bgm') {
+      const cleanTitle = getCleanBgmTitle(row.text);
+      bgmButtonsHtml += `<button type="button" class="bgmButton" data-audio="${esc(row.url)}" onclick="playBGM(this, '${esc(row.url)}')">${esc(cleanTitle)}</button>`;
+    } else if (row.type === 'chat') {
+      if (enabledTabs.has(row.tab)) activeLogs.push(row);
+    } else if (row.type === 'system' || row.type === 'dice-log') {
+      activeLogs.push(row);
     }
   });
 
-  $('#logStats').textContent = `총 ${activeLogs.length}개의 행`;
+  $('#logStats').textContent = `총 ${activeLogs.length}개 데이터 처리됨`;
 
-  if(activeLogs.length === 0){
-    $('#outputPreview').innerHTML = '<div class="empty">선택한 필터 조건에 맞는 로그가 없습니다.</div>';
-    return;
+  // 상단 BGM 버튼 컨테이너 정렬 주입 (명세 7 규칙 대응)
+  if (bgmButtonsHtml) {
+    finalHtml += `<div class="bgm-container">${bgmButtonsHtml}</div>`;
   }
 
-  let lastSender = null;
-  let lastTab = null;
+  // 명세 1: .ccfolia_wrap 뼈대 개시
+  finalHtml += `<div class="ccfolia_wrap">`;
 
-  activeLogs.forEach((row, idx) => {
-    // ⚠️ 렌더링 템플릿 대폭 교정
-    if(row.type === 'dice-log'){
-      // 구조를 하드코딩하지 않고 매번 인자값 상태(강조, 이름오픈)를 읽어와서 동적 가공 처리함
-      let processedDiceText = enhanceDice(row.text, row.sender);
+  activeLogs.forEach((row) => {
+    // 명세 2 & 명세 3: 시스템 및 다이스 필터 결합 가공 처리
+    if (row.type === 'system') {
+      // 닉네임과 인장이 아예 없는 시스템 전용 메시지는 중앙 정렬로 레이아웃 변형
+      finalHtml += `
+        <div class="gap message-row system-center">
+          <p class="msg-text">${inlineFormat(row.text)}</p>
+        </div>`;
+      return;
+    }
+
+    if (row.type === 'dice-log') {
+      let processedDice = enhanceDice(row.text, row.sender);
       let charColor = G_characters[row.sender]?.color || '#806a58';
 
-      htmlResult += `
-        <div class="cc-row dice-log" data-idx="${idx}" style="--dice-color:${charColor}">
-          <div class="cc-body">
-            <p class="cc-text">${processedDiceText}</p>
+      finalHtml += `
+        <div class="gap message-row dice-log" style="--char-color:${charColor}">
+          <div class="msg_container" style="grid-column: 1 / span 2;">
+            <p class="msg-text">${processedDice}</p>
           </div>
         </div>`;
-      
-      lastSender = null;
-      lastTab = null;
       return;
     }
 
-    if(row.type === 'system'){
-      htmlResult += `
-        <div class="cc-row system" data-idx="${idx}">
-          <div class="cc-body">
-            <p class="cc-text">${inlineFormat(row.text)}</p>
-          </div>
-        </div>`;
-      lastSender = null;
-      lastTab = null;
-      return;
-    }
+    // 일반 채팅 로그 변환 분기
+    let classes = ['gap', 'message-row'];
+    let isQuiet = optQuiet && (row.tab === '잡담' || row.tab === '기타' || row.tab.toLowerCase().includes('secret'));
+    if (isQuiet) classes.push('quiet-tab');
 
-    // 일반 Chat 렌더링
-    let classes = ['cc-row'];
-    let isQuiet = optQuietTab && (row.tab === '잡담' || row.tab === '기타' || row.tab.toLowerCase().includes('secret'));
-    if(isQuiet) classes.push('quiet-tab');
-
-    let cInfo = G_characters[row.sender] || {color:'#806a58', avatar:''};
-    let isCompact = optCompact && (lastSender === row.sender && lastTab === row.tab);
-    if(isCompact) classes.push('compact');
-
-    htmlResult += `<div class="${classes.join(' ')}" data-idx="${idx}" style="--dice-color:${cInfo.color}">`;
+    let c = G_characters[row.sender] || {color:'#806a58', avatar:'', w:48, h:48, mt:0, ml:0};
     
-    if(!isCompact){
-      if(cInfo.avatar){
-        htmlResult += `<div class="cc-avatar"><img src="${cInfo.avatar}" alt="avatar"></div>`;
-      } else {
-        htmlResult += `<div class="cc-avatar" style="background:#444"></div>`;
-      }
+    // 명세 4 & 명세 12: 캐릭터별 정밀 스타일 가중치 인라인 주입
+    let avatarStyle = `--avatar-w:${c.w}px; --avatar-h:${c.h}px; --avatar-mt:${c.mt}px; --avatar-ml:${c.ml}px;`;
+    let containerStyle = `--char-color:${c.color};`;
+
+    finalHtml += `<div class="${classes.join(' ')}" style="${containerStyle}">`;
+    
+    // 인장 출력 여부 및 공백 fallback 제어 (명세 2: blank.gif 스킵 및 유효 이미지 검사)
+    const hasValidAvatar = c.avatar && !c.avatar.includes('blank.gif');
+    if (hasValidAvatar) {
+      finalHtml += `<div class="msg-avatar" style="${avatarStyle}"><img src="${esc(c.avatar)}" alt="avatar"></div>`;
     } else {
-      htmlResult += `<div class="cc-avatar" style="visibility:hidden;height:0;margin:0"></div>`;
+      finalHtml += `<div class="msg-avatar" style="background:transparent;${avatarStyle}"></div>`;
     }
 
-    htmlResult += `<div class="cc-body">`;
-    if(!isCompact){
-      htmlResult += `
-        <div class="cc-name-line">
-          <span class="cc-name" style="color:${cInfo.color}">${esc(row.sender)}</span>
-          <span class="cc-meta">${esc(row.tab)}</span>
-        </div>`;
-    }
-    
-    htmlResult += `<p class="cc-text">${inlineFormat(row.text)}</p>`;
-    htmlResult += `</div></div>`;
-
-    lastSender = row.sender;
-    lastTab = row.tab;
+    finalHtml += `
+      <div class="msg_container">
+        <div class="msg-name" style="color:${c.color}">${esc(row.sender)}</div>
+        <p class="msg-text">${inlineFormat(row.text)}</p>
+      </div>
+    </div>`;
   });
 
-  $('#outputPreview').innerHTML = htmlResult;
+  finalHtml += `</div>`; // .ccfolia_wrap 종료
+  $('#outputPreview').innerHTML = finalHtml;
 }
 
+// 명세 2, 7, 8: 소스 필터 분해 및 데이터 식별 가공 함수
 function parseRaw(txt){
   G_parsedLogs = [];
   G_tabs.clear();
-  G_systems.clear();
+  G_characters = {};
 
   const lines = txt.split('\n');
   const chatRegex = /^\[([^\]]+)\]\s*([^\s:][^:]*)\s*:\s*(.*)$/;
   const systemRegex = /^시스템\s*:\s*(.*)$/;
+  
+  // 명세 7 & 명세 8: 백업 주소 패턴 감지용 정규식
+  const bgmRegex = /(https?:\/\/[^\s]+?\.(?:mp3|wav|ogg|m4a))/i;
 
   lines.forEach(line => {
     let clean = line.trim();
     if(!clean) return;
+
+    // 대화 내에 오디오 링크가 단독 매칭되거나 포함되어 있는 경우 비디오/BGM 독립 노드로 분리
+    if (bgmRegex.test(clean)) {
+      let matchUrl = clean.match(bgmRegex)[1];
+      G_parsedLogs.push({
+        type: 'bgm',
+        url: matchUrl,
+        text: clean
+      });
+      return;
+    }
 
     let chatMatch = clean.match(chatRegex);
     if(chatMatch){
@@ -393,16 +480,19 @@ function parseRaw(txt){
       let sender = chatMatch[2].trim();
       let text = chatMatch[3];
 
+      // 명세 2: 날짜 스탬프 문구 전처리 필터링 자동 삭제 대행
+      if (text.includes('msg-timestamp') || /^\d{4}\/\d{2}\/\d{2}/.test(text)) return;
+
       G_tabs.add(tab);
       if(!G_characters[sender]){
-        G_characters[sender] = { color: '#806a58', avatar: '' };
+        G_characters[sender] = { color: '#806a58', avatar: '', w: 48, h: 48, mt: 0, ml: 0 };
       }
 
+      // 명세 9: 다이스 롤러 텍스트 조건식 캐싱 분기
       if(text.includes('＞') || text.includes('▶') || /cc[b]?<=/i.test(text)){
-        G_systems.add('dice-log');
         G_parsedLogs.push({
           type: 'dice-log',
-          sender: sender, 
+          sender: sender,
           text: text
         });
       } else {
@@ -410,8 +500,7 @@ function parseRaw(txt){
           type: 'chat',
           tab: tab,
           sender: sender,
-          text: text,
-          time: ''
+          text: text
         });
       }
       return;
@@ -419,12 +508,10 @@ function parseRaw(txt){
 
     let sysMatch = clean.match(systemRegex);
     if(sysMatch){
-      G_systems.add('system');
       G_parsedLogs.push({ type:'system', text: sysMatch[1] });
       return;
     }
 
-    G_systems.add('system');
     G_parsedLogs.push({ type:'system', text: clean });
   });
 
@@ -434,20 +521,9 @@ function parseRaw(txt){
 function renderFilters(){
   let tHtml = '';
   G_tabs.forEach(t => {
-    tHtml += `
-      <div class="tab-color-row" data-tab="${t}">
-        <label class="chip"><input type="checkbox" value="${t}" checked onchange="doTransform()"> ${esc(t)}</label>
-        <input type="color" value="#806a58" style="display:none">
-      </div>`;
+    tHtml += `<label class="chip"><input type="checkbox" value="${t}" checked onchange="doTransform()"> ${esc(t)}</label>`;
   });
   $('#tabList').innerHTML = tHtml || '<div class="hint">탭 데이터 없음</div>';
-
-  let sHtml = '';
-  G_systems.forEach(s => {
-    let label = s === 'system' ? '일반 시스템 결과' : '주사위 롤러 결과';
-    sHtml += `<label class="chip"><input type="checkbox" value="${s}" checked onchange="doTransform()"> ${label}</label>`;
-  });
-  $('#systemList').innerHTML = sHtml || '<div class="hint">시스템 필터 없음</div>';
 }
 
 function renderCharacterList(){
@@ -455,48 +531,60 @@ function renderCharacterList(){
   Object.keys(G_characters).forEach(name => {
     let c = G_characters[name];
     html += `
-      <div class="character-summary panel" style="padding:8px">
-        <div style="font-weight:bold;margin-bottom:4px">${esc(name)}</div>
-        <div class="grid2">
-          <div>
-            <label style="margin:0">이름색</label>
-            <input type="color" value="${c.color}" onchange="updateCharColor('${esc(name)}', this.value)">
+      <div class="character-summary panel">
+        <div style="font-weight:bold;margin-bottom:6px;color:#5e4d41;">${esc(name)}</div>
+        <div style="display:grid;gap:6px;font-size:12px;">
+          <div class="grid2">
+            <div>
+              <label style="margin:0">이름 색상</label>
+              <input type="color" value="${c.color}" onchange="updateChar('${esc(name)}', 'color', this.value)">
+            </div>
+            <div>
+              <label style="margin:0">인장 주소(URL)</label>
+              <input type="text" value="${esc(c.avatar)}" placeholder="이미지 주소" onchange="updateChar('${esc(name)}', 'avatar', this.value)">
+            </div>
+          </div>
+          <div class="grid2">
+            <div>
+              <label style="margin:0">가로 크기(px)</label>
+              <input type="number" value="${c.w}" onchange="updateChar('${esc(name)}', 'w', parseInt(this.value)||48)">
+            </div>
+            <div>
+              <label style="margin:0">세로 크기(px)</label>
+              <input type="number" value="${c.h}" onchange="updateChar('${esc(name)}', 'h', parseInt(this.value)||48)">
+            </div>
           </div>
           <div>
-            <label style="margin:0">아바타 주소</label>
-            <input type="text" value="${esc(c.avatar)}" placeholder="이미지 URL" onchange="updateCharAvatar('${esc(name)}', this.value)">
+            <label style="margin:0">상단 여백 (marginTop - px 단위)</label>
+            <input type="number" value="${c.mt}" placeholder="0" onchange="updateChar('${esc(name)}', 'mt', parseInt(this.value)||0)">
           </div>
         </div>
       </div>`;
   });
-  $('#characterList').innerHTML = html || '<div class="hint">인식된 캐릭터 없음</div>';
+  $('#characterList').innerHTML = html || '<div class="hint">감지된 캐릭터가 없습니다.</div>';
 }
 
-function updateCharColor(name, val){
-  if(G_characters[name]) G_characters[name].color = val;
-  doTransform();
-}
-function updateCharAvatar(name, val){
-  if(G_characters[name]) G_characters[name].avatar = val;
+function updateChar(name, key, val){
+  if(G_characters[name]) G_characters[name][key] = val;
   doTransform();
 }
 
 function copyHTML(){
   const markup = $('#outputPreview').innerHTML;
   navigator.clipboard.writeText(markup)
-    .then(() => alert('HTML 코드가 클립보드에 복사되었습니다!'))
-    .catch(() => alert('복사에 실패했습니다.'));
+    .then(() => alert('티스토리 업로드용 HTML 소스코드가 복사되었습니다! HTML 편집기 모드에서 붙여넣어 주세요.'))
+    .catch(() => alert('복사 실패'));
 }
 
 function downloadHTML(){
   const markup = $('#outputPreview').innerHTML;
   const styles = $('style').innerHTML;
-  const full = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${styles}</style></head><body><div class="preview">${markup}</div></body></html>`;
+  const full = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${styles}</style></head><body>${markup}</body></html>`;
   const blob = new Blob([full], {type:'text/html'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'ccfolia_edited_log.html';
+  a.download = 'ccfolia_tistory_backup.html';
   a.click();
 }
 </script>
