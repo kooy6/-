@@ -5335,7 +5335,22 @@ renderMessage=function(message,set){
 };
 
 window.wrapGroupSelectedColorPatch=wrapGroupSelectedColorPatch;
-document.head.insertAdjacentHTML('beforeend', '<style>.dice-result.no-bold { font-weight: normal !important; } .dice-name b { font-weight: inherit; }</style>');
-</script>
+// ... (기존 코드들) ...
+
+/* === 최후의 수단: 스타일 강제 재정의 === */
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        /* 강조 설정이 'none'일 때 모든 주사위 로그의 굵기 제거 */
+        .dice-result, .dice-name { font-weight: normal !important; }
+        
+        /* 강조 설정이 되어 있을 때(기본값)는 굵게 유지 */
+        body.dice-emphasis-on .dice-result, 
+        body.dice-emphasis-on .dice-name { font-weight: bold !important; }
+    `;
+    document.head.appendChild(style);
+});
+
+</script></script>
 </body>
 </html>
