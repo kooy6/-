@@ -4033,9 +4033,9 @@ function enhanceDice(text, characterName) {
   html = html.replace(/(대단한\s*성공|극단적\s*성공|어려운\s*성공|보통\s*성공|대성공|성공|실패|대실패|펌블)/g, 
          (m) => '<span class="dice-result ' + emphasisClass + '">' + m + '</span>');
 
-  // 3. 이름 처리
+  // 3. 이름 처리 (여기서 <b>로 이름까지 감쌌습니다!)
   const namePart = characterName && $('#diceNameMode')?.value !== 'hide'
-    ? '<span class="dice-name break">[' + esc(characterName) + ']</span><br>'
+    ? '<span class="dice-name break"><b>[' + esc(characterName) + ']</b></span><br>'
     : '';
     
   return namePart + html;
@@ -5335,7 +5335,7 @@ renderMessage=function(message,set){
 };
 
 window.wrapGroupSelectedColorPatch=wrapGroupSelectedColorPatch;
-
+document.head.insertAdjacentHTML('beforeend', '<style>.dice-result.no-bold { font-weight: normal !important; } .dice-name b { font-weight: inherit; }</style>');
 </script>
 </body>
 </html>
