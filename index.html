@@ -109,47 +109,6 @@ body>.preview,body>.tistory-ccfolia-backup.preview{min-height:100vh;width:100%}
 .cc-row.dice-log.dice-character .cc-text{color:var(--dice-color,rgba(255,255,255,.64))!important}
 .cc-row.dice-log.dice-simple .cc-text{background:transparent;color:var(--cc-text)!important}
 .cc-row.dice-log .cc-avatar,.cc-row.dice-log .cc-name-line{display:none}
-  /* 판정로그 분리 시 세로로 깨지는 것 수정 */
-.cc-row.dice-log{
-  display:block !important;
-  max-width:var(--log-width) !important;
-  margin:8px auto !important;
-  text-align:left !important;
-}
-
-.cc-row.dice-log .cc-body{
-  padding-right:30px !important;
-}
-
-.cc-row.dice-log .cc-name-line{
-  display:flex !important;
-  margin-bottom:2px !important;
-}
-
-.cc-row.dice-log .cc-text{
-  display:block !important;
-  width:fit-content;
-  max-width:100%;
-  text-align:left !important;
-  white-space:pre-wrap !important;
-}
-  /* 분리 여부와 상관없이 판정 강조색 적용 */
-.dice-hit.character,
-.dice-result.character{
-  color:var(--dice-color,currentColor) !important;
-  font-weight:400 !important;
-}
-
-.dice-hit.character-bold,
-.dice-result.character-bold{
-  color:var(--dice-color,currentColor) !important;
-  font-weight:900 !important;
-}
-
-.dice-hit.bold-only,
-.dice-result.bold-only{
-  font-weight:900 !important;
-}
 .dice-name{font-weight:900;margin-right:6px;opacity:.95}
 .dice-name.hide{display:none}
 .dice-result{border-radius:3px}
@@ -1299,7 +1258,39 @@ button{
 .color-code-row input[type="text"]{
   font-family:monospace !important;
 }
+/* 최종 덮어쓰기: 판정로그 분리 세로깨짐 수정 */
+.preview .cc-row.dice-log{
+  display:block !important;
+  grid-template-columns:none !important;
+  max-width:var(--log-width, 760px) !important;
+  margin:8px auto !important;
+  text-align:left !important;
+}
 
+.preview .cc-row.dice-log .cc-body{
+  display:block !important;
+  padding-right:30px !important;
+}
+
+.preview .cc-row.dice-log .cc-name-line{
+  display:flex !important;
+  visibility:visible !important;
+  height:auto !important;
+  min-height:0 !important;
+  margin:0 0 2px !important;
+}
+
+.preview .cc-row.dice-log .cc-avatar{
+  display:none !important;
+}
+
+.preview .cc-row.dice-log .cc-text{
+  display:block !important;
+  width:auto !important;
+  max-width:100% !important;
+  text-align:left !important;
+  white-space:pre-wrap !important;
+}
 </style>
 </head>
 
@@ -2202,12 +2193,12 @@ function exportHtml(){
   render();
   const title=$('#titleInput').value.trim()||state.title||'custom_log';
   const cls='preview '+$('#skinMode').value;
-  return '<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+esc(title)+'</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Orbit&display=swap" rel="stylesheet"><style>'+document.querySelector('style').textContent+'</style></head><body><main class="'+cls+'">'+cleanForExport()+'</main>'+bgmExportScript()+'</body></html>';
+  return '<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+esc(title)+'</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Orbit&display=swap" rel="stylesheet"><style>'+document.querySelector('style').textContent+'<></head><body><main class="'+cls+'">'+cleanForExport()+'</main>'+bgmExportScript()+'</body></html>';
 }
 function exportTistoryHtml(){
   render();
   const cls='preview '+$('#skinMode').value;
-  return '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Orbit&display=swap" rel="stylesheet"><style>'+document.querySelector('style').textContent+'.tistory-ccfolia-backup{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;overflow:hidden!important;border-radius:0!important}.tistory-ccfolia-backup *{max-width:100%}</style><div class="tistory-ccfolia-backup '+cls+'">'+cleanForExport()+'</div>'+bgmExportScript();
+  return '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;700&family=Orbit&display=swap" rel="stylesheet"><style>'+document.querySelector('style').textContent+'.tistory-ccfolia-backup{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;overflow:hidden!important;border-radius:0!important}.tistory-ccfolia-backup *{max-width:100%}<><div class="tistory-ccfolia-backup '+cls+'">'+cleanForExport()+'</div>'+bgmExportScript();
 }
 function downloadHtml(){
   const blob=new Blob([exportHtml()],{type:'text/html'});
