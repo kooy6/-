@@ -4027,9 +4027,10 @@ function enhanceDice(text,characterName){
     (m)=>'<span class="dice-result '+diceEmphasisClass()+'">'+m+'</span>'
   );
 
-const namePart =
-  '[' + String(characterName) + ']<br>';
-
+const namePart=characterName && $('#diceNameMode')?.value !== 'hide'
+  ? '<span class="dice-name break">['+esc(characterName)+']</span><br>'
+  : '';
+  
 function renderMessage(message,set){
   if(message.handoutStyle){ return renderHandoutMessage(message,set); }
   const c=findCharacterForMessage(message)||{};
