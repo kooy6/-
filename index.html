@@ -4018,6 +4018,10 @@ function wrapDiceHit(text){
   const cls='dice-hit '+diceEmphasisClass();
   return '<span class="'+cls+'">'+text+'</span>';
 }
+  function enhanceDice(text,characterName){
+  alert("이름=" + characterName);
+
+  let html=inlineFormat(String(text||''));
 function enhanceDice(text,characterName){
   let html=inlineFormat(String(text||''));
   html=html.replace(/(cc[b]?&lt;=?\s*\d+\s*[^＞>\n(]*)/gi,(m)=>wrapDiceHit(m));
