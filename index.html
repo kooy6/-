@@ -3084,6 +3084,24 @@ function isQuietTabName(tab){
 }
 
 const oldRenderPatch6 = render;
+  /* === 이름 표시 및 볼드체 제거 통합 패치 === */
+const __oldRenderMessageFinal = renderMessage;
+renderMessage = function(message, set) {
+    // 1. 주사위 로그면 [이름] 강제 추가
+    if (message.kind === 'dice' && message.sender) {
+        message.text = "[" + message.sender + "] " + message.text;
+    }
+
+    // 2. 기존 렌더링 실행
+    let output = __oldRenderMessageFinal(message, set);
+
+    // 3. 강조 해제(diceEmphasis가 'none')일 때 <b> 태그 제거
+    if (typeof diceEmphasis !== 'undefined' && diceEmphasis === 'none') {
+        output = output.replace(/<\/?b[^>]*>/g, '');
+    }
+
+    return output;
+};
 render = function(){
   oldRenderPatch6();
   const preview = $('#preview');
