@@ -5323,7 +5323,31 @@ renderMessage=function(message,set){
 };
 
 window.wrapGroupSelectedColorPatch=wrapGroupSelectedColorPatch;
+/* === 최종 정리: 이름 표시 + 볼드 설정 연동 === */
 
+// 1. 이름 표시 패치
+const __originalEnhanceDice = enhanceDice;
+enhanceDice = function(text, characterName) {
+    let result = __originalEnhanceDice(text, characterName);
+    if (characterName) {
+        result = "<b>[" + characterName + "]</b> " + result;
+    }
+    return result;
+};
+
+// 2. 볼드 처리 패치 (설정값 none일 때만 볼드 제거)
+const __oldRenderMessageFinalPatch = renderMessage;
+renderMessage = function(message, set) {
+    let output = __oldRenderMessageFinalPatch(message, set);
+    
+    // 주사위 로그이면서 강조 설정이 'none'일 때 볼드 태그/스타일 제거
+    if ((message.kind === 'dice' || message.type === 'dice') && 
+        typeof diceEmphasis !== 'undefined' && diceEmphasis === 'none') {
+        output = output.replace(/<\/?b[^>]*>/g, '');
+        output = output.replace(/font-weight:\s*(bold|700|900)/gi, 'font-weight:400');
+    }
+    return output;
+};
 </script>
 </body>
 </html>
