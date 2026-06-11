@@ -1302,15 +1302,12 @@ button{
   white-space:pre-wrap !important;
 }
 
-/* 회색 상자 내부 이름이 잘 보이도록 상자 높이 자동 조절 */
-
-  .cc-dice {
+.cc-dice {
   height: auto !important;
-  min-height: 50px;
-  padding: 8px 12px !important;
-  display: inline-block !important; /* 내부에서 줄바꿈이 정상 작동하도록 변경 */
+  min-height: 50px !important;
+  padding: 10px 14px !important;
+  display: inline-block !important; 
 }
-/* --- 여기까지 복사하세요 --- */
 </style>
 </head>
 
@@ -5310,50 +5307,30 @@ function renderGroupedMessagePatch(group,set){
   return '<article class="cc-row grouped-message" style="--dice-color:'+esc(first.color||c.color||'rgba(255,255,255,.64)')+'" data-id="'+esc(first.id)+'" data-kind="message" draggable="false">'+
     avatar+'<div class="cc-body">'+nameLine+textHtml+tools+groupEditor+'</div></article>';
 }
-// --- 여기서부터 복사해서 const __oldRenderMessageFontPatch 바로 위에 넣으세요 ---
-// [판정로그 분리형] 회색 상자 내부 맨 첫 줄에 이름 글자로 집어넣기 완벽 패치
-if (typeof enhanceDice === 'function') {
-  const __originalEnhanceForBoxInside = enhanceDice;
-  enhanceDice = function(text, characterName) {
-    // 1. 원래 코코포리아 주사위 회색 상자 HTML을 만듭니다.
-    let diceHtml = __originalEnhanceForBoxInside(text, characterName);
-    
-    // 2. 주사위 이름 표시 옵션이 켜져있는지 확인합니다.
-    const diceNameMode = document.getElementById('diceNameMode')?.value || 'show';
-    if (diceNameMode !== 'show') return diceHtml;
 
-    // 3. 판정로그가 분리되면서 이름 정보가 누락되었다면, 현재 대화중인 캐릭터 이름을 추적합니다.
-    let finalName = characterName;
-    if (!finalName) {
-      const rows = document.querySelectorAll('.cc-row');
-      if (rows.length > 0) {
-        const lastRow = rows[rows.length - 1];
-        finalName = lastRow.querySelector('.cc-name')?.textContent || '';
-      }
-    }
-
-    // 4. 이름이 확인되었고 회색 상자가 정상 작동 중일 때
-    if (finalName) {
-      finalName = finalName.trim();
-      
-      // 이미 이름이 중복으로 들어간 게 아니라면
-      if (!diceHtml.includes('[' + finalName + ']')) {
-        // 원래 회색 상자 내부의 텍스트가 시작되는 부분(<div class="cc-dice-faces">) 바로 위에
-        // 원하셨던 [이름] 형식을 글자로 얹고 줄바꿈(<br>)을 해줍니다.
-        const nameTextInline = '<div class="dice-inside-name" style="font-weight: bold; margin-bottom: 5px; color: var(--dice-color, #fff); opacity: 0.9;">[' + finalName + ']</div>';
-        
-        // 회색 상자(cc-dice) 내부 구조에 자연스럽게 첫 줄로 끼워 넣는 마법의 코드입니다.
-        diceHtml = diceHtml.replace('<div class="cc-dice-faces">', nameTextInline + '<div class="cc-dice-faces">');
-      }
-    }
-    
-    return diceHtml;
-  };
-}
-// --- 여기까지 복사하세요 ---
 const __oldRenderMessageFontPatch=renderMessage;
 renderMessage=function(message,set){
   let output=__oldRenderMessageFontPatch(message,set);
+  // --- 여기서부터 복사해서 let output=... 바로 아랫줄에 붙여넣으세요 ---
+  try {
+    // 주사위 이름 표시 옵션이 켜져있고, 주사위 결과 박스(cc-dice)가 존재할 때
+    const diceNameMode = document.getElementById('diceNameMode')?.value || 'show';
+    if (diceNameMode === 'show' && output.includes('class="cc-dice"')) {
+      
+      // 원본 메세지 데이터에서 캐릭터 이름을 가져옵니다 (비어있으면 공백 처리)
+      let realName = message.name || message.displayName || '';
+      
+      if (realName) {
+        realName = realName.trim();
+        // 회색 박스 내부 디자인과 어우러지는 첫 줄 이름 텍스트 생성
+        const nameHeader = '<div class="dice-inside-name" style="font-weight: bold; margin-bottom: 6px; color: var(--dice-color, #fff); opacity: 0.85;">[' + realName + ']</div>';
+        
+        // 회색 박스 시작점 바로 뒤에 이름을 첫 줄로 삽입합니다.
+        output = output.replace('<div class="cc-dice-faces">', nameHeader + '<div class="cc-dice-faces">');
+      }
+    }
+  } catch(e) { console.error(e); }
+// --- 여기까지 복사하세요 ---
   const styles=[];
   if(message?.textColor)styles.push('color:'+esc(message.textColor));
   if(message?.fontMode){
