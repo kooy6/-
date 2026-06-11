@@ -1299,6 +1299,12 @@ button{
   text-align:left !important;
   white-space:pre-wrap !important;
 }
+  .dice-name {
+  font-weight: 400; /* 기본은 얇게 */
+}
+.dice-name.bold-on, .dice-result.bold-on {
+  font-weight: 700 !important; /* 강조 켜졌을 때만 굵게 */
+}
 </style>
 </head>
 
@@ -5308,34 +5314,38 @@ renderMessage=function(message,set){
 };
 
 window.wrapGroupSelectedColorPatch=wrapGroupSelectedColorPatch;
-/* === 주사위 및 이름 강조 제어 패치 === */
+/* === 최종 통합 패치: 폰트/색상/아이콘/주사위/이름제어 === */
 (function() {
-    const __oldRenderMessage = renderMessage;
+    const __oldRender = renderMessage;
 
     renderMessage = function(message, set) {
-        let output = __oldRenderMessage(message, set);
+        let output = __oldRender(message, set);
 
-        // 주사위 메시지인 경우에만 작동
+        // 1. 색상 및 폰트 적용 (기존 폰트 패치)
+        const styles = [];
+        if (message?.textColor) styles.push('color:' + esc(message.textColor));
+        if (message?.fontMode && typeof cssFontVarPatch !== 'undefined') {
+            styles.push('--message-font-family:' + esc(cssFontVarPatch(message.fontMode)));
+            styles.push('font-family:var(--message-font-family)');
+        }
+        if (styles.length) {
+            output = output.replace('<p class="cc-text">', '<p class="cc-text" style="' + styles.join(';') + '">');
+            output = output.replace('<p class="cc-text multi-line-text">', '<p class="cc-text multi-line-text" style="' + styles.join(';') + '">');
+        }
+
+        // 2. 주사위 및 이름 강조 제어
         if (message.kind === 'dice' || message.type === 'dice') {
-            const isEmphasisOff = (typeof diceEmphasis !== 'undefined' && diceEmphasis === 'none');
-
-            if (isEmphasisOff) {
-                // 1. 주사위 결과(dice-result)와 이름(dice-name)에서 볼드 제거
-                // 클래스에 no-bold를 추가하여 CSS로 제어 가능하게 함
-                output = output.replace(/class="([^"]*dice-(?:result|name)[^"]*)"/g, 'class="$1 no-bold"');
-                
-                // 직접 스타일이 박혀있는 경우(font-weight) 강제 제거
-                output = output.replace(/style="[^"]*font-weight:\s*(bold|700|900)[^"]*"/gi, '');
-            } else {
-                // 2. 강조 기능이 켜져 있을 때 (강조 적용)
-                // 이름과 결과 모두 굵게 유지
-                output = output.replace(/class="([^"]*dice-(?:result|name)[^"]*)"/g, 'class="$1 bold-on"');
+            // 강조 설정이 'none'이 아닐 때만 'bold-on' 클래스 추가
+            if (typeof diceEmphasis !== 'undefined' && diceEmphasis !== 'none') {
+                output = output.replace(/class="dice-(name|result)"/g, 'class="dice-$1 bold-on"');
             }
         }
 
         return output;
     };
 })();
+
+  
 </script>
 </body>
 </html>
